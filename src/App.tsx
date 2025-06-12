@@ -10,6 +10,7 @@ import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import CalendarPage from "@/pages/CalendarPage";
 import ReservationsPage from "@/pages/ReservationsPage";
+import GuestsPage from "@/pages/GuestsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,11 @@ const App = () => (
             <Route path="/reservations" element={
               <AppLayout>
                 <ReservationsPage />
+              </AppLayout>
+            } />
+            <Route path="/guests" element={
+              <AppLayout>
+                <GuestsPage />
               </AppLayout>
             } />
             <Route path="*" element={<NotFound />} />

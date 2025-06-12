@@ -4,23 +4,38 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, UserPlus } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
+import { ReservationModal } from '@/components/Reservations/ReservationModal';
+import { GuestModal } from '@/components/Guests/GuestModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Reservation } from '@/types/hotel';
 
 const ReservationsPage = () => {
-  const { reservations, guests, rooms } = useHotelData();
+  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, addGuest, isLoading } = useHotelData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [reservationModal, setReservationModal] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit';
+    reservation?: Reservation;
+  }>({
+    isOpen: false,
+    mode: 'create',
+  });
+  const [guestModal, setGuestModal] = useState({
+    isOpen: false,
+    mode: 'create' as 'create' | 'edit',
+  });
 
   const filteredReservations = reservations.filter(reservation => {
-    const guest = guests.find(g => g.id === reservation.guestId);
-    const room = rooms.find(r => r.id === reservation.roomId);
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
     return (
-      guest?.firstName.toLowerCase().includes(searchLower) ||
-      guest?.lastName.toLowerCase().includes(searchLower) ||
+      guest?.first_name.toLowerCase().includes(searchLower) ||
+      guest?.last_name.toLowerCase().includes(searchLower) ||
       guest?.email.toLowerCase().includes(searchLower) ||
       room?.number.includes(searchLower) ||
       reservation.id.includes(searchLower)
@@ -57,6 +72,28 @@ const ReservationsPage = () => {
     }
   };
 
+  const handleSaveReservation = (reservationData: any) => {
+    if (reservationModal.mode === 'create') {
+      addReservation(reservationData);
+    } else if (reservationModal.reservation) {
+      updateReservation(reservationModal.reservation.id, reservationData);
+    }
+  };
+
+  const handleDeleteReservation = (id: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta reserva?')) {
+      deleteReservation(id);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Cargando...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -66,10 +103,21 @@ const ReservationsPage = () => {
             Gestiona todas las reservas del hotel
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Reserva
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nuevo Huésped
+          </Button>
+          <Button
+            onClick={() => setReservationModal({ isOpen: true, mode: 'create' })}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Reserva
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -113,37 +161,49 @@ const ReservationsPage = () => {
                   </tr>
                 ) : (
                   filteredReservations.map((reservation) => {
-                    const guest = guests.find(g => g.id === reservation.guestId);
-                    const room = rooms.find(r => r.id === reservation.roomId);
+                    const guest = guests.find(g => g.id === reservation.guest_id);
+                    const room = rooms.find(r => r.id === reservation.room_id);
 
                     return (
                       <tr key={reservation.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{reservation.id}</td>
+                        <td className="py-3 px-4">{reservation.id.slice(0, 8)}...</td>
                         <td className="py-3 px-4">
-                          {guest ? `${guest.firstName} ${guest.lastName}` : 'N/A'}
+                          {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
                         </td>
                         <td className="py-3 px-4">{room?.number || 'N/A'}</td>
                         <td className="py-3 px-4">
-                          {format(new Date(reservation.checkIn), 'dd/MM/yyyy', { locale: es })}
+                          {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
                         </td>
                         <td className="py-3 px-4">
-                          {format(new Date(reservation.checkOut), 'dd/MM/yyyy', { locale: es })}
+                          {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
                         </td>
                         <td className="py-3 px-4">
                           <Badge className={getStatusColor(reservation.status)}>
                             {getStatusText(reservation.status)}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4">${reservation.totalAmount}</td>
+                        <td className="py-3 px-4">${reservation.total_amount}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setReservationModal({
+                                isOpen: true,
+                                mode: 'edit',
+                                reservation
+                              })}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteReservation(reservation.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -157,6 +217,23 @@ const ReservationsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ReservationModal
+        isOpen={reservationModal.isOpen}
+        onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+        onSave={handleSaveReservation}
+        rooms={rooms}
+        guests={guests}
+        reservation={reservationModal.reservation}
+        mode={reservationModal.mode}
+      />
+
+      <GuestModal
+        isOpen={guestModal.isOpen}
+        onClose={() => setGuestModal({ isOpen: false, mode: 'create' })}
+        onSave={addGuest}
+        mode={guestModal.mode}
+      />
     </div>
   );
 };

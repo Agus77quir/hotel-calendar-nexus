@@ -1,13 +1,13 @@
 
 export interface Guest {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   document: string;
   nationality: string;
-  createdAt: Date;
+  created_at: string;
 }
 
 export interface Room {
@@ -18,20 +18,22 @@ export interface Room {
   capacity: number;
   amenities: string[];
   status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
+  created_at: string;
 }
 
 export interface Reservation {
   id: string;
-  guestId: string;
-  roomId: string;
-  checkIn: Date;
-  checkOut: Date;
-  guests: number;
-  totalAmount: number;
+  guest_id: string;
+  room_id: string;
+  check_in: string;
+  check_out: string;
+  guests_count: number;
+  total_amount: number;
   status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
-  specialRequests?: string;
-  createdAt: Date;
-  createdBy: string;
+  special_requests?: string;
+  created_at: string;
+  created_by?: string;
+  updated_at: string;
 }
 
 export interface User {

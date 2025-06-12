@@ -21,8 +21,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation }:
 
   const getReservationsForDate = (date: Date) => {
     return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.checkIn);
-      const checkOut = new Date(reservation.checkOut);
+      const checkIn = new Date(reservation.check_in);
+      const checkOut = new Date(reservation.check_out);
       return date >= checkIn && date <= checkOut;
     });
   };
@@ -109,17 +109,17 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation }:
           ) : (
             <div className="space-y-4">
               {selectedDateReservations.map((reservation) => {
-                const guest = guests.find(g => g.id === reservation.guestId);
-                const room = rooms.find(r => r.id === reservation.roomId);
-                const isCheckIn = isSameDay(new Date(reservation.checkIn), selectedDate);
-                const isCheckOut = isSameDay(new Date(reservation.checkOut), selectedDate);
+                const guest = guests.find(g => g.id === reservation.guest_id);
+                const room = rooms.find(r => r.id === reservation.room_id);
+                const isCheckIn = isSameDay(new Date(reservation.check_in), selectedDate);
+                const isCheckOut = isSameDay(new Date(reservation.check_out), selectedDate);
 
                 return (
                   <div key={reservation.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium">
-                          {guest?.firstName} {guest?.lastName}
+                          {guest?.first_name} {guest?.last_name}
                         </h4>
                         <Badge className={getStatusColor(reservation.status)}>
                           {getStatusText(reservation.status)}
@@ -131,15 +131,15 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation }:
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <p>
-                        Check-in: {format(new Date(reservation.checkIn), 'dd/MM/yyyy')}
+                        Check-in: {format(new Date(reservation.check_in), 'dd/MM/yyyy')}
                         {isCheckIn && <Badge variant="outline" className="ml-2">Hoy</Badge>}
                       </p>
                       <p>
-                        Check-out: {format(new Date(reservation.checkOut), 'dd/MM/yyyy')}
+                        Check-out: {format(new Date(reservation.check_out), 'dd/MM/yyyy')}
                         {isCheckOut && <Badge variant="outline" className="ml-2">Hoy</Badge>}
                       </p>
-                      <p>Huéspedes: {reservation.guests}</p>
-                      <p>Total: ${reservation.totalAmount}</p>
+                      <p>Huéspedes: {reservation.guests_count}</p>
+                      <p>Total: ${reservation.total_amount}</p>
                     </div>
                   </div>
                 );
