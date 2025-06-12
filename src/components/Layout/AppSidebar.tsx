@@ -41,7 +41,7 @@ const guestItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { open } = useSidebar();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -66,14 +66,14 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? 'w-14' : 'w-60'} collapsible>
+    <Sidebar className={open ? 'w-60' : 'w-14'}>
       <SidebarTrigger className="m-2 self-end" />
       
       <SidebarContent>
         <div className="px-4 py-2">
           <div className="flex items-center gap-2">
             <Hotel className="h-8 w-8 text-blue-600" />
-            {!collapsed && (
+            {open && (
               <div>
                 <h2 className="text-lg font-bold text-blue-600">NARDINI</h2>
                 <p className="text-xs text-muted-foreground">Hotel Management</p>
@@ -99,7 +99,7 @@ export function AppSidebar() {
                       }
                     >
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {open && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -109,7 +109,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <div className="mt-auto p-4">
-          {!collapsed && user && (
+          {open && user && (
             <div className="mb-4 p-3 bg-muted rounded-lg">
               <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
               <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
@@ -121,7 +121,7 @@ export function AppSidebar() {
             className="w-full justify-start"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            {!collapsed && <span>Cerrar Sesión</span>}
+            {open && <span>Cerrar Sesión</span>}
           </Button>
         </div>
       </SidebarContent>
