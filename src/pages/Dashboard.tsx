@@ -10,22 +10,24 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-800 mb-2">
           Bienvenido, {user?.firstName}
         </h1>
-        <p className="text-muted-foreground">
-          Resumen general del hotel y actividades del día
+        <p className="text-gray-600 text-lg">
+          Panel de control del sistema hotelero - Resumen general y actividades del día
         </p>
       </div>
 
       <StatsCards stats={stats} />
 
-      <HotelCalendar 
-        reservations={reservations}
-        rooms={rooms}
-        guests={guests}
-      />
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
+        <HotelCalendar 
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+        />
+      </div>
     </div>
   );
 };
