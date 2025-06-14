@@ -3,13 +3,17 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu } from 'lucide-react';
-import { useEffect } from 'react';
+import { Bell, Menu, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
+import { NotificationPanel } from '@/components/Notifications/NotificationPanel';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -17,6 +21,23 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!isAuthenticated) {
     return null;
@@ -36,8 +57,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <header className="h-20 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-6 shadow-lg">
             <div className="flex items-center gap-4">
               <SidebarTrigger>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
+                <Button variant="ghost" size="lg" className="p-3">
+                  <Menu className="h-6 w-6" />
                 </Button>
               </SidebarTrigger>
               <div className="flex items-center gap-4">
@@ -51,10 +72,30 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="icon" className="bg-white/80 hover:bg-white">
-                <Bell className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="bg-white/80 hover:bg-white"
+                onClick={() => setIsSearchOpen(true)}
+                title="Buscar huéspedes (Ctrl+K)"
+              >
+                <Search className="h-4 w-4" />
               </Button>
+              <div className="relative">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="bg-white/80 hover:bg-white relative"
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                </Button>
+                {isNotificationOpen && (
+                  <NotificationPanel onClose={() => setIsNotificationOpen(false)} />
+                )}
+              </div>
             </div>
           </header>
           <main className="flex-1 p-6 overflow-y-auto bg-white/80 backdrop-blur-sm">
@@ -62,6 +103,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </main>
         </div>
       </div>
+
+      <FloatingGuestSearch 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+      />
     </SidebarProvider>
   );
 };
