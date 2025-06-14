@@ -10,6 +10,16 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* Ahora el calendario se muestra primero */}
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
+        <HotelCalendar 
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+        />
+      </div>
+
       <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
         <h1 className="text-4xl font-bold tracking-tight text-gray-800 mb-2">
           Bienvenido, {user?.firstName}
@@ -20,16 +30,9 @@ const Dashboard = () => {
       </div>
 
       <StatsCards stats={stats} />
-
-      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
-        <HotelCalendar 
-          reservations={reservations}
-          rooms={rooms}
-          guests={guests}
-        />
-      </div>
     </div>
   );
 };
 
 export default Dashboard;
+

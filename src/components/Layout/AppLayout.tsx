@@ -1,4 +1,3 @@
-
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,7 +57,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center gap-4">
               <SidebarTrigger>
                 <Button variant="ghost" size="lg" className="p-3">
-                  <Menu className="h-6 w-6" />
+                  {/* Menu icon más grande y colorido */}
+                  <Menu className="h-9 w-9 text-blue-700 drop-shadow-md" />
                 </Button>
               </SidebarTrigger>
               <div className="flex items-center gap-4">
