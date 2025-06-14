@@ -97,6 +97,61 @@ export const useHotelData = () => {
     },
   });
 
+  // Update guest mutation
+  const updateGuestMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Guest> }) => {
+      const { data, error } = await supabase
+        .from('guests')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      toast({
+        title: "Éxito",
+        description: "Huésped actualizado correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el huésped: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete guest mutation
+  const deleteGuestMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('guests')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      toast({
+        title: "Éxito",
+        description: "Huésped eliminado correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el huésped: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Add reservation mutation
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
@@ -214,6 +269,8 @@ export const useHotelData = () => {
     stats,
     isLoading: roomsLoading || guestsLoading || reservationsLoading,
     addGuest: (guestData: Omit<Guest, 'id' | 'created_at'>) => addGuestMutation.mutate(guestData),
+    updateGuest: (id: string, updates: Partial<Guest>) => updateGuestMutation.mutate({ id, updates }),
+    deleteGuest: (id: string) => deleteGuestMutation.mutate(id),
     addReservation: (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => 
       addReservationMutation.mutate(reservationData),
     updateReservation: (id: string, updates: Partial<Reservation>) => 

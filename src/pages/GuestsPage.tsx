@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const GuestsPage = () => {
-  const { guests, addGuest, isLoading } = useHotelData();
+  const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{
     isOpen: boolean;
@@ -35,8 +35,15 @@ const GuestsPage = () => {
   const handleSaveGuest = (guestData: any) => {
     if (guestModal.mode === 'create') {
       addGuest(guestData);
+    } else if (guestModal.mode === 'edit' && guestModal.guest) {
+      updateGuest(guestModal.guest.id, guestData);
     }
-    // TODO: Add update guest functionality
+  };
+
+  const handleDeleteGuest = (id: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
+      deleteGuest(id);
+    }
   };
 
   if (isLoading) {
@@ -128,7 +135,11 @@ const GuestsPage = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDeleteGuest(guest.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

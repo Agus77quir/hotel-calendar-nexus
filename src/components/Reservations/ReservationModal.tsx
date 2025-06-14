@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { format } from 'date-fns';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -34,7 +33,7 @@ export const ReservationModal = ({
     check_in: '',
     check_out: '',
     guests_count: 1,
-    status: 'confirmed' as const,
+    status: 'confirmed' as 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled',
     special_requests: '',
   });
 
@@ -159,7 +158,7 @@ export const ReservationModal = ({
 
           <div>
             <Label htmlFor="status">Estado</Label>
-            <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
+            <Select value={formData.status} onValueChange={(value: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled') => setFormData({...formData, status: value})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

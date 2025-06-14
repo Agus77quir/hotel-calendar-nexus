@@ -41,7 +41,7 @@ const guestItems = [
 ];
 
 export function AppSidebar() {
-  const { open } = useSidebar();
+  const { open, setOpenMobile, isMobile } = useSidebar();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -63,6 +63,13 @@ export function AppSidebar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleNavClick = () => {
+    // Close mobile sidebar when navigation item is clicked
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -92,6 +99,7 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end
+                      onClick={handleNavClick}
                       className={({ isActive }) => 
                         isActive 
                           ? 'bg-blue-100 text-blue-600 font-medium' 
