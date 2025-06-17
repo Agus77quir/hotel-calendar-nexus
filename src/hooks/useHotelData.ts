@@ -1,5 +1,5 @@
-
 import { useMockHotelData } from './useMockHotelData';
+import { useEmailNotifications } from './useEmailNotifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Reservation, Guest, HotelStats } from '@/types/hotel';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useHotelData = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sendReservationEmail } = useEmailNotifications();
 
   // Check if Supabase types are available by testing a simple query
   const isSupabaseReady = async () => {
@@ -297,7 +298,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation mutation - with fallback
+  // Add reservation mutation - with email notifications
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       try {
@@ -324,9 +325,22 @@ export const useHotelData = () => {
         return null;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      
+      // Send email notification
+      const guest = guests.find(g => g.id === variables.guest_id);
+      const room = rooms.find(r => r.id === variables.room_id);
+      
+      if (guest && room) {
+        if (variables.status === 'checked-in') {
+          await sendReservationEmail('checkedIn', guest, variables as Reservation, room);
+        } else {
+          await sendReservationEmail('created', guest, variables as Reservation, room);
+        }
+      }
+      
       toast({
         title: "Éxito",
         description: "Reserva creada correctamente",
@@ -341,7 +355,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Update reservation mutation - with fallback
+  // Update reservation mutation - with email notifications
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Reservation> }) => {
       try {
@@ -360,9 +374,34 @@ export const useHotelData = () => {
         return null;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (data, { id, updates }) => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      
+      // Send email notification based on status change
+      const originalReservation = reservations.find(r => r.id === id);
+      const guest = guests.find(g => g.id === originalReservation?.guest_id);
+      const room = rooms.find(r => r.id === originalReservation?.room_id);
+      
+      if (guest && room && originalReservation && updates.status) {
+        const updatedReservation = { ...originalReservation, ...updates };
+        
+        switch (updates.status) {
+          case 'confirmed':
+            await sendReservationEmail('confirmed', guest, updatedReservation, room);
+            break;
+          case 'checked-in':
+            await sendReservationEmail('checkedIn', guest, updatedReservation, room);
+            break;
+          case 'checked-out':
+            await sendReservationEmail('checkedOut', guest, updatedReservation, room);
+            break;
+          case 'cancelled':
+            await sendReservationEmail('cancelled', guest, updatedReservation, room);
+            break;
+        }
+      }
+      
       toast({
         title: "Éxito",
         description: "Reserva actualizada correctamente",
