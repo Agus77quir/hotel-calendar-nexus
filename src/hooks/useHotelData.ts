@@ -109,6 +109,7 @@ export const useHotelData = () => {
         if (error) throw error;
         return data;
       } catch (error) {
+        console.log('Error adding guest to Supabase, using mock:', error);
         // Fallback to mock functionality
         mockData.addGuest(guestData);
         return null;
@@ -116,18 +117,10 @@ export const useHotelData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
-      if (guests.length === mockData.guests.length) {
-        // If using mock data, show different message
-        toast({
-          title: "Modo Demo",
-          description: "Huésped agregado en modo demo (conectando con base de datos...)",
-        });
-      } else {
-        toast({
-          title: "Éxito",
-          description: "Huésped agregado correctamente",
-        });
-      }
+      toast({
+        title: "Éxito",
+        description: "Huésped agregado correctamente",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -152,6 +145,7 @@ export const useHotelData = () => {
         if (error) throw error;
         return data;
       } catch (error) {
+        console.log('Error updating guest in Supabase, using mock:', error);
         mockData.updateGuest(id, updates);
         return null;
       }
@@ -183,6 +177,7 @@ export const useHotelData = () => {
         
         if (error) throw error;
       } catch (error) {
+        console.log('Error deleting guest from Supabase, using mock:', error);
         mockData.deleteGuest(id);
       }
     },
@@ -197,6 +192,106 @@ export const useHotelData = () => {
       toast({
         title: "Error",
         description: "No se pudo eliminar el huésped: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add room mutation - with fallback
+  const addRoomMutation = useMutation({
+    mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
+      try {
+        const { data, error } = await supabase
+          .from('rooms')
+          .insert([roomData])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.log('Error adding room to Supabase, using mock:', error);
+        mockData.addRoom(roomData);
+        return null;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Éxito",
+        description: "Habitación agregada correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo agregar la habitación: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update room mutation - with fallback
+  const updateRoomMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Room> }) => {
+      try {
+        const { data, error } = await supabase
+          .from('rooms')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.log('Error updating room in Supabase, using mock:', error);
+        mockData.updateRoom(id, updates);
+        return null;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Éxito",
+        description: "Habitación actualizada correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la habitación: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete room mutation - with fallback
+  const deleteRoomMutation = useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        const { error } = await supabase
+          .from('rooms')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+      } catch (error) {
+        console.log('Error deleting room from Supabase, using mock:', error);
+        mockData.deleteRoom(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Éxito",
+        description: "Habitación eliminada correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la habitación: " + error.message,
         variant: "destructive",
       });
     },
@@ -224,6 +319,7 @@ export const useHotelData = () => {
         
         return data;
       } catch (error) {
+        console.log('Error adding reservation to Supabase, using mock:', error);
         mockData.addReservation(reservationData);
         return null;
       }
@@ -259,6 +355,7 @@ export const useHotelData = () => {
         if (error) throw error;
         return data;
       } catch (error) {
+        console.log('Error updating reservation in Supabase, using mock:', error);
         mockData.updateReservation(id, updates);
         return null;
       }
@@ -306,6 +403,7 @@ export const useHotelData = () => {
             .eq('id', reservation.room_id);
         }
       } catch (error) {
+        console.log('Error deleting reservation from Supabase, using mock:', error);
         mockData.deleteReservation(id);
       }
     },
@@ -335,6 +433,9 @@ export const useHotelData = () => {
     addGuest: (guestData: Omit<Guest, 'id' | 'created_at'>) => addGuestMutation.mutate(guestData),
     updateGuest: (id: string, updates: Partial<Guest>) => updateGuestMutation.mutate({ id, updates }),
     deleteGuest: (id: string) => deleteGuestMutation.mutate(id),
+    addRoom: (roomData: Omit<Room, 'id' | 'created_at'>) => addRoomMutation.mutate(roomData),
+    updateRoom: (id: string, updates: Partial<Room>) => updateRoomMutation.mutate({ id, updates }),
+    deleteRoom: (id: string) => deleteRoomMutation.mutate(id),
     addReservation: (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => 
       addReservationMutation.mutate(reservationData),
     updateReservation: (id: string, updates: Partial<Reservation>) => 

@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import CalendarPage from "./pages/CalendarPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import GuestsPage from "./pages/GuestsPage";
+import RoomsPage from "./pages/RoomsPage";
 import CheckInOutPage from "./pages/CheckInOutPage";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +32,7 @@ function App() {
               <Route path="/calendar" element={<AppLayout><CalendarPage /></AppLayout>} />
               <Route path="/reservations" element={<AppLayout><ReservationsPage /></AppLayout>} />
               <Route path="/guests" element={<AppLayout><GuestsPage /></AppLayout>} />
+              <Route path="/rooms" element={<AppLayout><RoomsPage /></AppLayout>} />
               <Route path="/checkin" element={<AppLayout><CheckInOutPage /></AppLayout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
