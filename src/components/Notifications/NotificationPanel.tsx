@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, UserCheck, UserX, AlertCircle, Calendar, X } from 'lucide-react';
+import { Bell, UserCheck, UserX, AlertCircle, Calendar, X, CheckCircle } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -20,14 +21,17 @@ interface Notification {
   time: string;
   isRead: boolean;
   priority: 'low' | 'medium' | 'high';
+  actionable: boolean;
+  reservationId?: string;
+  roomId?: string;
 }
 
 export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
-  const { reservations, guests, rooms } = useHotelData();
+  const { reservations, guests, rooms, updateReservation, updateRoom } = useHotelData();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Generar notificaciones basadas en los datos reales
     const today = new Date().toISOString().split('T')[0];
     const generatedNotifications: Notification[] = [];
 
@@ -43,11 +47,14 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
       generatedNotifications.push({
         id: `checkin-${reservation.id}`,
         type: 'check-in',
-        title: 'Check-in programado',
+        title: 'Check-in pendiente',
         message: `${guest?.first_name} ${guest?.last_name} - Habitación ${room?.number}`,
         time: 'Hoy',
         isRead: false,
-        priority: 'high'
+        priority: 'high',
+        actionable: true,
+        reservationId: reservation.id,
+        roomId: reservation.room_id
       });
     });
 
@@ -63,11 +70,14 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
       generatedNotifications.push({
         id: `checkout-${reservation.id}`,
         type: 'check-out',
-        title: 'Check-out programado',
+        title: 'Check-out pendiente',
         message: `${guest?.first_name} ${guest?.last_name} - Habitación ${room?.number}`,
         time: 'Hoy',
         isRead: false,
-        priority: 'medium'
+        priority: 'medium',
+        actionable: true,
+        reservationId: reservation.id,
+        roomId: reservation.room_id
       });
     });
 
@@ -82,14 +92,16 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
         message: `Habitación ${room.number} requiere atención`,
         time: 'Pendiente',
         isRead: false,
-        priority: 'medium'
+        priority: 'medium',
+        actionable: true,
+        roomId: room.id
       });
     });
 
-    // Nuevas reservas (simulado)
+    // Nuevas reservas recientes
     const recentReservations = reservations
       .filter(r => r.status === 'confirmed')
-      .slice(0, 3);
+      .slice(0, 2);
 
     recentReservations.forEach(reservation => {
       const guest = guests.find(g => g.id === reservation.guest_id);
@@ -97,16 +109,52 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
       generatedNotifications.push({
         id: `booking-${reservation.id}`,
         type: 'booking',
-        title: 'Nueva reserva',
+        title: 'Nueva reserva confirmada',
         message: `${guest?.first_name} ${guest?.last_name} - ${format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}`,
-        time: 'Hace 2h',
-        isRead: Math.random() > 0.5,
-        priority: 'low'
+        time: 'Reciente',
+        isRead: false,
+        priority: 'low',
+        actionable: false
       });
     });
 
     setNotifications(generatedNotifications);
   }, [reservations, guests, rooms]);
+
+  const handleQuickAction = async (notification: Notification) => {
+    try {
+      if (notification.type === 'check-in' && notification.reservationId && notification.roomId) {
+        await updateReservation(notification.reservationId, { status: 'checked-in' });
+        await updateRoom(notification.roomId, { status: 'occupied' });
+        toast({
+          title: "Check-in realizado",
+          description: "El huésped ha sido registrado exitosamente"
+        });
+      } else if (notification.type === 'check-out' && notification.reservationId && notification.roomId) {
+        await updateReservation(notification.reservationId, { status: 'checked-out' });
+        await updateRoom(notification.roomId, { status: 'cleaning' });
+        toast({
+          title: "Check-out realizado",
+          description: "El huésped ha salido y la habitación está en limpieza"
+        });
+      } else if (notification.type === 'maintenance' && notification.roomId) {
+        await updateRoom(notification.roomId, { status: 'available' });
+        toast({
+          title: "Mantenimiento completado",
+          description: "La habitación está disponible nuevamente"
+        });
+      }
+      
+      // Mark notification as read
+      markAsRead(notification.id);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo completar la acción",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -126,13 +174,13 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 border-red-200';
+        return 'bg-red-50 border-red-200';
       case 'medium':
-        return 'bg-yellow-100 border-yellow-200';
+        return 'bg-yellow-50 border-yellow-200';
       case 'low':
-        return 'bg-blue-100 border-blue-200';
+        return 'bg-blue-50 border-blue-200';
       default:
-        return 'bg-gray-100 border-gray-200';
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -194,10 +242,9 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                    className={`p-4 border-b hover:bg-muted/50 transition-colors ${
                       !notification.isRead ? 'bg-blue-50' : ''
                     } ${getPriorityColor(notification.priority)}`}
-                    onClick={() => markAsRead(notification.id)}
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-1">
@@ -215,9 +262,32 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
                         <p className="text-sm text-muted-foreground mt-1">
                           {notification.message}
                         </p>
-                        {!notification.isRead && (
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                        )}
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-2">
+                            {!notification.isRead && (
+                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-xs"
+                            >
+                              Marcar leída
+                            </Button>
+                          </div>
+                          {notification.actionable && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleQuickAction(notification)}
+                              className="text-xs"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {notification.type === 'check-in' ? 'Check-in' : 
+                               notification.type === 'check-out' ? 'Check-out' : 'Completar'}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -185,6 +185,37 @@ export const useMockHotelData = () => {
     });
   };
 
+  const addRoom = (roomData: Omit<Room, 'id' | 'created_at'>) => {
+    const newRoom: Room = {
+      ...roomData,
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+    };
+    setRooms(prev => [newRoom, ...prev]);
+    toast({
+      title: "Éxito",
+      description: "Habitación agregada correctamente",
+    });
+  };
+
+  const updateRoom = (id: string, updates: Partial<Room>) => {
+    setRooms(prev => prev.map(room => 
+      room.id === id ? { ...room, ...updates } : room
+    ));
+    toast({
+      title: "Éxito",
+      description: "Habitación actualizada correctamente",
+    });
+  };
+
+  const deleteRoom = (id: string) => {
+    setRooms(prev => prev.filter(room => room.id !== id));
+    toast({
+      title: "Éxito",
+      description: "Habitación eliminada correctamente",
+    });
+  };
+
   const addReservation = (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
     const newReservation: Reservation = {
       ...reservationData,
@@ -243,6 +274,9 @@ export const useMockHotelData = () => {
     addGuest,
     updateGuest,
     deleteGuest,
+    addRoom,
+    updateRoom,
+    deleteRoom,
     addReservation,
     updateReservation,
     deleteReservation,
