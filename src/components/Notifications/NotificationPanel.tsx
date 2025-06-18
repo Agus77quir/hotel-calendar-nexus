@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, UserCheck, UserX, AlertCircle, Calendar, X, CheckCircle } from 'lucide-react';
+import { Bell, UserCheck, UserX, AlertCircle, Calendar, X, CheckCircle, Trash2 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -198,6 +198,22 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
     );
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    toast({
+      title: "Notificación eliminada",
+      description: "La notificación ha sido removida"
+    });
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    toast({
+      title: "Notificaciones eliminadas",
+      description: "Todas las notificaciones han sido removidas"
+    });
+  };
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
@@ -214,6 +230,18 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {notifications.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearAllNotifications}
+                  className="text-xs text-red-600 hover:text-red-700"
+                  title="Eliminar todas"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Limpiar
+                </Button>
+              )}
               {unreadCount > 0 && (
                 <Button 
                   variant="ghost" 
@@ -255,9 +283,20 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
                           <p className="font-medium text-sm truncate">
                             {notification.title}
                           </p>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {notification.time}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">
+                              {notification.time}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteNotification(notification.id)}
+                              className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              title="Eliminar notificación"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           {notification.message}
