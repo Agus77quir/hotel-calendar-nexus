@@ -14,6 +14,16 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  // Hide welcome message after 1 second
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Calculate notification count based on real data
   useEffect(() => {
@@ -34,39 +44,41 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-800 mb-2">
-              Bienvenido, {user?.firstName}
-            </h1>
-            <p className="text-gray-600 text-lg">
-              Panel de control del sistema hotelero - Resumen general y actividades del día
-            </p>
-          </div>
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative"
-            >
-              <Bell className="h-4 w-4" />
-              {notificationCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0"
-                >
-                  {notificationCount}
-                </Badge>
+      {showWelcome && (
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight text-gray-800 mb-2">
+                Bienvenido, {user?.firstName}
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Panel de control del sistema hotelero - Resumen general y actividades del día
+              </p>
+            </div>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative"
+              >
+                <Bell className="h-4 w-4" />
+                {notificationCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0"
+                  >
+                    {notificationCount}
+                  </Badge>
+                )}
+              </Button>
+              {showNotifications && (
+                <NotificationPanel onClose={() => setShowNotifications(false)} />
               )}
-            </Button>
-            {showNotifications && (
-              <NotificationPanel onClose={() => setShowNotifications(false)} />
-            )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <StatsCards stats={stats} />
 
