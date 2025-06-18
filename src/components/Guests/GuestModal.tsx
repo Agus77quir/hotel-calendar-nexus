@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,6 +29,8 @@ export const GuestModal = ({
     nationality: '',
   });
 
+  const [emailError, setEmailError] = useState('');
+
   useEffect(() => {
     if (guest && mode === 'edit') {
       setFormData({
@@ -52,8 +53,31 @@ export const GuestModal = ({
     }
   }, [guest, mode, isOpen]);
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setFormData({...formData, email});
+    
+    if (email && !validateEmail(email)) {
+      setEmailError('Por favor ingrese un email válido');
+    } else {
+      setEmailError('');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email before submitting
+    if (!validateEmail(formData.email)) {
+      setEmailError('Por favor ingrese un email válido');
+      return;
+    }
+    
     onSave(formData);
     onClose();
   };
@@ -91,9 +115,13 @@ export const GuestModal = ({
             <Input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={handleEmailChange}
               required
+              className={emailError ? 'border-red-500' : ''}
             />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            )}
           </div>
 
           <div>
@@ -127,7 +155,7 @@ export const GuestModal = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={!!emailError}>
               {mode === 'create' ? 'Crear Huésped' : 'Actualizar Huésped'}
             </Button>
           </div>

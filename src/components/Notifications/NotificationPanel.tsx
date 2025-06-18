@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -200,7 +201,7 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="absolute top-12 right-0 w-96 z-[9999]">
+    <div className="absolute top-12 right-0 w-96 z-[99999]">
       <Card className="shadow-2xl border bg-white">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
