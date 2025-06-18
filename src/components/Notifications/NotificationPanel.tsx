@@ -201,7 +201,7 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="absolute top-12 right-0 w-96 z-[99999]">
+    <div className="fixed top-20 right-6 w-96 z-[99999] pointer-events-auto">
       <Card className="shadow-2xl border bg-white">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
