@@ -1,18 +1,17 @@
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu, Search } from 'lucide-react';
+import { Menu, Search, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
-import { NotificationPanel } from '@/components/Notifications/NotificationPanel';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -30,13 +29,17 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       }
       if (e.key === 'Escape') {
         setIsSearchOpen(false);
-        setIsNotificationOpen(false);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -82,20 +85,15 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               >
                 <Search className="h-4 w-4" />
               </Button>
-              <div className="relative">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="bg-white/80 hover:bg-white relative"
-                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                >
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
-                </Button>
-                {isNotificationOpen && (
-                  <NotificationPanel onClose={() => setIsNotificationOpen(false)} />
-                )}
-              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="bg-white/80 hover:bg-white flex items-center gap-2"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Cerrar Sesión</span>
+              </Button>
             </div>
           </header>
           <main className="flex-1 p-6 overflow-y-auto bg-white/80 backdrop-blur-sm">
