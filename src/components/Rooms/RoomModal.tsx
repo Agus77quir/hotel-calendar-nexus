@@ -26,7 +26,7 @@ export const RoomModal = ({
 }: RoomModalProps) => {
   const [formData, setFormData] = useState({
     number: '',
-    type: 'single' as Room['type'],
+    type: 'matrimonial' as Room['type'],
     price: '',
     capacity: '',
     status: 'available' as Room['status'],
@@ -47,7 +47,7 @@ export const RoomModal = ({
     } else {
       setFormData({
         number: '',
-        type: 'single',
+        type: 'matrimonial',
         price: '',
         capacity: '',
         status: 'available',
@@ -116,10 +116,11 @@ export const RoomModal = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="single">Individual</SelectItem>
-                <SelectItem value="double">Doble</SelectItem>
-                <SelectItem value="suite">Suite</SelectItem>
-                <SelectItem value="deluxe">Deluxe</SelectItem>
+                <SelectItem value="matrimonial">Matrimonial</SelectItem>
+                <SelectItem value="triple-individual">Triple Individual</SelectItem>
+                <SelectItem value="triple-matrimonial">Triple Matrimonial</SelectItem>
+                <SelectItem value="doble-individual">Doble Individual</SelectItem>
+                <SelectItem value="suite-presidencial-doble">Suite Presidencial Doble</SelectItem>
               </SelectContent>
             </Select>
           </div>

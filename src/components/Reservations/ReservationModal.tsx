@@ -18,6 +18,23 @@ interface ReservationModalProps {
   mode: 'create' | 'edit';
 }
 
+const getRoomTypeDisplayName = (type: Room['type']) => {
+  switch (type) {
+    case 'matrimonial':
+      return 'Matrimonial';
+    case 'triple-individual':
+      return 'Triple Individual';
+    case 'triple-matrimonial':
+      return 'Triple Matrimonial';
+    case 'doble-individual':
+      return 'Doble Individual';
+    case 'suite-presidencial-doble':
+      return 'Suite Presidencial Doble';
+    default:
+      return type;
+  }
+};
+
 export const ReservationModal = ({
   isOpen,
   onClose,
@@ -117,7 +134,7 @@ export const ReservationModal = ({
               <SelectContent>
                 {availableRooms.map((room) => (
                   <SelectItem key={room.id} value={room.id}>
-                    {room.number} - {room.type} (${room.price}/noche)
+                    {room.number} - {getRoomTypeDisplayName(room.type)} (${room.price}/noche)
                   </SelectItem>
                 ))}
               </SelectContent>

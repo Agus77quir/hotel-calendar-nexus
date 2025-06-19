@@ -13,7 +13,7 @@ export interface Guest {
 export interface Room {
   id: string;
   number: string;
-  type: 'single' | 'double' | 'suite' | 'deluxe';
+  type: 'matrimonial' | 'triple-individual' | 'triple-matrimonial' | 'doble-individual' | 'suite-presidencial-doble';
   price: number;
   capacity: number;
   amenities: string[];

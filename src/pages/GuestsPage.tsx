@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,11 @@ import { GuestModal } from '@/components/Guests/GuestModal';
 import { Guest } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const GuestsPage = () => {
   const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{
     isOpen: boolean;
@@ -35,6 +36,8 @@ const GuestsPage = () => {
   const handleSaveGuest = (guestData: any) => {
     if (guestModal.mode === 'create') {
       addGuest(guestData);
+      // Redirect to reservations page after adding a new guest
+      navigate('/reservations');
     } else if (guestModal.mode === 'edit' && guestModal.guest) {
       updateGuest(guestModal.guest.id, guestData);
     }
