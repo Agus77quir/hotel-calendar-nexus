@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, Eye, Edit, Trash2, UserPlus } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
+import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
 import { GuestModal } from '@/components/Guests/GuestModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -15,6 +15,11 @@ import { Reservation } from '@/types/hotel';
 const ReservationsPage = () => {
   const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, addGuest, isLoading } = useHotelData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilters, setDateFilters] = useState<{
+    dateFrom?: string;
+    dateTo?: string;
+    filterType?: 'custom' | 'week' | 'month';
+  }>({});
   const [reservationModal, setReservationModal] = useState<{
     isOpen: boolean;
     mode: 'create' | 'edit';
@@ -33,13 +38,25 @@ const ReservationsPage = () => {
     const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
-    return (
+    // Text search filter
+    const matchesSearch = (
       guest?.first_name.toLowerCase().includes(searchLower) ||
       guest?.last_name.toLowerCase().includes(searchLower) ||
       guest?.email.toLowerCase().includes(searchLower) ||
       room?.number.includes(searchLower) ||
       reservation.id.includes(searchLower)
     );
+
+    // Date filter
+    let matchesDate = true;
+    if (dateFilters.dateFrom && dateFilters.dateTo) {
+      const checkIn = reservation.check_in;
+      const checkOut = reservation.check_out;
+      // Check if reservation overlaps with filter date range
+      matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+    }
+
+    return matchesSearch && matchesDate;
   });
 
   const getStatusColor = (status: string) => {
@@ -119,6 +136,11 @@ const ReservationsPage = () => {
           </Button>
         </div>
       </div>
+
+      <ReservationFilters
+        onFiltersChange={setDateFilters}
+        onClearFilters={() => setDateFilters({})}
+      />
 
       <Card>
         <CardHeader>

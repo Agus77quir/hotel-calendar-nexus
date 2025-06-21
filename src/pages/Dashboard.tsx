@@ -1,6 +1,7 @@
 
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
+import { DailyReservations } from '@/components/Dashboard/DailyReservations';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ const Dashboard = () => {
   const { stats, reservations, rooms, guests } = useHotelData();
   const { user } = useAuth();
   const [showWelcome, setShowWelcome] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Hide welcome message after 1 second
   useEffect(() => {
@@ -64,6 +66,20 @@ const Dashboard = () => {
           reservations={reservations}
           rooms={rooms}
           guests={guests}
+          onDateSelect={setSelectedDate}
+        />
+      </div>
+
+      {/* Daily Reservations */}
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg border-0">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          Reservas Diarias
+        </h2>
+        <DailyReservations
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+          selectedDate={selectedDate}
         />
       </div>
 

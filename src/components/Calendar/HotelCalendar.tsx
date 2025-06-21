@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +13,18 @@ interface HotelCalendarProps {
   rooms: Room[];
   guests: Guest[];
   onAddReservation?: () => void;
+  onDateSelect?: (date: Date) => void;
 }
 
-export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation }: HotelCalendarProps) => {
+export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, onDateSelect }: HotelCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      onDateSelect?.(date);
+    }
+  };
 
   const getReservationsForDate = (date: Date) => {
     return reservations.filter(reservation => {
@@ -99,7 +106,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation }:
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={(date) => date && setSelectedDate(date)}
+            onSelect={handleDateSelect}
             locale={es}
             className="rounded-md border bg-white/50"
             modifiers={{
