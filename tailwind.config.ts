@@ -19,7 +19,7 @@ export default {
 			}
 		},
 		screens: {
-			'xs': '475px',
+			'xs': '375px',
 			'sm': '640px',
 			'md': '768px',
 			'lg': '1024px',
@@ -76,6 +76,13 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			fontSize: {
+				'2xs': ['10px', '14px'],
+			},
+			spacing: {
+				'18': '4.5rem',
+				'22': '5.5rem',
 			},
 			keyframes: {
 				'accordion-down': {
