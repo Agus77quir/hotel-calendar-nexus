@@ -1,6 +1,5 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Guest, Room, Reservation } from '@/types/hotel';
 
 export const useEmailNotifications = () => {
@@ -13,8 +12,9 @@ export const useEmailNotifications = () => {
     room: Room
   ) => {
     try {
-      console.log(`Enviando email de ${type} a ${guest.email}`);
+      console.log(`Preparando email de ${type} para ${guest.email}`);
       
+      // Usar directamente mailto como método principal
       const emailData = {
         to: guest.email,
         type,
@@ -29,47 +29,19 @@ export const useEmailNotifications = () => {
         }
       };
 
-      // Try to send email via Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('send-reservation-email', {
-        body: emailData
-      });
-
-      if (error) {
-        console.error('Error calling email function:', error);
-        // Fallback to mailto as backup
-        fallbackToMailto(emailData);
-        return;
-      }
-
-      console.log('Email sent successfully:', data);
-      toast({
-        title: "Email enviado",
-        description: `Confirmación enviada a ${guest.email}`,
-      });
-
+      sendMailtoEmail(emailData);
+      
     } catch (error) {
-      console.error('Error sending email notification:', error);
-      
-      // Fallback to mailto
-      const emailData = {
-        to: guest.email,
-        type,
-        guestName: `${guest.first_name} ${guest.last_name}`,
-        reservationDetails: {
-          id: reservation.id.slice(0, 8),
-          roomNumber: room.number,
-          checkIn: reservation.check_in,
-          checkOut: reservation.check_out,
-          totalAmount: reservation.total_amount,
-          guestsCount: reservation.guests_count
-        }
-      };
-      
-      fallbackToMailto(emailData);
+      console.error('Error enviando notificación de email:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo preparar el email de confirmación",
+        variant: "destructive"
+      });
     }
   };
 
-  const fallbackToMailto = (emailData: any) => {
+  const sendMailtoEmail = (emailData: any) => {
     const { to, type, guestName, reservationDetails } = emailData;
     
     const subjects = {

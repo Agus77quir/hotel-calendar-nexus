@@ -1,3 +1,4 @@
+
 import {
   CalendarDays,
   FileText,
@@ -8,6 +9,7 @@ import {
   UserCheck,
   Wrench,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 import {
   Sidebar,
@@ -36,13 +38,22 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
+import { useSidebar } from "@/components/ui/sidebar"
 
 export function AppSidebar() {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const navigate = useNavigate();
+  const { setOpenMobile } = useSidebar();
 
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
     document.documentElement.classList.toggle('dark', !isDarkTheme);
+  };
+
+  const handleNavigate = (url: string) => {
+    navigate(url);
+    // Hide sidebar on mobile after navigation
+    setOpenMobile(false);
   };
 
   const navigationItems = [
@@ -109,7 +120,7 @@ export function AppSidebar() {
           <SidebarGroup>
             {navigationItems.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton href={item.url}>
+                <SidebarMenuButton onClick={() => handleNavigate(item.url)}>
                   <item.icon className="mr-2 h-4 w-4" />
                   <span>{item.title}</span>
                 </SidebarMenuButton>
