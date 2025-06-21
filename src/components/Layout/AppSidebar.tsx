@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
+import { useEffect } from "react"
 
 const menuItems = [
   {
@@ -52,6 +53,23 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
+
+  // Guardar automáticamente la selección del menú
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const selectedMenuItem = menuItems.find(item => item.url === currentPath);
+    
+    if (selectedMenuItem) {
+      // Guardar en localStorage la última sección visitada
+      localStorage.setItem('lastSelectedMenuItem', JSON.stringify({
+        title: selectedMenuItem.title,
+        url: selectedMenuItem.url,
+        timestamp: new Date().toISOString()
+      }));
+      
+      console.log(`Menú guardado automáticamente: ${selectedMenuItem.title}`);
+    }
+  }, [location.pathname]);
 
   return (
     <Sidebar>
