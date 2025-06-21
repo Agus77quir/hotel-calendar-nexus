@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
@@ -53,6 +54,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   // Guardar automáticamente la selección del menú
   useEffect(() => {
@@ -68,8 +70,21 @@ export function AppSidebar() {
       }));
       
       console.log(`Menú guardado automáticamente: ${selectedMenuItem.title}`);
+      
+      // Cerrar el sidebar en móviles cuando se seleccione una sección
+      if (isMobile) {
+        setOpenMobile(false);
+        console.log('Sidebar cerrado automáticamente en móvil');
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, isMobile, setOpenMobile]);
+
+  const handleMenuItemClick = () => {
+    // Cerrar sidebar en móviles al hacer clic en cualquier elemento del menú
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar>
@@ -85,7 +100,11 @@ export function AppSidebar() {
                     isActive={location.pathname === item.url}
                     className="w-full"
                   >
-                    <Link to={item.url} className="flex items-center gap-3">
+                    <Link 
+                      to={item.url} 
+                      className="flex items-center gap-3"
+                      onClick={handleMenuItemClick}
+                    >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
