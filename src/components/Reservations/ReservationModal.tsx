@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { CalendarDays, Users, DollarSign } from 'lucide-react';
+import { CalendarDays, Users, DollarSign, Mail } from 'lucide-react';
+import { useEmailNotifications } from '@/hooks/useEmailNotifications';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export const ReservationModal = ({
   reservation,
   mode
 }: ReservationModalProps) => {
+  const { sendReservationEmail } = useEmailNotifications();
   const [formData, setFormData] = useState({
     guest_id: '',
     room_id: '',
@@ -54,6 +56,7 @@ export const ReservationModal = ({
     status: 'confirmed' as 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled',
     special_requests: '',
   });
+  const [sendConfirmationEmail, setSendConfirmationEmail] = useState(true);
 
   useEffect(() => {
     if (reservation && mode === 'edit') {
@@ -89,7 +92,7 @@ export const ReservationModal = ({
     return selectedRoom.price * nights;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const totalAmount = calculateTotal();
@@ -97,10 +100,29 @@ export const ReservationModal = ({
     const reservationData = {
       ...formData,
       total_amount: totalAmount,
-      created_by: 'current-user-id', // This should come from auth context
+      created_by: 'current-user-id',
     };
 
+    // Save the reservation first
     onSave(reservationData);
+
+    // Send confirmation email if enabled and creating a new reservation
+    if (sendConfirmationEmail && mode === 'create') {
+      const guest = guests.find(g => g.id === formData.guest_id);
+      const room = rooms.find(r => r.id === formData.room_id);
+      
+      if (guest && room) {
+        console.log('Enviando email de confirmación...');
+        // Create a temporary reservation object for email
+        const tempReservation = {
+          ...reservationData,
+          id: 'temp-' + Date.now(),
+        } as Reservation;
+        
+        await sendReservationEmail('confirmed', guest, tempReservation, room);
+      }
+    }
+    
     onClose();
   };
 
@@ -227,6 +249,26 @@ export const ReservationModal = ({
               className="min-h-[80px]"
             />
           </div>
+
+          {/* Email confirmation checkbox - only show for new reservations */}
+          {mode === 'create' && (
+            <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg border">
+              <Mail className="h-5 w-5 text-blue-600" />
+              <Checkbox
+                id="send-email"
+                checked={sendConfirmationEmail}
+                onCheckedChange={(checked) => setSendConfirmationEmail(checked as boolean)}
+              />
+              <div className="flex-1">
+                <Label htmlFor="send-email" className="text-sm font-medium cursor-pointer">
+                  Enviar email de confirmación al huésped
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Se enviará automáticamente un email con los detalles de la reserva
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Total Amount Display */}
           {formData.room_id && formData.check_in && formData.check_out && (
