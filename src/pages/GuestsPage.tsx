@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { GuestModal } from '@/components/Guests/GuestModal';
+import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { Guest } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -66,12 +68,15 @@ const GuestsPage = () => {
             Gestiona la información de todos los huéspedes
           </p>
         </div>
-        <Button
-          onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Huésped
-        </Button>
+        <div className="flex gap-2">
+          <BackToHomeButton />
+          <Button
+            onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Huésped
+          </Button>
+        </div>
       </div>
 
       <Card>

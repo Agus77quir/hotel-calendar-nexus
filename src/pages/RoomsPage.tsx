@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2, Bed, Users } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { RoomModal } from '@/components/Rooms/RoomModal';
+import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { Room } from '@/types/hotel';
 import { Badge } from '@/components/ui/badge';
 
@@ -107,12 +108,15 @@ const RoomsPage = () => {
             Gestiona todas las habitaciones del hotel
           </p>
         </div>
-        <Button
-          onClick={() => setRoomModal({ isOpen: true, mode: 'create' })}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Habitación
-        </Button>
+        <div className="flex gap-2">
+          <BackToHomeButton />
+          <Button
+            onClick={() => setRoomModal({ isOpen: true, mode: 'create' })}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Habitación
+          </Button>
+        </div>
       </div>
 
       <Card>

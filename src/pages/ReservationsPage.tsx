@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
 import { GuestModal } from '@/components/Guests/GuestModal';
+import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Reservation } from '@/types/hotel';
@@ -121,6 +123,7 @@ const ReservationsPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <BackToHomeButton />
           <Button
             variant="outline"
             onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
