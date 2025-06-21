@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Edit, Trash2, Bed, Users, Wrench } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Bed, Users } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { RoomModal } from '@/components/Rooms/RoomModal';
 import { Room } from '@/types/hotel';
@@ -75,14 +75,16 @@ const RoomsPage = () => {
 
   const getTypeText = (type: string) => {
     switch (type) {
-      case 'single':
-        return 'Individual';
-      case 'double':
-        return 'Doble';
-      case 'suite':
-        return 'Suite';
-      case 'deluxe':
-        return 'Deluxe';
+      case 'matrimonial':
+        return 'Matrimonial';
+      case 'triple-individual':
+        return 'Triple Individual';
+      case 'triple-matrimonial':
+        return 'Triple Matrimonial';
+      case 'doble-individual':
+        return 'Doble Individual';
+      case 'suite-presidencial-doble':
+        return 'Suite Presidencial Doble';
       default:
         return type;
     }
