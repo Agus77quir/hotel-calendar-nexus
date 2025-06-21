@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { DailyReservations } from '@/components/Dashboard/DailyReservations';
@@ -6,7 +7,8 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 
 const Index = () => {
-  const { stats, isLoading } = useHotelData();
+  const { stats, rooms, guests, reservations, isLoading } = useHotelData();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   if (isLoading) {
     return (
@@ -36,7 +38,12 @@ const Index = () => {
       <StatsCards stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <DailyReservations />
+        <DailyReservations 
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+          selectedDate={selectedDate}
+        />
         
         {/* Quick Actions Card with Hotel Images */}
         <Card>
