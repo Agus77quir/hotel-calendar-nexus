@@ -1,3 +1,4 @@
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
@@ -72,7 +73,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     className="h-12 w-auto object-contain"
                   />
                   <div className="hidden sm:block">
-                    <span className="font-bold text-lg text-blue-600">Hotel Management System</span>
+                    <span className="font-bold text-lg text-blue-600">Gestión de Hoteles</span>
                   </div>
                 </div>
               </div>
