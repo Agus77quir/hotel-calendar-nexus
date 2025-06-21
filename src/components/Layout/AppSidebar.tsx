@@ -1,120 +1,139 @@
+import {
+  CalendarDays,
+  FileText,
+  Home,
+  Users,
+  Building2,
+  Calendar,
+  UserCheck,
+  Wrench,
+} from "lucide-react"
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
-import { useEffect } from "react"
-
-const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "Huéspedes",
-    url: "/guests",
-    icon: Users,
-  },
-  {
-    title: "Habitaciones",
-    url: "/rooms",
-    icon: Bed,
-  },
-  {
-    title: "Reservas",
-    url: "/reservations",
-    icon: ClipboardList,
-  },
-  {
-    title: "Calendario",
-    url: "/calendar",
-    icon: Calendar,
-  },
-  {
-    title: "Check-in/out",
-    url: "/checkin-checkout",
-    icon: CheckSquare,
-  },
-  {
-    title: "Auditoría",
-    url: "/audit",
-    icon: Shield,
-  },
-]
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Switch } from "@/components/ui/switch"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { useState } from "react"
 
 export function AppSidebar() {
-  const location = useLocation()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
 
-  // Guardar automáticamente la selección del menú
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const selectedMenuItem = menuItems.find(item => item.url === currentPath);
-    
-    if (selectedMenuItem) {
-      // Guardar en localStorage la última sección visitada
-      localStorage.setItem('lastSelectedMenuItem', JSON.stringify({
-        title: selectedMenuItem.title,
-        url: selectedMenuItem.url,
-        timestamp: new Date().toISOString()
-      }));
-      
-      console.log(`Menú guardado automáticamente: ${selectedMenuItem.title}`);
-      
-      // Cerrar el sidebar en móviles cuando se seleccione una sección
-      if (isMobile) {
-        setOpenMobile(false);
-        console.log('Sidebar cerrado automáticamente en móvil');
-      }
-    }
-  }, [location.pathname, isMobile, setOpenMobile]);
-
-  const handleMenuItemClick = () => {
-    // Cerrar sidebar en móviles al hacer clic en cualquier elemento del menú
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+    document.documentElement.classList.toggle('dark', !isDarkTheme);
   };
 
+  const navigationItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: Home,
+    },
+    {
+      title: "Huéspedes",
+      url: "/guests",
+      icon: Users,
+    },
+    {
+      title: "Habitaciones",
+      url: "/rooms",
+      icon: Building2,
+    },
+    {
+      title: "Reservas",
+      url: "/reservations",
+      icon: Calendar,
+    },
+    {
+      title: "Calendario",
+      url: "/calendar",
+      icon: CalendarDays,
+    },
+    {
+      title: "Check-in/out",
+      url: "/checkin-checkout",
+      icon: UserCheck,
+    },
+    {
+      title: "Mantenimiento",
+      url: "/maintenance",
+      icon: Wrench,
+    },
+    {
+      title: "Auditoría",
+      url: "/audit",
+      icon: FileText,
+    },
+  ];
+
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Gestión Hotelera</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === item.url}
-                    className="w-full"
-                  >
-                    <Link 
-                      to={item.url} 
-                      className="flex items-center gap-3"
-                      onClick={handleMenuItemClick}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <SidebarProvider>
+      <Sidebar className="md:w-60">
+        <SidebarHeader>
+          <SidebarTrigger className="md:hidden" />
+          <div className="flex items-center space-x-2">
+            <Avatar>
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>SC</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-semibold">Hotel Admin</p>
+              <p className="text-xs text-gray-500">admin@example.com</p>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarSeparator />
+        <SidebarContent>
+          <SidebarGroup>
+            {navigationItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton href={item.url}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarSeparator />
+          <div className="p-4">
+            <Label htmlFor="dark-theme" className="text-sm">
+              Modo oscuro
+            </Label>
+            <Switch
+              id="dark-theme"
+              checked={isDarkTheme}
+              onCheckedChange={toggleTheme}
+            />
+          </div>
+        </SidebarFooter>
+        <SidebarRail>
+          <SidebarTrigger />
+        </SidebarRail>
+      </Sidebar>
+    </SidebarProvider>
   )
 }
