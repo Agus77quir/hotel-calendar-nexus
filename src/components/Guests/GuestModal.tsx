@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -84,78 +85,89 @@ export const GuestModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm sm:max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg">
             {mode === 'create' ? 'Nuevo Huésped' : 'Editar Huésped'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="first_name">Nombre</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="first_name" className="text-sm">Nombre</Label>
               <Input
+                id="first_name"
                 value={formData.first_name}
                 onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                 required
+                className="h-10"
               />
             </div>
-            <div>
-              <Label htmlFor="last_name">Apellido</Label>
+            <div className="space-y-2">
+              <Label htmlFor="last_name" className="text-sm">Apellido</Label>
               <Input
+                id="last_name"
                 value={formData.last_name}
                 onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                 required
+                className="h-10"
               />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm">Email</Label>
             <Input
+              id="email"
               type="email"
               value={formData.email}
               onChange={handleEmailChange}
               required
-              className={emailError ? 'border-red-500' : ''}
+              className={`h-10 ${emailError ? 'border-red-500' : ''}`}
             />
             {emailError && (
               <p className="text-red-500 text-sm mt-1">{emailError}</p>
             )}
           </div>
 
-          <div>
-            <Label htmlFor="phone">Teléfono</Label>
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-sm">Teléfono</Label>
             <Input
+              id="phone"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               required
+              className="h-10"
             />
           </div>
 
-          <div>
-            <Label htmlFor="document">Documento</Label>
+          <div className="space-y-2">
+            <Label htmlFor="document" className="text-sm">Documento</Label>
             <Input
+              id="document"
               value={formData.document}
               onChange={(e) => setFormData({...formData, document: e.target.value})}
               required
+              className="h-10"
             />
           </div>
 
-          <div>
-            <Label htmlFor="nationality">Nacionalidad</Label>
+          <div className="space-y-2">
+            <Label htmlFor="nationality" className="text-sm">Nacionalidad</Label>
             <Input
+              id="nationality"
               value={formData.nationality}
               onChange={(e) => setFormData({...formData, nationality: e.target.value})}
               required
+              className="h-10"
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={!!emailError}>
+            <Button type="submit" disabled={!!emailError} className="w-full sm:w-auto">
               {mode === 'create' ? 'Crear Huésped' : 'Actualizar Huésped'}
             </Button>
           </div>

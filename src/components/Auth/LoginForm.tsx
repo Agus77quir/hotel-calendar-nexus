@@ -55,28 +55,28 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-sm sm:max-w-md space-y-4 sm:space-y-6">
         <div className="text-center">
           <div className="flex justify-center items-center gap-2 mb-4">
-            <Hotel className="h-10 w-10 text-blue-600" />
+            <Hotel className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">NARDINI</h1>
-              <p className="text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-600">NARDINI</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
             </div>
           </div>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Iniciar Sesión</CardTitle>
-            <CardDescription>
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-lg sm:text-xl">Iniciar Sesión</CardTitle>
+            <CardDescription className="text-sm">
               Ingresa tus credenciales para acceder al sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -84,10 +84,11 @@ export const LoginForm = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
+                  className="h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className="text-sm">Contraseña</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -96,6 +97,7 @@ export const LoginForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
+                    className="h-10 pr-10"
                   />
                   <Button
                     type="button"
@@ -112,7 +114,7 @@ export const LoginForm = () => {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full h-10" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
@@ -120,14 +122,14 @@ export const LoginForm = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm">Credenciales de Prueba</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {demoCredentials.map((cred, index) => (
               <div key={index} className="p-3 bg-muted rounded-lg">
                 <p className="font-medium text-sm">{cred.role}</p>
-                <p className="text-xs text-muted-foreground">Email: {cred.email}</p>
+                <p className="text-xs text-muted-foreground break-all">Email: {cred.email}</p>
                 <p className="text-xs text-muted-foreground">Contraseña: {cred.password}</p>
                 <Button
                   size="sm"
@@ -136,7 +138,7 @@ export const LoginForm = () => {
                     setEmail(cred.email);
                     setPassword(cred.password);
                   }}
-                  className="mt-2 h-6 text-xs"
+                  className="mt-2 h-6 text-xs w-full sm:w-auto"
                 >
                   Usar credenciales
                 </Button>
