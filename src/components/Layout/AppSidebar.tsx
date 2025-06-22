@@ -53,33 +53,37 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
-  const { setOpenMobile } = useSidebar()
+  const { setOpenMobile, isMobile } = useSidebar()
 
   const handleNavClick = () => {
-    setOpenMobile(false) // Hide mobile menu when navigation item is clicked
+    if (isMobile) {
+      setOpenMobile(false) // Hide mobile menu when navigation item is clicked
+    }
   }
 
   return (
-    <Sidebar>
-      <SidebarContent>
+    <Sidebar className="border-r border-gray-200">
+      <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Gestión Hotelera</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-semibold text-gray-700 mb-2">
+            Gestión Hotelera
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === item.url}
-                    className="w-full"
+                    className="w-full h-10 px-3 py-2 rounded-md transition-colors hover:bg-gray-100 active:bg-gray-200"
                   >
                     <Link 
                       to={item.url} 
-                      className="flex items-center gap-3"
+                      className="flex items-center gap-3 text-sm font-medium"
                       onClick={handleNavClick}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
