@@ -1,4 +1,3 @@
-
 import { useMockHotelData } from './useMockHotelData';
 import { useEmailNotifications } from './useEmailNotifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -335,8 +334,12 @@ export const useHotelData = () => {
       const room = rooms.find(r => r.id === variables.room_id);
       
       if (guest && room && data) {
-        // Use the returned data which has the proper ID
-        const fullReservation = { ...variables, ...data } as Reservation;
+        // Use the returned data which has the proper ID and cast status to proper type
+        const fullReservation: Reservation = { 
+          ...variables, 
+          ...data,
+          status: data.status as Reservation['status']
+        };
         
         if (variables.status === 'checked-in') {
           await sendReservationEmail('checkedIn', guest, fullReservation, room);
@@ -390,7 +393,12 @@ export const useHotelData = () => {
       const room = rooms.find(r => r.id === originalReservation?.room_id);
       
       if (guest && room && originalReservation && updates.status && data) {
-        const updatedReservation = { ...originalReservation, ...updates, ...data };
+        const updatedReservation: Reservation = { 
+          ...originalReservation, 
+          ...updates, 
+          ...data,
+          status: data.status as Reservation['status']
+        };
         
         switch (updates.status) {
           case 'confirmed':
