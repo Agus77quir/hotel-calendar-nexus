@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -35,8 +34,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="text-center text-white">
-            <h1 className="text-xl md:text-4xl font-bold mb-1 md:mb-2">Bienvenido a Nardini SRL Gestión Hotelera</h1>
-            <p className="text-sm md:text-xl">Administra tu hotel de manera eficiente y profesional</p>
+            <h1 className="text-xl md:text-4xl font-bold">Bienvenido a Nardini SRL Gestión Hotelera</h1>
           </div>
         </div>
       </div>
@@ -109,7 +107,7 @@ const Index = () => {
                 <span className="text-xs md:text-sm font-medium">Hace 2 minutos</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs md:text-sm text-muted-foreground">Usuarios Conectados</span>
+                <span className="text-xs md:text-sm text-muted-foreground">Usuario Conectados</span>
                 <span className="text-xs md:text-sm font-medium">3</span>
               </div>
             </div>
