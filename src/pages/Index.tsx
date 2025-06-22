@@ -42,9 +42,19 @@ const Index = () => {
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 relative">
+      {/* Logo de Nardini SRL como fondo adicional en la página principal */}
+      <div 
+        className="fixed inset-0 bg-center bg-no-repeat opacity-3 z-0 pointer-events-none"
+        style={{ 
+          backgroundImage: 'url(/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png)',
+          backgroundSize: '300px auto',
+          backgroundPosition: 'center center'
+        }}
+      />
+
       {/* Hero Section with Hotel Image */}
-      <div className="relative h-48 sm:h-64 rounded-lg overflow-hidden">
+      <div className="relative h-48 sm:h-64 rounded-lg overflow-hidden z-10">
         <img 
           src="https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&h=400"
           alt="Hotel elegante"
@@ -57,9 +67,11 @@ const Index = () => {
         </div>
       </div>
 
-      <StatsCards stats={stats} />
+      <div className="relative z-10">
+        <StatsCards stats={stats} />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10">
         <DailyReservations 
           reservations={reservations}
           rooms={rooms}

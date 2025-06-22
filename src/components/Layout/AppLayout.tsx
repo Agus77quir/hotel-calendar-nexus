@@ -49,10 +49,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full relative flex-col">
-        {/* Background Image */}
+        {/* Logo de Nardini SRL como fondo en todas las páginas */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10 z-0"
-          style={{ backgroundImage: 'url(/lovable-uploads/a71a95fb-44b6-4706-83ad-80878a466482.png)' }}
+          className="fixed inset-0 bg-center bg-no-repeat opacity-5 z-0 pointer-events-none"
+          style={{ 
+            backgroundImage: 'url(/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png)',
+            backgroundSize: '200px auto',
+            backgroundPosition: 'center center'
+          }}
         />
         
         <div className="flex flex-1 relative z-10">
