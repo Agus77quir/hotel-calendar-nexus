@@ -1,7 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
-import { DailyReservations } from '@/components/Dashboard/DailyReservations';
 import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 
@@ -36,8 +35,6 @@ const Index = () => {
       <StatsCards stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <DailyReservations />
-        
         {/* Quick Actions Card with Hotel Images */}
         <Card>
           <CardHeader>
@@ -88,6 +85,32 @@ const Index = () => {
                     <p className="font-semibold">Nueva Reserva</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Status Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Estado del Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Sistema Operativo</span>
+                <span className="text-sm font-medium text-green-600">Funcionando</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Última Actualización</span>
+                <span className="text-sm font-medium">Hace 2 minutos</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Usuarios Conectados</span>
+                <span className="text-sm font-medium">3</span>
               </div>
             </div>
           </CardContent>
