@@ -36,6 +36,12 @@ export const useEmailNotifications = () => {
           return;
       }
 
+      // Ensure reservation has an ID
+      if (!reservation.id) {
+        console.error('Reservation ID is missing, cannot send email notification');
+        return;
+      }
+
       const notification: EmailNotification = {
         to: guest.email,
         subject: template.subject,

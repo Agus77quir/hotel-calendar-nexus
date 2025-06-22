@@ -1,3 +1,4 @@
+
 import { useMockHotelData } from './useMockHotelData';
 import { useEmailNotifications } from './useEmailNotifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -333,13 +334,16 @@ export const useHotelData = () => {
       const guest = guests.find(g => g.id === variables.guest_id);
       const room = rooms.find(r => r.id === variables.room_id);
       
-      if (guest && room) {
+      if (guest && room && data) {
+        // Use the returned data which has the proper ID
+        const fullReservation = { ...variables, ...data } as Reservation;
+        
         if (variables.status === 'checked-in') {
-          await sendReservationEmail('checkedIn', guest, variables as Reservation, room);
+          await sendReservationEmail('checkedIn', guest, fullReservation, room);
         } else if (variables.status === 'confirmed') {
-          await sendReservationEmail('confirmed', guest, variables as Reservation, room);
+          await sendReservationEmail('confirmed', guest, fullReservation, room);
         } else {
-          await sendReservationEmail('created', guest, variables as Reservation, room);
+          await sendReservationEmail('created', guest, fullReservation, room);
         }
       }
       
@@ -385,8 +389,8 @@ export const useHotelData = () => {
       const guest = guests.find(g => g.id === originalReservation?.guest_id);
       const room = rooms.find(r => r.id === originalReservation?.room_id);
       
-      if (guest && room && originalReservation && updates.status) {
-        const updatedReservation = { ...originalReservation, ...updates };
+      if (guest && room && originalReservation && updates.status && data) {
+        const updatedReservation = { ...originalReservation, ...updates, ...data };
         
         switch (updates.status) {
           case 'confirmed':

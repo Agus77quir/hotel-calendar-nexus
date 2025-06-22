@@ -89,8 +89,22 @@ export const ReservationModal = ({
     return selectedRoom.price * nights;
   };
 
+  const validateDates = () => {
+    if (!formData.check_in || !formData.check_out) return true;
+    
+    const checkIn = new Date(formData.check_in);
+    const checkOut = new Date(formData.check_out);
+    
+    return checkOut > checkIn;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateDates()) {
+      alert('La fecha de check-out debe ser posterior a la fecha de check-in');
+      return;
+    }
     
     const totalAmount = calculateTotal();
 
@@ -185,9 +199,18 @@ export const ReservationModal = ({
                 onChange={(e) => setFormData({...formData, check_out: e.target.value})}
                 className="h-10"
                 required
+                min={formData.check_in}
               />
             </div>
           </div>
+
+          {!validateDates() && formData.check_in && formData.check_out && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-md">
+              <p className="text-red-700 text-sm">
+                La fecha de check-out debe ser posterior a la fecha de check-in
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -195,8 +218,8 @@ export const ReservationModal = ({
               <Input
                 type="number"
                 min="1"
-                value={formData.guests_count}
-                onChange={(e) => setFormData({...formData, guests_count: parseInt(e.target.value)})}
+                value={formData.guests_count || ''}
+                onChange={(e) => setFormData({...formData, guests_count: parseInt(e.target.value) || 1})}
                 className="h-10"
                 required
               />
@@ -229,7 +252,7 @@ export const ReservationModal = ({
           </div>
 
           {/* Total Amount Display */}
-          {formData.room_id && formData.check_in && formData.check_out && (
+          {formData.room_id && formData.check_in && formData.check_out && validateDates() && (
             <div className="bg-primary/5 p-4 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -245,7 +268,11 @@ export const ReservationModal = ({
             <Button type="button" variant="outline" onClick={onClose} className="px-6">
               Cancelar
             </Button>
-            <Button type="submit" className="px-6">
+            <Button 
+              type="submit" 
+              className="px-6"
+              disabled={!validateDates()}
+            >
               {mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'}
             </Button>
           </div>
