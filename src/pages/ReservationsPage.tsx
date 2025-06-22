@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,6 +102,13 @@ const ReservationsPage = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta reserva?')) {
       deleteReservation(id);
     }
+  };
+
+  // Manejar el guardado de huésped desde la página de reservas
+  const handleSaveGuestFromReservations = async (guestData: any) => {
+    await addGuest(guestData);
+    // Cerrar el modal de huésped y mantener al usuario en la página de reservas
+    setGuestModal({ isOpen: false, mode: 'create' });
   };
 
   if (isLoading) {
@@ -256,7 +262,7 @@ const ReservationsPage = () => {
       <GuestModal
         isOpen={guestModal.isOpen}
         onClose={() => setGuestModal({ isOpen: false, mode: 'create' })}
-        onSave={addGuest}
+        onSave={handleSaveGuestFromReservations}
         mode={guestModal.mode}
       />
     </div>

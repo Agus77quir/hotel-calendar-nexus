@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,10 +34,10 @@ const GuestsPage = () => {
     );
   });
 
-  const handleSaveGuest = (guestData: any) => {
+  const handleSaveGuest = async (guestData: any) => {
     if (guestModal.mode === 'create') {
-      addGuest(guestData);
-      // Redirect to reservations page after adding a new guest
+      await addGuest(guestData);
+      // Siempre redirigir a reservas después de crear un huésped
       navigate('/reservations');
     } else if (guestModal.mode === 'edit' && guestModal.guest) {
       updateGuest(guestModal.guest.id, guestData);
