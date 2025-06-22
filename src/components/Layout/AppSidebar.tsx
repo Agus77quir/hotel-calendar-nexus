@@ -1,150 +1,138 @@
 
-import {
-  CalendarDays,
-  FileText,
-  Home,
-  Users,
-  Building2,
-  Calendar,
-  UserCheck,
-  Wrench,
-} from "lucide-react"
-import { useNavigate } from "react-router-dom"
-
+import { Calendar, Users, Bed, Settings, BarChart3, LogOut, Hotel, UserCheck, Clock } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
+  SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarRail,
-  SidebarSeparator,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { useSidebar } from "@/components/ui/sidebar"
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+
+const adminItems = [
+  { title: 'Dashboard', url: '/', icon: BarChart3 },
+  { title: 'Calendario', url: '/calendar', icon: Calendar },
+  { title: 'Reservas', url: '/reservations', icon: UserCheck },
+  { title: 'Habitaciones', url: '/rooms', icon: Bed },
+  { title: 'Huéspedes', url: '/guests', icon: Users },
+  { title: 'Check-in/out', url: '/checkin', icon: Clock },
+  { title: 'Configuración', url: '/settings', icon: Settings },
+];
+
+const receptionistItems = [
+  { title: 'Dashboard', url: '/', icon: BarChart3 },
+  { title: 'Calendario', url: '/calendar', icon: Calendar },
+  { title: 'Reservas', url: '/reservations', icon: UserCheck },
+  { title: 'Habitaciones', url: '/rooms', icon: Bed },
+  { title: 'Huéspedes', url: '/guests', icon: Users },
+  { title: 'Check-in/out', url: '/checkin', icon: Clock },
+];
+
+const guestItems = [
+  { title: 'Mi Reserva', url: '/my-reservation', icon: UserCheck },
+  { title: 'Servicios', url: '/services', icon: Hotel },
+];
 
 export function AppSidebar() {
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const { open, setOpenMobile, isMobile } = useSidebar();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
 
-  const toggleTheme = () => {
-    setIsDarkTheme(!isDarkTheme);
-    document.documentElement.classList.toggle('dark', !isDarkTheme);
+  const getItemsForRole = () => {
+    switch (user?.role) {
+      case 'admin':
+        return adminItems;
+      case 'receptionist':
+        return receptionistItems;
+      case 'guest':
+        return guestItems;
+      default:
+        return [];
+    }
   };
 
-  const handleNavigate = (url: string) => {
-    navigate(url);
-    // Hide sidebar on mobile after navigation
-    setOpenMobile(false);
+  const items = getItemsForRole();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  const navigationItems = [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Huéspedes",
-      url: "/guests",
-      icon: Users,
-    },
-    {
-      title: "Habitaciones",
-      url: "/rooms",
-      icon: Building2,
-    },
-    {
-      title: "Reservas",
-      url: "/reservations",
-      icon: Calendar,
-    },
-    {
-      title: "Calendario",
-      url: "/calendar",
-      icon: CalendarDays,
-    },
-    {
-      title: "Check-in/out",
-      url: "/checkin-checkout",
-      icon: UserCheck,
-    },
-    {
-      title: "Mantenimiento",
-      url: "/maintenance",
-      icon: Wrench,
-    },
-    {
-      title: "Auditoría",
-      url: "/audit",
-      icon: FileText,
-    },
-  ];
+  const handleNavClick = () => {
+    // Close mobile sidebar when navigation item is clicked
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
-    <SidebarProvider>
-      <Sidebar className="md:w-60">
-        <SidebarHeader>
-          <SidebarTrigger className="md:hidden" />
-          <div className="flex items-center space-x-2">
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>SC</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-semibold">Hotel Admin</p>
-              <p className="text-xs text-gray-500">admin@example.com</p>
+    <Sidebar className={open ? 'w-60' : 'w-14'}>
+      <SidebarTrigger className="m-2 self-end" />
+      
+      <SidebarContent>
+        <div className="px-4 py-2">
+          <div className="flex items-center gap-2">
+            <Hotel className="h-8 w-8 text-blue-600" />
+            {open && (
+              <div>
+                <h2 className="text-lg font-bold text-blue-600">NARDINI</h2>
+                <p className="text-xs text-muted-foreground">Hotel Management</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end
+                      onClick={handleNavClick}
+                      className={({ isActive }) => 
+                        isActive 
+                          ? 'bg-blue-100 text-blue-600 font-medium' 
+                          : 'hover:bg-muted/50'
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {open && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mt-auto p-4">
+          {open && user && (
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+              <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
             </div>
-          </div>
-        </SidebarHeader>
-        <SidebarSeparator />
-        <SidebarContent>
-          <SidebarGroup>
-            {navigationItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton onClick={() => handleNavigate(item.url)}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarSeparator />
-          <div className="p-4">
-            <Label htmlFor="dark-theme" className="text-sm">
-              Modo oscuro
-            </Label>
-            <Switch
-              id="dark-theme"
-              checked={isDarkTheme}
-              onCheckedChange={toggleTheme}
-            />
-          </div>
-        </SidebarFooter>
-        <SidebarRail>
-          <SidebarTrigger />
-        </SidebarRail>
-      </Sidebar>
-    </SidebarProvider>
-  )
+          )}
+          <Button 
+            variant="ghost" 
+            onClick={handleLogout}
+            className="w-full justify-start"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {open && <span>Cerrar Sesión</span>}
+          </Button>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
 }

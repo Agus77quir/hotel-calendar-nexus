@@ -18,14 +18,6 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		screens: {
-			'xs': '375px',
-			'sm': '640px',
-			'md': '768px',
-			'lg': '1024px',
-			'xl': '1280px',
-			'2xl': '1536px',
-		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
@@ -76,13 +68,6 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
-			},
-			fontSize: {
-				'2xs': ['10px', '14px'],
-			},
-			spacing: {
-				'18': '4.5rem',
-				'22': '5.5rem',
 			},
 			keyframes: {
 				'accordion-down': {

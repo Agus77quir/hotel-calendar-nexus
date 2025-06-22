@@ -54,29 +54,29 @@ export const LoginForm = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-2 sm:p-4">
-      <div className="w-full max-w-[340px] xs:max-w-sm sm:max-w-md space-y-3 sm:space-y-4">
-        <div className="text-center px-2">
-          <div className="flex justify-center items-center gap-2 mb-3 sm:mb-4">
-            <Hotel className="h-6 w-6 xs:h-8 xs:w-8 sm:h-10 sm:w-10 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <Hotel className="h-10 w-10 text-blue-600" />
             <div>
-              <h1 className="text-xl xs:text-2xl sm:text-3xl font-bold text-blue-600">NARDINI</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
+              <h1 className="text-3xl font-bold text-blue-600">NARDINI</h1>
+              <p className="text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
             </div>
           </div>
         </div>
 
-        <Card className="mx-2 xs:mx-0">
-          <CardHeader className="space-y-1 pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
-            <CardTitle className="text-base xs:text-lg sm:text-xl text-center xs:text-left">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-xs xs:text-sm text-center xs:text-left">
+        <Card>
+          <CardHeader>
+            <CardTitle>Iniciar Sesión</CardTitle>
+            <CardDescription>
               Ingresa tus credenciales para acceder al sistema
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="email" className="text-xs xs:text-sm">Email</Label>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -84,11 +84,10 @@ export const LoginForm = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
-                  className="h-9 xs:h-10 text-sm"
                 />
               </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="password" className="text-xs xs:text-sm">Contraseña</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -97,40 +96,39 @@ export const LoginForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    className="h-9 xs:h-10 pr-9 xs:pr-10 text-sm"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full w-8 xs:w-10 px-2 xs:px-3 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-3 w-3 xs:h-4 xs:w-4" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-3 w-3 xs:h-4 xs:w-4" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-9 xs:h-10 text-sm" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="mx-2 xs:mx-0">
-          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-            <CardTitle className="text-xs xs:text-sm text-center xs:text-left">Credenciales de Prueba</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Credenciales de Prueba</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 sm:space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
+          <CardContent className="space-y-3">
             {demoCredentials.map((cred, index) => (
-              <div key={index} className="p-2.5 xs:p-3 bg-muted rounded-lg">
-                <p className="font-medium text-xs xs:text-sm">{cred.role}</p>
-                <p className="text-[10px] xs:text-xs text-muted-foreground break-all">Email: {cred.email}</p>
-                <p className="text-[10px] xs:text-xs text-muted-foreground">Contraseña: {cred.password}</p>
+              <div key={index} className="p-3 bg-muted rounded-lg">
+                <p className="font-medium text-sm">{cred.role}</p>
+                <p className="text-xs text-muted-foreground">Email: {cred.email}</p>
+                <p className="text-xs text-muted-foreground">Contraseña: {cred.password}</p>
                 <Button
                   size="sm"
                   variant="outline"
@@ -138,7 +136,7 @@ export const LoginForm = () => {
                     setEmail(cred.email);
                     setPassword(cred.password);
                   }}
-                  className="mt-1.5 xs:mt-2 h-5 xs:h-6 text-[10px] xs:text-xs w-full px-2"
+                  className="mt-2 h-6 text-xs"
                 >
                   Usar credenciales
                 </Button>

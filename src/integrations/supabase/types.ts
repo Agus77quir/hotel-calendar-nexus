@@ -42,36 +42,6 @@ export type Database = {
         }
         Relationships: []
       }
-      guests_audit: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          guest_id: string
-          id: string
-          new_data: Json | null
-          old_data: Json | null
-          operation_type: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          guest_id: string
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          guest_id?: string
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type?: string
-        }
-        Relationships: []
-      }
       reservations: {
         Row: {
           check_in: string
@@ -132,36 +102,6 @@ export type Database = {
           },
         ]
       }
-      reservations_audit: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          id: string
-          new_data: Json | null
-          old_data: Json | null
-          operation_type: string
-          reservation_id: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type: string
-          reservation_id: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type?: string
-          reservation_id?: string
-        }
-        Relationships: []
-      }
       rooms: {
         Row: {
           amenities: string[] | null
@@ -192,36 +132,6 @@ export type Database = {
           price?: number
           status?: string
           type?: string
-        }
-        Relationships: []
-      }
-      rooms_audit: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          id: string
-          new_data: Json | null
-          old_data: Json | null
-          operation_type: string
-          room_id: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type: string
-          room_id: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_data?: Json | null
-          old_data?: Json | null
-          operation_type?: string
-          room_id?: string
         }
         Relationships: []
       }
