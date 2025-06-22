@@ -3,9 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
+import { useSidebar } from '@/components/ui/sidebar';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { stats, isLoading } = useHotelData();
+  const { setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
+
+  const handleQuickAction = (path: string) => {
+    setOpenMobile(false); // Hide mobile menu
+    navigate(path);
+  };
 
   if (isLoading) {
     return (
@@ -17,16 +26,16 @@ const Index = () => {
 
   return (
     <div className="space-y-8">
-      {/* Hero Section with Hotel Image */}
+      {/* Hero Section with Landscape Image */}
       <div className="relative h-64 rounded-lg overflow-hidden">
         <img 
-          src="https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=1200&h=400"
-          alt="Hotel lobby"
+          src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&h=400"
+          alt="Paisaje montañoso"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
           <div className="text-center text-white">
-            <h1 className="text-4xl font-bold mb-2">Bienvenido al Sistema de Gestión Hotelera</h1>
+            <h1 className="text-4xl font-bold mb-2">Bienvenido a Nardini SRL Gestión Hotelera</h1>
             <p className="text-xl">Administra tu hotel de manera eficiente y profesional</p>
           </div>
         </div>
@@ -35,7 +44,7 @@ const Index = () => {
       <StatsCards stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Quick Actions Card with Hotel Images */}
+        {/* Quick Actions Card with Icons */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -45,45 +54,36 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative group cursor-pointer rounded-lg overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=300&h=200"
-                  alt="Gestión de huéspedes"
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Users className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-semibold">Huéspedes</p>
-                  </div>
+              <div 
+                className="relative group cursor-pointer rounded-lg p-6 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-all duration-200 border border-blue-200"
+                onClick={() => handleQuickAction('/guests')}
+              >
+                <div className="text-center">
+                  <Users className="h-12 w-12 mx-auto mb-3 text-blue-600" />
+                  <p className="font-semibold text-blue-800">Huéspedes</p>
+                  <p className="text-xs text-blue-600 mt-1">Gestionar registros</p>
                 </div>
               </div>
               
-              <div className="relative group cursor-pointer rounded-lg overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=300&h=200"
-                  alt="Gestión de habitaciones"
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Building2 className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-semibold">Habitaciones</p>
-                  </div>
+              <div 
+                className="relative group cursor-pointer rounded-lg p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 transition-all duration-200 border border-green-200"
+                onClick={() => handleQuickAction('/rooms')}
+              >
+                <div className="text-center">
+                  <Building2 className="h-12 w-12 mx-auto mb-3 text-green-600" />
+                  <p className="font-semibold text-green-800">Habitaciones</p>
+                  <p className="text-xs text-green-600 mt-1">Estado y disponibilidad</p>
                 </div>
               </div>
               
-              <div className="relative group cursor-pointer rounded-lg overflow-hidden col-span-2">
-                <img 
-                  src="https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=600&h=200"
-                  alt="Reservas"
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Calendar className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-semibold">Nueva Reserva</p>
-                  </div>
+              <div 
+                className="relative group cursor-pointer rounded-lg p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 transition-all duration-200 border border-purple-200 col-span-2"
+                onClick={() => handleQuickAction('/reservations')}
+              >
+                <div className="text-center">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 text-purple-600" />
+                  <p className="font-semibold text-purple-800">Nueva Reserva</p>
+                  <p className="text-xs text-purple-600 mt-1">Crear nueva reservación</p>
                 </div>
               </div>
             </div>

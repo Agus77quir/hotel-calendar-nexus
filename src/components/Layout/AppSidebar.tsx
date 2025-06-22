@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
@@ -52,6 +53,11 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const { setOpenMobile } = useSidebar()
+
+  const handleNavClick = () => {
+    setOpenMobile(false) // Hide mobile menu when navigation item is clicked
+  }
 
   return (
     <Sidebar>
@@ -67,7 +73,11 @@ export function AppSidebar() {
                     isActive={location.pathname === item.url}
                     className="w-full"
                   >
-                    <Link to={item.url} className="flex items-center gap-3">
+                    <Link 
+                      to={item.url} 
+                      className="flex items-center gap-3"
+                      onClick={handleNavClick}
+                    >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
