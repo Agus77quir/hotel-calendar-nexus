@@ -57,11 +57,12 @@ const GuestsPage = () => {
         });
       }
       setGuestModal({ isOpen: false, mode: 'create' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving guest:', error);
+      const errorMessage = error?.message || 'No se pudo guardar el huésped. Por favor intente de nuevo.';
       toast({
         title: "Error",
-        description: "No se pudo guardar el huésped. Por favor intente de nuevo.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error; // Re-throw to let modal handle the error state
@@ -77,11 +78,12 @@ const GuestsPage = () => {
           title: "Éxito",
           description: "Huésped eliminado correctamente",
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting guest:', error);
+        const errorMessage = error?.message || 'No se pudo eliminar el huésped. Por favor intente de nuevo.';
         toast({
           title: "Error",
-          description: "No se pudo eliminar el huésped. Por favor intente de nuevo.",
+          description: errorMessage,
           variant: "destructive",
         });
       }

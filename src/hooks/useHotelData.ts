@@ -97,45 +97,83 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount), 0),
   };
 
-  // Add guest mutation - with fallback to mock
+  // Add guest mutation - with better error handling
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
+      console.log('Attempting to add guest:', guestData);
+      
       try {
+        // First check if email already exists
+        const { data: existingGuest, error: checkError } = await supabase
+          .from('guests')
+          .select('email')
+          .eq('email', guestData.email)
+          .maybeSingle();
+
+        if (checkError) {
+          console.error('Error checking existing email:', checkError);
+          throw new Error('Error verificando email existente');
+        }
+
+        if (existingGuest) {
+          throw new Error('Ya existe un huésped con este email');
+        }
+
         const { data, error } = await supabase
           .from('guests')
           .insert([guestData])
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase insert error:', error);
+          if (error.code === '23505' && error.message.includes('guests_email_key')) {
+            throw new Error('Ya existe un huésped con este email');
+          }
+          throw new Error(`Error en la base de datos: ${error.message}`);
+        }
+
+        console.log('Guest added successfully:', data);
         return data;
-      } catch (error) {
-        console.log('Error adding guest to Supabase, using mock:', error);
-        // Fallback to mock functionality
-        mockData.addGuest(guestData);
-        return null;
+      } catch (error: any) {
+        console.error('Error adding guest to Supabase:', error);
+        // Re-throw to let the mutation handle it
+        throw error;
       }
     },
     onSuccess: () => {
+      console.log('Guest mutation succeeded, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['guests'] });
-      toast({
-        title: "Éxito",
-        description: "Huésped agregado correctamente",
-      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar el huésped: " + error.message,
-        variant: "destructive",
-      });
+      console.error('Guest mutation failed:', error);
+      // Don't show toast here - let the component handle it
     },
   });
 
-  // Update guest mutation - with fallback
+  // Update guest mutation - with better error handling
   const updateGuestMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Guest> }) => {
       try {
+        // If updating email, check for duplicates
+        if (updates.email) {
+          const { data: existingGuest, error: checkError } = await supabase
+            .from('guests')
+            .select('id, email')
+            .eq('email', updates.email)
+            .neq('id', id)
+            .maybeSingle();
+
+          if (checkError) {
+            console.error('Error checking existing email:', checkError);
+            throw new Error('Error verificando email existente');
+          }
+
+          if (existingGuest) {
+            throw new Error('Ya existe un huésped con este email');
+          }
+        }
+
         const { data, error } = await supabase
           .from('guests')
           .update(updates)
@@ -143,27 +181,24 @@ export const useHotelData = () => {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating guest:', error);
+          if (error.code === '23505' && error.message.includes('guests_email_key')) {
+            throw new Error('Ya existe un huésped con este email');
+          }
+          throw new Error(`Error actualizando huésped: ${error.message}`);
+        }
         return data;
-      } catch (error) {
-        console.log('Error updating guest in Supabase, using mock:', error);
-        mockData.updateGuest(id, updates);
-        return null;
+      } catch (error: any) {
+        console.error('Error updating guest in Supabase:', error);
+        throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
-      toast({
-        title: "Éxito",
-        description: "Huésped actualizado correctamente",
-      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el huésped: " + error.message,
-        variant: "destructive",
-      });
+      console.error('Update guest mutation failed:', error);
     },
   });
 
@@ -184,17 +219,9 @@ export const useHotelData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
-      toast({
-        title: "Éxito",
-        description: "Huésped eliminado correctamente",
-      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el huésped: " + error.message,
-        variant: "destructive",
-      });
+      console.error('Delete guest mutation failed:', error);
     },
   });
 
@@ -483,9 +510,9 @@ export const useHotelData = () => {
     reservations,
     stats,
     isLoading: roomsLoading || guestsLoading || reservationsLoading,
-    addGuest: (guestData: Omit<Guest, 'id' | 'created_at'>) => addGuestMutation.mutate(guestData),
-    updateGuest: (id: string, updates: Partial<Guest>) => updateGuestMutation.mutate({ id, updates }),
-    deleteGuest: (id: string) => deleteGuestMutation.mutate(id),
+    addGuest: (guestData: Omit<Guest, 'id' | 'created_at'>) => addGuestMutation.mutateAsync(guestData),
+    updateGuest: (id: string, updates: Partial<Guest>) => updateGuestMutation.mutateAsync({ id, updates }),
+    deleteGuest: (id: string) => deleteGuestMutation.mutateAsync(id),
     addRoom: (roomData: Omit<Room, 'id' | 'created_at'>) => addRoomMutation.mutate(roomData),
     updateRoom: (id: string, updates: Partial<Room>) => updateRoomMutation.mutate({ id, updates }),
     deleteRoom: (id: string) => deleteRoomMutation.mutate(id),
