@@ -4,6 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useHotelData } from '@/hooks/useHotelData';
 import { GuestModal } from '@/components/Guests/GuestModal';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
@@ -148,65 +157,69 @@ const GuestsPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted border-b">
-                  <th className="py-3 px-4 text-left font-medium">Nombre</th>
-                  <th className="py-3 px-4 text-left font-medium">Email</th>
-                  <th className="py-3 px-4 text-left font-medium">Teléfono</th>
-                  <th className="py-3 px-4 text-left font-medium">Documento</th>
-                  <th className="py-3 px-4 text-left font-medium">Nacionalidad</th>
-                  <th className="py-3 px-4 text-left font-medium">Fecha registro</th>
-                  <th className="py-3 px-4 text-right font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredGuests.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                      {searchTerm ? 'No se encontraron huéspedes que coincidan con la búsqueda' : 'No hay huéspedes registrados'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredGuests.map((guest) => (
-                    <tr key={guest.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4 font-medium">
-                        {guest.first_name} {guest.last_name}
-                      </td>
-                      <td className="py-3 px-4">{guest.email}</td>
-                      <td className="py-3 px-4">{guest.phone}</td>
-                      <td className="py-3 px-4">{guest.document}</td>
-                      <td className="py-3 px-4">{guest.nationality}</td>
-                      <td className="py-3 px-4">
-                        {format(new Date(guest.created_at), 'dd/MM/yyyy', { locale: es })}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleEditGuest(guest)}
-                            title="Editar huésped"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleDeleteGuest(guest.id)}
-                            title="Eliminar huésped"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="w-full">
+            <ScrollArea className="h-[600px] w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[180px]">Nombre Completo</TableHead>
+                    <TableHead className="min-w-[200px]">Email</TableHead>
+                    <TableHead className="min-w-[120px]">Teléfono</TableHead>
+                    <TableHead className="min-w-[120px]">Documento</TableHead>
+                    <TableHead className="min-w-[120px]">Nacionalidad</TableHead>
+                    <TableHead className="min-w-[120px]">Fecha Registro</TableHead>
+                    <TableHead className="min-w-[120px] text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredGuests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                        {searchTerm ? 'No se encontraron huéspedes que coincidan con la búsqueda' : 'No hay huéspedes registrados'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredGuests.map((guest) => (
+                      <TableRow key={guest.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          {guest.first_name} {guest.last_name}
+                        </TableCell>
+                        <TableCell className="break-all">{guest.email}</TableCell>
+                        <TableCell>{guest.phone}</TableCell>
+                        <TableCell>{guest.document}</TableCell>
+                        <TableCell>{guest.nationality}</TableCell>
+                        <TableCell>
+                          {format(new Date(guest.created_at), 'dd/MM/yyyy', { locale: es })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditGuest(guest)}
+                              title="Editar huésped"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteGuest(guest.id)}
+                              title="Eliminar huésped"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Eliminar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
         </CardContent>
       </Card>
