@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,12 @@ import { Guest } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const GuestsPage = () => {
   const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{
     isOpen: boolean;
@@ -35,25 +38,69 @@ const GuestsPage = () => {
   });
 
   const handleSaveGuest = async (guestData: any) => {
-    if (guestModal.mode === 'create') {
-      await addGuest(guestData);
-      // Siempre redirigir a reservas después de crear un huésped
-      navigate('/reservations');
-    } else if (guestModal.mode === 'edit' && guestModal.guest) {
-      updateGuest(guestModal.guest.id, guestData);
+    try {
+      if (guestModal.mode === 'create') {
+        console.log('Creating new guest:', guestData);
+        await addGuest(guestData);
+        toast({
+          title: "Éxito",
+          description: "Huésped creado correctamente",
+        });
+        // Siempre redirigir a reservas después de crear un huésped
+        navigate('/reservations');
+      } else if (guestModal.mode === 'edit' && guestModal.guest) {
+        console.log('Updating guest:', guestModal.guest.id, guestData);
+        await updateGuest(guestModal.guest.id, guestData);
+        toast({
+          title: "Éxito",
+          description: "Huésped actualizado correctamente",
+        });
+      }
+      setGuestModal({ isOpen: false, mode: 'create' });
+    } catch (error) {
+      console.error('Error saving guest:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el huésped. Por favor intente de nuevo.",
+        variant: "destructive",
+      });
+      throw error; // Re-throw to let modal handle the error state
     }
   };
 
-  const handleDeleteGuest = (id: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
-      deleteGuest(id);
+  const handleDeleteGuest = async (id: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este huésped? Esta acción no se puede deshacer.')) {
+      try {
+        console.log('Deleting guest:', id);
+        await deleteGuest(id);
+        toast({
+          title: "Éxito",
+          description: "Huésped eliminado correctamente",
+        });
+      } catch (error) {
+        console.error('Error deleting guest:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el huésped. Por favor intente de nuevo.",
+          variant: "destructive",
+        });
+      }
     }
+  };
+
+  const handleEditGuest = (guest: Guest) => {
+    console.log('Editing guest:', guest);
+    setGuestModal({
+      isOpen: true,
+      mode: 'edit',
+      guest
+    });
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando...</div>
+        <div className="text-lg">Cargando huéspedes...</div>
       </div>
     );
   }
@@ -70,7 +117,10 @@ const GuestsPage = () => {
         <div className="flex gap-2">
           <BackToHomeButton />
           <Button
-            onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
+            onClick={() => {
+              console.log('Opening create guest modal');
+              setGuestModal({ isOpen: true, mode: 'create' });
+            }}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Huésped
@@ -113,13 +163,13 @@ const GuestsPage = () => {
                 {filteredGuests.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                      No se encontraron huéspedes
+                      {searchTerm ? 'No se encontraron huéspedes que coincidan con la búsqueda' : 'No hay huéspedes registrados'}
                     </td>
                   </tr>
                 ) : (
                   filteredGuests.map((guest) => (
                     <tr key={guest.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 font-medium">
                         {guest.first_name} {guest.last_name}
                       </td>
                       <td className="py-3 px-4">{guest.email}</td>
@@ -134,11 +184,8 @@ const GuestsPage = () => {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            onClick={() => setGuestModal({
-                              isOpen: true,
-                              mode: 'edit',
-                              guest
-                            })}
+                            onClick={() => handleEditGuest(guest)}
+                            title="Editar huésped"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -146,6 +193,8 @@ const GuestsPage = () => {
                             variant="ghost" 
                             size="icon"
                             onClick={() => handleDeleteGuest(guest.id)}
+                            title="Eliminar huésped"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -162,7 +211,10 @@ const GuestsPage = () => {
 
       <GuestModal
         isOpen={guestModal.isOpen}
-        onClose={() => setGuestModal({ isOpen: false, mode: 'create' })}
+        onClose={() => {
+          console.log('Closing guest modal');
+          setGuestModal({ isOpen: false, mode: 'create' });
+        }}
         onSave={handleSaveGuest}
         guest={guestModal.guest}
         mode={guestModal.mode}

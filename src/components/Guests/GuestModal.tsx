@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,16 +31,17 @@ export const GuestModal = ({
   });
 
   const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (guest && mode === 'edit') {
       setFormData({
-        first_name: guest.first_name,
-        last_name: guest.last_name,
-        email: guest.email,
-        phone: guest.phone,
-        document: guest.document,
-        nationality: guest.nationality,
+        first_name: guest.first_name || '',
+        last_name: guest.last_name || '',
+        email: guest.email || '',
+        phone: guest.phone || '',
+        document: guest.document || '',
+        nationality: guest.nationality || '',
       });
     } else {
       setFormData({
@@ -51,6 +53,7 @@ export const GuestModal = ({
         nationality: '',
       });
     }
+    setEmailError('');
   }, [guest, mode, isOpen]);
 
   const validateEmail = (email: string) => {
@@ -69,21 +72,66 @@ export const GuestModal = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate email before submitting
+  const validateForm = () => {
+    if (!formData.first_name.trim()) {
+      alert('El nombre es requerido');
+      return false;
+    }
+    if (!formData.last_name.trim()) {
+      alert('El apellido es requerido');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      alert('El email es requerido');
+      return false;
+    }
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor ingrese un email válido');
+      return false;
+    }
+    if (!formData.phone.trim()) {
+      alert('El teléfono es requerido');
+      return false;
+    }
+    if (!formData.document.trim()) {
+      alert('El documento es requerido');
+      return false;
+    }
+    if (!formData.nationality.trim()) {
+      alert('La nacionalidad es requerida');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
       return;
     }
     
-    onSave(formData);
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      await onSave(formData);
+      onClose();
+    } catch (error) {
+      console.error('Error saving guest:', error);
+      alert('Error al guardar el huésped. Por favor intente de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -93,30 +141,36 @@ export const GuestModal = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="first_name">Nombre</Label>
+              <Label htmlFor="first_name">Nombre *</Label>
               <Input
+                id="first_name"
                 value={formData.first_name}
                 onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div>
-              <Label htmlFor="last_name">Apellido</Label>
+              <Label htmlFor="last_name">Apellido *</Label>
               <Input
+                id="last_name"
                 value={formData.last_name}
                 onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email *</Label>
             <Input
+              id="email"
               type="email"
               value={formData.email}
               onChange={handleEmailChange}
               required
+              disabled={isSubmitting}
               className={emailError ? 'border-red-500' : ''}
             />
             {emailError && (
@@ -125,38 +179,57 @@ export const GuestModal = ({
           </div>
 
           <div>
-            <Label htmlFor="phone">Teléfono</Label>
+            <Label htmlFor="phone">Teléfono *</Label>
             <Input
+              id="phone"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               required
+              disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <Label htmlFor="document">Documento</Label>
+            <Label htmlFor="document">Documento *</Label>
             <Input
+              id="document"
               value={formData.document}
               onChange={(e) => setFormData({...formData, document: e.target.value})}
               required
+              disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <Label htmlFor="nationality">Nacionalidad</Label>
+            <Label htmlFor="nationality">Nacionalidad *</Label>
             <Input
+              id="nationality"
               value={formData.nationality}
               onChange={(e) => setFormData({...formData, nationality: e.target.value})}
               required
+              disabled={isSubmitting}
             />
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!!emailError}>
-              {mode === 'create' ? 'Crear Huésped' : 'Actualizar Huésped'}
+            <Button 
+              type="submit" 
+              disabled={!!emailError || isSubmitting}
+            >
+              {isSubmitting 
+                ? 'Guardando...' 
+                : mode === 'create' 
+                  ? 'Crear Huésped' 
+                  : 'Actualizar Huésped'
+              }
             </Button>
           </div>
         </form>
