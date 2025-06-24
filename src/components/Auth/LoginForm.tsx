@@ -54,8 +54,17 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Background Image - Same as main app but more transparent */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-5 z-0"
+        style={{ backgroundImage: 'url(/lovable-uploads/a71a95fb-44b6-4706-83ad-80878a466482.png)' }}
+      />
+      
+      {/* Gradient overlay for additional subtlety */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-blue-100/80 z-10" />
+      
+      <div className="w-full max-w-md relative z-20">
         <div className="text-center mb-6">
           <div className="flex justify-center items-center gap-2 mb-4">
             <Hotel className="h-10 w-10 text-blue-600" />
@@ -66,7 +75,7 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        <Card>
+        <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl">
           <CardHeader>
             <CardTitle>Iniciar Sesión</CardTitle>
             <CardDescription>
