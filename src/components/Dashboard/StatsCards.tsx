@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock } from 'lucide-react';
 import { HotelStats, Room, Reservation } from '@/types/hotel';
@@ -65,7 +66,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
       icon: Wrench,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-      subtitle: maintenanceRoomNumbers.length > 0 
+      subtitle: stats.maintenanceRooms > 0 
         ? `Hab. ${maintenanceRoomNumbers.join(', ')}` 
         : 'Ninguna en mantenimiento'
     },
@@ -124,3 +125,4 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     </div>
   );
 };
+
