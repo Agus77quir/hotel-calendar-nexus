@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -240,53 +241,6 @@ const RoomsPage = () => {
       />
     </div>
   );
-
-  function getStatusColor(status: string) {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'occupied':
-        return 'bg-red-100 text-red-800';
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cleaning':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }
-
-  function getStatusText(status: string) {
-    switch (status) {
-      case 'available':
-        return 'Disponible';
-      case 'occupied':
-        return 'Ocupada';
-      case 'maintenance':
-        return 'Mantenimiento';
-      case 'cleaning':
-        return 'Limpieza';
-      default:
-        return status;
-    }
-  }
-
-  function getTypeText(type: string) {
-    switch (type) {
-      case 'matrimonial':
-        return 'Matrimonial';
-      case 'triple-individual':
-        return 'Triple Individual';
-      case 'triple-matrimonial':
-        return 'Triple Matrimonial';
-      case 'doble-individual':
-        return 'Doble Individual';
-      case 'suite-presidencial-doble':
-        return 'Suite Presidencial Doble';
-      default:
-        return type;
-    }
-  }
 };
 
 export default RoomsPage;
