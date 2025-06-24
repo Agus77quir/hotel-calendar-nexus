@@ -79,6 +79,22 @@ export const ReservationModal = ({
     }
   }, [reservation, mode, isOpen]);
 
+  // Get selected room details
+  const selectedRoom = rooms.find(r => r.id === formData.room_id);
+  const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
+
+  // Handle room change - adjust guest count if it exceeds new room capacity
+  const handleRoomChange = (roomId: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    const newMaxCapacity = room ? room.capacity : 1;
+    
+    setFormData(prev => ({
+      ...prev,
+      room_id: roomId,
+      guests_count: prev.guests_count > newMaxCapacity ? newMaxCapacity : prev.guests_count
+    }));
+  };
+
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
     if (!selectedRoom || !formData.check_in || !formData.check_out) return 0;
@@ -162,7 +178,7 @@ export const ReservationModal = ({
 
             <div className="space-y-2">
               <Label htmlFor="room_id" className="text-sm font-medium">Habitación</Label>
-              <Select value={formData.room_id} onValueChange={(value) => setFormData({...formData, room_id: value})}>
+              <Select value={formData.room_id} onValueChange={handleRoomChange}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Seleccionar habitación" />
                 </SelectTrigger>
@@ -171,7 +187,10 @@ export const ReservationModal = ({
                     <SelectItem key={room.id} value={room.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{room.number} - {getRoomTypeDisplayName(room.type)}</span>
-                        <span className="ml-2 text-primary font-medium">${room.price}/noche</span>
+                        <div className="flex items-center gap-2 ml-2">
+                          <span className="text-xs text-muted-foreground">Max: {room.capacity}</span>
+                          <span className="text-primary font-medium">${room.price}/noche</span>
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -214,15 +233,33 @@ export const ReservationModal = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="guests_count" className="text-sm font-medium">Número de huéspedes</Label>
+              <Label htmlFor="guests_count" className="text-sm font-medium">
+                Número de huéspedes
+                {selectedRoom && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    (Máximo: {maxCapacity})
+                  </span>
+                )}
+              </Label>
               <Input
                 type="number"
                 min="1"
+                max={maxCapacity}
                 value={formData.guests_count || ''}
-                onChange={(e) => setFormData({...formData, guests_count: parseInt(e.target.value) || 1})}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 1;
+                  const clampedValue = Math.min(Math.max(value, 1), maxCapacity);
+                  setFormData({...formData, guests_count: clampedValue});
+                }}
                 className="h-10"
                 required
+                disabled={!formData.room_id}
               />
+              {!formData.room_id && (
+                <p className="text-xs text-muted-foreground">
+                  Selecciona una habitación primero
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -261,6 +298,11 @@ export const ReservationModal = ({
                 </div>
                 <span className="text-xl font-bold text-primary">${calculateTotal()}</span>
               </div>
+              {selectedRoom && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Habitación {selectedRoom.number} - {formData.guests_count} huésped{formData.guests_count > 1 ? 'es' : ''}
+                </div>
+              )}
             </div>
           )}
 
