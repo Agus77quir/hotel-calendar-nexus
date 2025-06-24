@@ -1,15 +1,31 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock } from 'lucide-react';
-import { HotelStats } from '@/types/hotel';
+import { HotelStats, Room, Reservation } from '@/types/hotel';
 
 interface StatsCardsProps {
   stats: HotelStats;
+  rooms?: Room[];
+  reservations?: Reservation[];
 }
 
-export const StatsCards = ({ stats }: StatsCardsProps) => {
+export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsProps) => {
   const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
   
+  // Calculate additional metrics
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  
+  const monthlyRevenue = reservations
+    .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+
+  const activeReservations = reservations.filter(r => 
+    r.check_in <= today && 
+    r.check_out >= today && 
+    r.status !== 'cancelled'
+  ).length;
+
   const cards = [
     {
       title: 'Habitaciones Totales',
@@ -60,12 +76,12 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       subtitle: 'Salidas programadas'
     },
     {
-      title: 'Ingresos Totales',
-      value: `$${stats.revenue.toFixed(2)}`,
+      title: 'Ingresos del Mes',
+      value: `$${monthlyRevenue.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-green-700',
       bgColor: 'bg-green-100',
-      subtitle: 'Facturación actual'
+      subtitle: 'Facturación mensual'
     },
     {
       title: 'Tasa de Ocupación',

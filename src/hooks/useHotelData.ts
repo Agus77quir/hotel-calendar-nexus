@@ -79,7 +79,9 @@ export const useHotelData = () => {
     },
   });
 
-  // Calculate stats
+  // Calculate comprehensive stats
+  const today = new Date().toISOString().split('T')[0];
+  
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -87,14 +89,14 @@ export const useHotelData = () => {
     maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
     totalReservations: reservations.length,
     todayCheckIns: reservations.filter(r => {
-      const today = new Date().toISOString().split('T')[0];
-      return r.check_in === today && r.status === 'confirmed';
+      return r.check_in === today && (r.status === 'confirmed' || r.status === 'checked-in');
     }).length,
     todayCheckOuts: reservations.filter(r => {
-      const today = new Date().toISOString().split('T')[0];
       return r.check_out === today && r.status === 'checked-in';
     }).length,
-    revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount), 0),
+    revenue: reservations
+      .filter(r => r.status !== 'cancelled')
+      .reduce((sum, r) => sum + Number(r.total_amount || 0), 0),
   };
 
   // Add guest mutation - with better error handling
