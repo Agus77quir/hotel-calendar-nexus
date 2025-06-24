@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -105,10 +106,6 @@ const Index = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs md:text-sm text-muted-foreground">Última Actualización</span>
                 <span className="text-xs md:text-sm font-medium">Hace 2 minutos</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs md:text-sm text-muted-foreground">Usuario Conectados</span>
-                <span className="text-xs md:text-sm font-medium">3</span>
               </div>
             </div>
           </CardContent>
