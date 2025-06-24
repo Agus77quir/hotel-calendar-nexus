@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,7 +75,7 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        <Card className="bg-white/60 backdrop-blur-sm border-white/50 shadow-xl">
+        <Card className="bg-white/40 backdrop-blur-sm border-white/30 shadow-xl">
           <CardHeader>
             <CardTitle>Iniciar Sesión</CardTitle>
             <CardDescription>
