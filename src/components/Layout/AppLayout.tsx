@@ -4,7 +4,7 @@ import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, Search, LogOut } from 'lucide-react';
+import { Menu, Search, LogOut, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
@@ -42,6 +42,21 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     navigate('/login');
   };
 
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'receptionist':
+        return 'Recepcionista';
+      default:
+        return role;
+    }
+  };
+
+  const getSystemStatus = () => {
+    return 'Sistema Operativo'; // Sistema siempre operativo
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -73,10 +88,21 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                   />
                   <div className="hidden sm:block min-w-0">
                     <span className="font-bold text-sm md:text-lg text-blue-600 truncate">Gestión de Hoteles</span>
+                    <div className="text-xs text-green-600 font-medium">
+                      {getSystemStatus()}
+                    </div>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                {/* User info */}
+                <div className="hidden md:flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2">
+                  <User className="h-4 w-4 text-blue-600" />
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">{user?.firstName}</div>
+                    <div className="text-xs text-gray-600">{getRoleDisplayName(user?.role || '')}</div>
+                  </div>
+                </div>
                 <Button 
                   variant="outline" 
                   size="icon" 

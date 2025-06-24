@@ -12,54 +12,68 @@ import {
 } from "@/components/ui/sidebar"
 import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 
-const menuItems = [
+const allMenuItems = [
   {
     title: "Dashboard",
     url: "/",
     icon: Home,
+    roles: ['admin', 'receptionist'],
   },
   {
     title: "Huéspedes",
     url: "/guests",
     icon: Users,
+    roles: ['admin', 'receptionist'],
   },
   {
     title: "Habitaciones",
     url: "/rooms",
     icon: Bed,
+    roles: ['admin'],
   },
   {
     title: "Reservas",
     url: "/reservations",
     icon: ClipboardList,
+    roles: ['admin', 'receptionist'],
   },
   {
     title: "Calendario",
     url: "/calendar",
     icon: Calendar,
+    roles: ['admin'],
   },
   {
     title: "Check-in/out",
     url: "/checkin-checkout",
     icon: CheckSquare,
+    roles: ['admin'],
   },
   {
     title: "Auditoría",
     url: "/audit",
     icon: Shield,
+    roles: ['admin'],
   },
 ]
 
 export function AppSidebar() {
   const location = useLocation()
   const { setOpenMobile, isMobile } = useSidebar()
+  const { user } = useAuth()
 
   const handleNavClick = () => {
     if (isMobile) {
-      setOpenMobile(false) // Hide mobile menu when navigation item is clicked
+      setOpenMobile(false)
     }
   }
+
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => 
+    user && item.roles.includes(user.role)
+  )
 
   return (
     <Sidebar className="border-r border-gray-200">

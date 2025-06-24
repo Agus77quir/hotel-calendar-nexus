@@ -28,6 +28,9 @@ export const LoginForm = () => {
           title: 'Bienvenido',
           description: 'Has iniciado sesión correctamente',
         });
+        // Clear form after successful login
+        setEmail('');
+        setPassword('');
         navigate('/');
       } else {
         toast({
@@ -35,6 +38,8 @@ export const LoginForm = () => {
           description: 'Credenciales incorrectas',
           variant: 'destructive',
         });
+        // Clear password on failed login
+        setPassword('');
       }
     } catch (error) {
       toast({
@@ -42,16 +47,11 @@ export const LoginForm = () => {
         description: 'Ha ocurrido un error al iniciar sesión',
         variant: 'destructive',
       });
+      setPassword('');
     } finally {
       setLoading(false);
     }
   };
-
-  const demoCredentials = [
-    { role: 'Administrador', email: 'admin@nardini.com', password: 'admin123' },
-    { role: 'Recepcionista', email: 'recepcion@nardini.com', password: 'recep123' },
-    { role: 'Huésped', email: 'huesped@example.com', password: 'guest123' },
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
@@ -76,14 +76,15 @@ export const LoginForm = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Usuario</Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="tu@email.com"
+                  placeholder="Ingresa tu usuario"
+                  autoComplete="username"
                 />
               </div>
               <div className="space-y-2">
@@ -96,6 +97,7 @@ export const LoginForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
@@ -116,32 +118,6 @@ export const LoginForm = () => {
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Credenciales de Prueba</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {demoCredentials.map((cred, index) => (
-              <div key={index} className="p-3 bg-muted rounded-lg">
-                <p className="font-medium text-sm">{cred.role}</p>
-                <p className="text-xs text-muted-foreground">Email: {cred.email}</p>
-                <p className="text-xs text-muted-foreground">Contraseña: {cred.password}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setEmail(cred.email);
-                    setPassword(cred.password);
-                  }}
-                  className="mt-2 h-6 text-xs"
-                >
-                  Usar credenciales
-                </Button>
-              </div>
-            ))}
           </CardContent>
         </Card>
       </div>

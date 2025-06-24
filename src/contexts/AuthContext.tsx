@@ -11,33 +11,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo users
+// Demo users with simplified credentials
 const demoUsers: (User & { password: string })[] = [
   {
     id: '1',
-    email: 'admin@nardini.com',
-    firstName: 'María',
-    lastName: 'Nardini',
+    email: 'admin',
+    firstName: 'Administrador',
+    lastName: 'Sistema',
     role: 'admin',
-    password: 'admin123',
+    password: 'admin1234',
     createdAt: new Date(),
   },
   {
     id: '2',
-    email: 'recepcion@nardini.com',
-    firstName: 'Carlos',
-    lastName: 'González',
+    email: 'rec1',
+    firstName: 'Recepcionista',
+    lastName: 'Uno',
     role: 'receptionist',
-    password: 'recep123',
+    password: 'rec1123',
     createdAt: new Date(),
   },
   {
     id: '3',
-    email: 'huesped@example.com',
-    firstName: 'Ana',
-    lastName: 'Martínez',
-    role: 'guest',
-    password: 'guest123',
+    email: 'rec2',
+    firstName: 'Recepcionista',
+    lastName: 'Dos',
+    role: 'receptionist',
+    password: 'rec2123',
     createdAt: new Date(),
   },
 ];
@@ -75,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('hotelUser');
+    // Clear any form data that might contain passwords
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => form.reset());
   };
 
   const value = {
