@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,14 +54,14 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background Image - Landscape from dashboard */}
+      {/* Background Image - Landscape much more visible */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80 z-0"
         style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&h=400)' }}
       />
       
-      {/* Gradient overlay - very transparent */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-blue-100/20 z-10" />
+      {/* Gradient overlay - minimal */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/10 to-blue-100/10 z-10" />
       
       <div className="w-full max-w-md relative z-20">
         <div className="text-center mb-6">
@@ -75,7 +74,7 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-white/40 shadow-xl">
+        <Card className="bg-white/60 backdrop-blur-sm border-white/50 shadow-xl">
           <CardHeader>
             <CardTitle>Iniciar Sesión</CardTitle>
             <CardDescription>
