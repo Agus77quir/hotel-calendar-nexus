@@ -55,14 +55,14 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background Image - Same as main app but more transparent */}
+      {/* Background Image - Same as main app but more visible */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-5 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 z-0"
         style={{ backgroundImage: 'url(/lovable-uploads/a71a95fb-44b6-4706-83ad-80878a466482.png)' }}
       />
       
-      {/* Gradient overlay for additional subtlety */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-blue-100/80 z-10" />
+      {/* Gradient overlay - more transparent */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-blue-100/40 z-10" />
       
       <div className="w-full max-w-md relative z-20">
         <div className="text-center mb-6">
@@ -75,7 +75,7 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl">
+        <Card className="bg-white/85 backdrop-blur-sm border-white/30 shadow-xl">
           <CardHeader>
             <CardTitle>Iniciar Sesión</CardTitle>
             <CardDescription>
