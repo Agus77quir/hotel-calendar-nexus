@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Edit, Trash2, Bed, Users } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Search, Edit, Trash2, Bed, Users, Wrench } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { RoomModal } from '@/components/Rooms/RoomModal';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
@@ -42,6 +42,11 @@ const RoomsPage = () => {
     if (confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
       deleteRoom(id);
     }
+  };
+
+  const handleMaintenanceToggle = (room: Room, isChecked: boolean) => {
+    const newStatus = isChecked ? 'maintenance' : 'available';
+    updateRoom(room.id, { status: newStatus });
   };
 
   const getStatusColor = (status: string) => {
@@ -167,6 +172,23 @@ const RoomsPage = () => {
                     <div className="text-lg font-semibold text-green-600">
                       ${room.price}/noche
                     </div>
+                    
+                    {/* Maintenance Checkbox */}
+                    <div className="flex items-center space-x-2 p-2 bg-orange-50 rounded-md border">
+                      <Checkbox
+                        id={`maintenance-${room.id}`}
+                        checked={room.status === 'maintenance'}
+                        onCheckedChange={(checked) => handleMaintenanceToggle(room, checked as boolean)}
+                      />
+                      <label
+                        htmlFor={`maintenance-${room.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                      >
+                        <Wrench className="h-4 w-4 text-orange-600" />
+                        En mantenimiento
+                      </label>
+                    </div>
+
                     {room.amenities && room.amenities.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {room.amenities.slice(0, 3).map((amenity, index) => (
@@ -218,6 +240,53 @@ const RoomsPage = () => {
       />
     </div>
   );
+
+  function getStatusColor(status: string) {
+    switch (status) {
+      case 'available':
+        return 'bg-green-100 text-green-800';
+      case 'occupied':
+        return 'bg-red-100 text-red-800';
+      case 'maintenance':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cleaning':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  function getStatusText(status: string) {
+    switch (status) {
+      case 'available':
+        return 'Disponible';
+      case 'occupied':
+        return 'Ocupada';
+      case 'maintenance':
+        return 'Mantenimiento';
+      case 'cleaning':
+        return 'Limpieza';
+      default:
+        return status;
+    }
+  }
+
+  function getTypeText(type: string) {
+    switch (type) {
+      case 'matrimonial':
+        return 'Matrimonial';
+      case 'triple-individual':
+        return 'Triple Individual';
+      case 'triple-matrimonial':
+        return 'Triple Matrimonial';
+      case 'doble-individual':
+        return 'Doble Individual';
+      case 'suite-presidencial-doble':
+        return 'Suite Presidencial Doble';
+      default:
+        return type;
+    }
+  }
 };
 
 export default RoomsPage;

@@ -26,6 +26,14 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     r.status !== 'cancelled'
   ).length;
 
+  // Get maintenance room numbers
+  const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
+  const maintenanceRoomNumbers = maintenanceRooms.map(r => r.number).sort((a, b) => {
+    const numA = parseInt(a) || 0;
+    const numB = parseInt(b) || 0;
+    return numA - numB;
+  });
+
   const cards = [
     {
       title: 'Habitaciones Totales',
@@ -57,7 +65,9 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
       icon: Wrench,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-      subtitle: 'Fuera de servicio'
+      subtitle: maintenanceRoomNumbers.length > 0 
+        ? `Hab. ${maintenanceRoomNumbers.join(', ')}` 
+        : 'Ninguna en mantenimiento'
     },
     {
       title: 'Check-ins Hoy',
