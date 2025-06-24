@@ -55,8 +55,8 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
           <div className="flex justify-center items-center gap-2 mb-4">
             <Hotel className="h-10 w-10 text-blue-600" />
             <div>
@@ -84,7 +84,7 @@ export const LoginForm = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="Ingresa tu usuario"
-                  autoComplete="username"
+                  autoComplete="off"
                 />
               </div>
               <div className="space-y-2">
@@ -97,7 +97,7 @@ export const LoginForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    autoComplete="current-password"
+                    autoComplete="off"
                   />
                   <Button
                     type="button"

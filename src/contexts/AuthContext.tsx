@@ -11,7 +11,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo users with simplified credentials
+// Demo users with updated credentials
 const demoUsers: (User & { password: string })[] = [
   {
     id: '1',
@@ -19,7 +19,7 @@ const demoUsers: (User & { password: string })[] = [
     firstName: 'Administrador',
     lastName: 'Sistema',
     role: 'admin',
-    password: 'admin1234',
+    password: 'admin@123',
     createdAt: new Date(),
   },
   {
@@ -28,7 +28,7 @@ const demoUsers: (User & { password: string })[] = [
     firstName: 'Recepcionista',
     lastName: 'Uno',
     role: 'receptionist',
-    password: 'rec1123',
+    password: 'rec@123',
     createdAt: new Date(),
   },
   {
@@ -78,6 +78,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear any form data that might contain passwords
     const forms = document.querySelectorAll('form');
     forms.forEach(form => form.reset());
+    
+    // Clear all password fields specifically
+    const passwordFields = document.querySelectorAll('input[type="password"]');
+    passwordFields.forEach(field => {
+      if (field instanceof HTMLInputElement) {
+        field.value = '';
+      }
+    });
+    
+    // Clear any text inputs that might contain passwords
+    const textFields = document.querySelectorAll('input[type="text"]');
+    textFields.forEach(field => {
+      if (field instanceof HTMLInputElement) {
+        field.value = '';
+      }
+    });
   };
 
   const value = {
