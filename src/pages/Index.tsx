@@ -1,12 +1,14 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
+import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
 import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const { stats, isLoading } = useHotelData();
+  const { stats, rooms, guests, reservations, isLoading } = useHotelData();
   const { setOpenMobile } = useSidebar();
   const navigate = useNavigate();
 
@@ -39,7 +41,17 @@ const Index = () => {
         </div>
       </div>
 
-      <StatsCards stats={stats} />
+      <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+
+      {/* Calendar Section */}
+      <div className="mb-6">
+        <HotelCalendar 
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+          onAddReservation={() => handleQuickAction('/reservations')}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         {/* Quick Actions Card with Icons */}
