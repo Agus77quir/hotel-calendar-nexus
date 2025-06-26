@@ -9,6 +9,7 @@ import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
 import { GuestModal } from '@/components/Guests/GuestModal';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
+import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Reservation } from '@/types/hotel';
@@ -130,6 +131,11 @@ const ReservationsPage = () => {
         </div>
         <div className="flex gap-2">
           <BackToHomeButton />
+          <ReportExportButtons 
+            reservations={reservations}
+            guests={guests}
+            rooms={rooms}
+          />
           <Button
             variant="outline"
             onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
