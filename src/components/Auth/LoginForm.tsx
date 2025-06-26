@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,17 @@ export const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Clear fields on component mount and unmount
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    
+    return () => {
+      setEmail('');
+      setPassword('');
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +39,7 @@ export const LoginForm = () => {
           title: 'Bienvenido',
           description: 'Has iniciado sesión correctamente',
         });
-        // Clear form after successful login
+        // Clear form immediately after successful login
         setEmail('');
         setPassword('');
         navigate('/');
@@ -51,6 +62,18 @@ export const LoginForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    // Prevent browser from storing the value
+    e.target.setAttribute('autocomplete', 'off');
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    // Prevent browser from storing the value
+    e.target.setAttribute('autocomplete', 'new-password');
   };
 
   return (
@@ -83,17 +106,21 @@ export const LoginForm = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div className="space-y-2">
                 <Label htmlFor="email">Usuario</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="text"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   required
                   placeholder="Ingresa tu usuario"
                   autoComplete="off"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </div>
               <div className="space-y-2">
@@ -101,12 +128,16 @@ export const LoginForm = () => {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     required
                     placeholder="••••••••"
-                    autoComplete="off"
+                    autoComplete="new-password"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                   <Button
                     type="button"

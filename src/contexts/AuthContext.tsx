@@ -71,34 +71,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userWithoutPassword);
       localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
       console.log('Login successful for user:', userWithoutPassword.email);
+      
+      // Clear password from memory immediately after login
+      setTimeout(() => {
+        clearPasswordFields();
+      }, 100);
+      
       return true;
     }
     console.log('Login failed - user not found or wrong credentials');
+    
+    // Clear password field on failed login
+    clearPasswordFields();
+    
     return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('hotelUser');
-    // Clear any form data that might contain passwords
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => form.reset());
-    
-    // Clear all password fields specifically
+  const clearPasswordFields = () => {
+    // Clear all password fields
     const passwordFields = document.querySelectorAll('input[type="password"]');
     passwordFields.forEach(field => {
       if (field instanceof HTMLInputElement) {
         field.value = '';
+        field.setAttribute('autocomplete', 'new-password');
       }
     });
     
     // Clear any text inputs that might contain passwords
     const textFields = document.querySelectorAll('input[type="text"]');
     textFields.forEach(field => {
-      if (field instanceof HTMLInputElement) {
+      if (field instanceof HTMLInputElement && (field.name === 'email' || field.name === 'username')) {
         field.value = '';
+        field.setAttribute('autocomplete', 'off');
       }
     });
+    
+    // Clear forms
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => {
+        if (input.type === 'password' || input.name === 'email' || input.name === 'username') {
+          input.value = '';
+        }
+      });
+    });
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('hotelUser');
+    
+    // Clear all sensitive data from forms
+    clearPasswordFields();
+    
+    // Additional cleanup for browser autofill
+    setTimeout(() => {
+      clearPasswordFields();
+    }, 500);
   };
 
   const value = {
