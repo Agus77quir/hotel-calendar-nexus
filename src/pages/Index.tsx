@@ -31,7 +31,7 @@ const Index = () => {
     
     const lastUpdateDate = new Date(latestReservation.updated_at || latestReservation.created_at);
     return formatDistanceToNow(lastUpdateDate, { 
-      addSuffix: true, 
+      addSuffix: false, 
       locale: es 
     });
   };
@@ -135,7 +135,7 @@ const Index = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs md:text-sm text-muted-foreground">Última Actualización</span>
-                <span className="text-xs md:text-sm font-medium">{getLastUpdate()}</span>
+                <span className="text-xs md:text-sm font-medium">hace {getLastUpdate()}</span>
               </div>
             </div>
           </CardContent>
