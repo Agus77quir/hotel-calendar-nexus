@@ -1,3 +1,4 @@
+
 import { useMockHotelData } from './useMockHotelData';
 import { useEmailNotifications } from './useEmailNotifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -327,7 +328,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation mutation - with email notifications
+  // Add reservation mutation - with email notifications and improved error handling
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       try {
@@ -337,7 +338,16 @@ export const useHotelData = () => {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Reservation creation error:', error);
+          
+          // Handle specific constraint violations
+          if (error.code === '23P01' && error.message.includes('no_overlapping_reservations')) {
+            throw new Error('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
+          }
+          
+          throw error;
+        }
         
         // Update room status if reservation is checked-in
         if (reservationData.status === 'checked-in') {
@@ -348,8 +358,16 @@ export const useHotelData = () => {
         }
         
         return data;
-      } catch (error) {
-        console.log('Error adding reservation to Supabase, using mock:', error);
+      } catch (error: any) {
+        console.log('Error adding reservation to Supabase:', error);
+        
+        // Re-throw specific errors to be handled by the component
+        if (error.message.includes('ya está reservada') || 
+            error.message.includes('no_overlapping_reservations')) {
+          throw error;
+        }
+        
+        // For other errors, try mock fallback
         mockData.addReservation(reservationData);
         return null;
       }
@@ -385,15 +403,19 @@ export const useHotelData = () => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la reserva: " + error.message,
-        variant: "destructive",
-      });
+      // Don't show toast for constraint violations - let the component handle it
+      if (!error.message.includes('ya está reservada') && 
+          !error.message.includes('no_overlapping_reservations')) {
+        toast({
+          title: "Error",
+          description: "No se pudo crear la reserva: " + error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
-  // Update reservation mutation - with email notifications
+  // Update reservation mutation - with email notifications and improved error handling
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Reservation> }) => {
       try {
@@ -404,10 +426,28 @@ export const useHotelData = () => {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Reservation update error:', error);
+          
+          // Handle specific constraint violations
+          if (error.code === '23P01' && error.message.includes('no_overlapping_reservations')) {
+            throw new Error('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
+          }
+          
+          throw error;
+        }
+        
         return data;
-      } catch (error) {
-        console.log('Error updating reservation in Supabase, using mock:', error);
+      } catch (error: any) {
+        console.log('Error updating reservation in Supabase:', error);
+        
+        // Re-throw specific errors to be handled by the component
+        if (error.message.includes('ya está reservada') || 
+            error.message.includes('no_overlapping_reservations')) {
+          throw error;
+        }
+        
+        // For other errors, try mock fallback
         mockData.updateReservation(id, updates);
         return null;
       }
@@ -451,11 +491,15 @@ export const useHotelData = () => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la reserva: " + error.message,
-        variant: "destructive",
-      });
+      // Don't show toast for constraint violations - let the component handle it
+      if (!error.message.includes('ya está reservada') && 
+          !error.message.includes('no_overlapping_reservations')) {
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar la reserva: " + error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -519,9 +563,9 @@ export const useHotelData = () => {
     updateRoom: (id: string, updates: Partial<Room>) => updateRoomMutation.mutate({ id, updates }),
     deleteRoom: (id: string) => deleteRoomMutation.mutate(id),
     addReservation: (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => 
-      addReservationMutation.mutate(reservationData),
+      addReservationMutation.mutateAsync(reservationData),
     updateReservation: (id: string, updates: Partial<Reservation>) => 
-      updateReservationMutation.mutate({ id, updates }),
+      updateReservationMutation.mutateAsync({ id, updates }),
     deleteReservation: (id: string) => deleteReservationMutation.mutate(id),
   };
 };

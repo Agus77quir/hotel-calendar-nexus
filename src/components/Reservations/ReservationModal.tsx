@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { CalendarDays, Users, DollarSign } from 'lucide-react';
+import { CalendarDays, Users, DollarSign, AlertTriangle } from 'lucide-react';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -55,6 +56,9 @@ export const ReservationModal = ({
     special_requests: '',
   });
 
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (reservation && mode === 'edit') {
       setFormData({
@@ -77,11 +81,43 @@ export const ReservationModal = ({
         special_requests: '',
       });
     }
+    setAvailabilityError('');
   }, [reservation, mode, isOpen]);
 
   // Get selected room details
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
+
+  // Filter available rooms based on dates and existing reservations
+  const getAvailableRooms = () => {
+    if (!formData.check_in || !formData.check_out) {
+      return rooms.filter(room => room.status === 'available');
+    }
+
+    // For editing, we need to exclude the current reservation from the check
+    const excludeReservationId = mode === 'edit' && reservation ? reservation.id : null;
+    
+    return rooms.filter(room => {
+      // Room must be available for new reservations
+      if (mode === 'create' && room.status !== 'available') {
+        return false;
+      }
+      
+      // For editing, allow the current room even if it's occupied
+      if (mode === 'edit' && room.id === formData.room_id) {
+        return true;
+      }
+      
+      // Room must be available
+      if (room.status !== 'available') {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  const availableRooms = getAvailableRooms();
 
   // Handle room change - adjust guest count if it exceeds new room capacity
   const handleRoomChange = (roomId: string) => {
@@ -93,6 +129,9 @@ export const ReservationModal = ({
       room_id: roomId,
       guests_count: prev.guests_count > newMaxCapacity ? newMaxCapacity : prev.guests_count
     }));
+    
+    // Clear availability error when room changes
+    setAvailabilityError('');
   };
 
   const calculateTotal = () => {
@@ -114,27 +153,43 @@ export const ReservationModal = ({
     return checkOut > checkIn;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateDates()) {
-      alert('La fecha de check-out debe ser posterior a la fecha de check-in');
+      setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
       return;
     }
     
-    const totalAmount = calculateTotal();
+    setIsSubmitting(true);
+    setAvailabilityError('');
 
-    const reservationData = {
-      ...formData,
-      total_amount: totalAmount,
-      created_by: 'current-user-id', // This should come from auth context
-    };
+    try {
+      const totalAmount = calculateTotal();
 
-    onSave(reservationData);
-    onClose();
+      const reservationData = {
+        ...formData,
+        total_amount: totalAmount,
+        created_by: 'current-user-id', // This should come from auth context
+      };
+
+      await onSave(reservationData);
+      onClose();
+    } catch (error: any) {
+      console.error('Error saving reservation:', error);
+      
+      // Handle specific database constraint errors
+      if (error.message && error.message.includes('no_overlapping_reservations')) {
+        setAvailabilityError('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
+      } else if (error.message && error.message.includes('Ya existe una reserva')) {
+        setAvailabilityError('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
+      } else {
+        setAvailabilityError(error.message || 'Error al crear la reserva. Por favor, intenta nuevamente.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const availableRooms = rooms.filter(room => room.status === 'available');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -156,6 +211,13 @@ export const ReservationModal = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+          {availabilityError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{availabilityError}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
@@ -177,7 +239,14 @@ export const ReservationModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="room_id" className="text-sm font-medium">Habitación</Label>
+              <Label htmlFor="room_id" className="text-sm font-medium">
+                Habitación
+                {availableRooms.length === 0 && formData.check_in && formData.check_out && (
+                  <span className="text-red-500 text-xs ml-2">
+                    (No hay habitaciones disponibles para estas fechas)
+                  </span>
+                )}
+              </Label>
               <Select value={formData.room_id} onValueChange={handleRoomChange}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Seleccionar habitación" />
@@ -205,7 +274,10 @@ export const ReservationModal = ({
               <Input
                 type="date"
                 value={formData.check_in}
-                onChange={(e) => setFormData({...formData, check_in: e.target.value})}
+                onChange={(e) => {
+                  setFormData({...formData, check_in: e.target.value});
+                  setAvailabilityError(''); // Clear error when dates change
+                }}
                 className="h-10"
                 required
               />
@@ -215,7 +287,10 @@ export const ReservationModal = ({
               <Input
                 type="date"
                 value={formData.check_out}
-                onChange={(e) => setFormData({...formData, check_out: e.target.value})}
+                onChange={(e) => {
+                  setFormData({...formData, check_out: e.target.value});
+                  setAvailabilityError(''); // Clear error when dates change
+                }}
                 className="h-10"
                 required
                 min={formData.check_in}
@@ -313,9 +388,12 @@ export const ReservationModal = ({
             <Button 
               type="submit" 
               className="px-6"
-              disabled={!validateDates()}
+              disabled={!validateDates() || isSubmitting || availableRooms.length === 0}
             >
-              {mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'}
+              {isSubmitting 
+                ? 'Guardando...' 
+                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+              }
             </Button>
           </div>
         </form>
