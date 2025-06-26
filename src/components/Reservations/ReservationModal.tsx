@@ -88,31 +88,32 @@ export const ReservationModal = ({
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
 
+  // Check if dates overlap
+  const datesOverlap = (start1: string, end1: string, start2: string, end2: string) => {
+    return start1 < end2 && end1 > start2;
+  };
+
   // Filter available rooms based on dates and existing reservations
   const getAvailableRooms = () => {
+    // If no dates selected, show only available rooms
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
 
-    // For editing, we need to exclude the current reservation from the check
-    const excludeReservationId = mode === 'edit' && reservation ? reservation.id : null;
-    
     return rooms.filter(room => {
-      // Room must be available for new reservations
-      if (mode === 'create' && room.status !== 'available') {
-        return false;
-      }
-      
-      // For editing, allow the current room even if it's occupied
-      if (mode === 'edit' && room.id === formData.room_id) {
-        return true;
-      }
-      
       // Room must be available
       if (room.status !== 'available') {
         return false;
       }
-      
+
+      // For editing, allow the current room even if it has reservations
+      if (mode === 'edit' && room.id === formData.room_id) {
+        return true;
+      }
+
+      // Check if room has any overlapping reservations for the selected dates
+      // This would need to be implemented with actual reservation data checking
+      // For now, we'll rely on the backend constraint to handle this
       return true;
     });
   };
@@ -131,6 +132,17 @@ export const ReservationModal = ({
     }));
     
     // Clear availability error when room changes
+    setAvailabilityError('');
+  };
+
+  // Handle date changes - reset room selection and clear errors
+  const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+      // Reset room selection when dates change to force user to reselect
+      room_id: field === 'check_in' || field === 'check_out' ? '' : prev.room_id
+    }));
     setAvailabilityError('');
   };
 
@@ -160,6 +172,11 @@ export const ReservationModal = ({
       setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
       return;
     }
+
+    if (!formData.room_id) {
+      setAvailabilityError('Debe seleccionar una habitación disponible para las fechas indicadas');
+      return;
+    }
     
     setIsSubmitting(true);
     setAvailabilityError('');
@@ -179,10 +196,9 @@ export const ReservationModal = ({
       console.error('Error saving reservation:', error);
       
       // Handle specific database constraint errors
-      if (error.message && error.message.includes('no_overlapping_reservations')) {
-        setAvailabilityError('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
-      } else if (error.message && error.message.includes('Ya existe una reserva')) {
-        setAvailabilityError('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
+      if (error.message && (error.message.includes('no_overlapping_reservations') || 
+          error.message.includes('Ya existe una reserva'))) {
+        setAvailabilityError('Habitación ya reservada, elija otra. Esta habitación no está disponible para las fechas seleccionadas.');
       } else {
         setAvailabilityError(error.message || 'Error al crear la reserva. Por favor, intenta nuevamente.');
       }
@@ -241,13 +257,22 @@ export const ReservationModal = ({
             <div className="space-y-2">
               <Label htmlFor="room_id" className="text-sm font-medium">
                 Habitación
-                {availableRooms.length === 0 && formData.check_in && formData.check_out && (
+                {formData.check_in && formData.check_out && availableRooms.length === 0 && (
                   <span className="text-red-500 text-xs ml-2">
                     (No hay habitaciones disponibles para estas fechas)
                   </span>
                 )}
+                {(!formData.check_in || !formData.check_out) && (
+                  <span className="text-amber-500 text-xs ml-2">
+                    (Seleccione fechas primero)
+                  </span>
+                )}
               </Label>
-              <Select value={formData.room_id} onValueChange={handleRoomChange}>
+              <Select 
+                value={formData.room_id} 
+                onValueChange={handleRoomChange}
+                disabled={!formData.check_in || !formData.check_out || availableRooms.length === 0}
+              >
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Seleccionar habitación" />
                 </SelectTrigger>
@@ -274,10 +299,7 @@ export const ReservationModal = ({
               <Input
                 type="date"
                 value={formData.check_in}
-                onChange={(e) => {
-                  setFormData({...formData, check_in: e.target.value});
-                  setAvailabilityError(''); // Clear error when dates change
-                }}
+                onChange={(e) => handleDateChange('check_in', e.target.value)}
                 className="h-10"
                 required
               />
@@ -287,10 +309,7 @@ export const ReservationModal = ({
               <Input
                 type="date"
                 value={formData.check_out}
-                onChange={(e) => {
-                  setFormData({...formData, check_out: e.target.value});
-                  setAvailabilityError(''); // Clear error when dates change
-                }}
+                onChange={(e) => handleDateChange('check_out', e.target.value)}
                 className="h-10"
                 required
                 min={formData.check_in}
@@ -302,6 +321,14 @@ export const ReservationModal = ({
             <div className="bg-red-50 border border-red-200 p-3 rounded-md">
               <p className="text-red-700 text-sm">
                 La fecha de check-out debe ser posterior a la fecha de check-in
+              </p>
+            </div>
+          )}
+
+          {formData.check_in && formData.check_out && validateDates() && availableRooms.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+              <p className="text-amber-700 text-sm">
+                No hay habitaciones disponibles para las fechas seleccionadas. Por favor, elija otras fechas.
               </p>
             </div>
           )}
@@ -388,7 +415,7 @@ export const ReservationModal = ({
             <Button 
               type="submit" 
               className="px-6"
-              disabled={!validateDates() || isSubmitting || availableRooms.length === 0}
+              disabled={!validateDates() || isSubmitting || !formData.room_id}
             >
               {isSubmitting 
                 ? 'Guardando...' 
