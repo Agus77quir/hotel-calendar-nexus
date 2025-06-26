@@ -69,7 +69,7 @@ export const LoginForm = () => {
           <div className="flex justify-center items-center gap-2 mb-4">
             <Hotel className="h-10 w-10 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">NARDINI</h1>
+              <h1 className="text-3xl font-bold text-blue-600">Nardini S.R.L</h1>
               <p className="text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
             </div>
           </div>
