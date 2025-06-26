@@ -141,17 +141,17 @@ export const useReportExport = () => {
       [`Fecha: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`],
       [''],
       ['Resumen de Habitaciones'],
-      ['Total de habitaciones', rooms.length],
-      ['Habitaciones ocupadas', rooms.filter(r => r.status === 'occupied').length],
-      ['Habitaciones disponibles', rooms.filter(r => r.status === 'available').length],
-      ['Habitaciones en mantenimiento', rooms.filter(r => r.status === 'maintenance').length],
+      ['Total de habitaciones', rooms.length.toString()],
+      ['Habitaciones ocupadas', rooms.filter(r => r.status === 'occupied').length.toString()],
+      ['Habitaciones disponibles', rooms.filter(r => r.status === 'available').length.toString()],
+      ['Habitaciones en mantenimiento', rooms.filter(r => r.status === 'maintenance').length.toString()],
       [''],
       ['Resumen de Reservas'],
-      ['Total de reservas', reservations.length],
-      ['Reservas confirmadas', reservations.filter(r => r.status === 'confirmed').length],
-      ['Reservas registradas', reservations.filter(r => r.status === 'checked-in').length],
-      ['Reservas completadas', reservations.filter(r => r.status === 'checked-out').length],
-      ['Reservas canceladas', reservations.filter(r => r.status === 'cancelled').length]
+      ['Total de reservas', reservations.length.toString()],
+      ['Reservas confirmadas', reservations.filter(r => r.status === 'confirmed').length.toString()],
+      ['Reservas registradas', reservations.filter(r => r.status === 'checked-in').length.toString()],
+      ['Reservas completadas', reservations.filter(r => r.status === 'checked-out').length.toString()],
+      ['Reservas canceladas', reservations.filter(r => r.status === 'cancelled').length.toString()]
     ];
     
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
@@ -173,12 +173,12 @@ export const useReportExport = () => {
         room?.number || 'N/A',
         reservation.check_in,
         reservation.check_out,
-        reservation.guests_count,
+        reservation.guests_count.toString(),
         reservation.status === 'confirmed' ? 'Confirmada' :
         reservation.status === 'checked-in' ? 'Registrado' :
         reservation.status === 'checked-out' ? 'Check-out' :
         reservation.status === 'cancelled' ? 'Cancelada' : reservation.status,
-        reservation.total_amount,
+        reservation.total_amount.toString(),
         reservation.special_requests || ''
       ]);
     });
@@ -217,8 +217,8 @@ export const useReportExport = () => {
         room.id,
         room.number,
         room.type,
-        room.capacity,
-        room.price,
+        room.capacity.toString(),
+        room.price.toString(),
         room.status === 'available' ? 'Disponible' :
         room.status === 'occupied' ? 'Ocupada' :
         room.status === 'maintenance' ? 'Mantenimiento' : room.status,

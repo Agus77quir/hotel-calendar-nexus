@@ -57,7 +57,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <OccupancyChart reservations={reservations} rooms={rooms} />
-        <RevenueChart reservations={reservations} />
+        <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
