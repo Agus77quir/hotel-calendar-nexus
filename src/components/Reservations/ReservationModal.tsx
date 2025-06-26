@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { CalendarDays, Users, DollarSign, AlertTriangle } from 'lucide-react';
+import { useHotelData } from '@/hooks/useHotelData';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const ReservationModal = ({
   reservation,
   mode
 }: ReservationModalProps) => {
+  const { reservations } = useHotelData();
   const [formData, setFormData] = useState({
     guest_id: '',
     room_id: '',
@@ -88,14 +90,38 @@ export const ReservationModal = ({
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
 
-  // Check if dates overlap
-  const datesOverlap = (start1: string, end1: string, start2: string, end2: string) => {
-    return start1 < end2 && end1 > start2;
+  // Check if dates overlap with existing reservations
+  const hasDateOverlap = (roomId: string, checkIn: string, checkOut: string) => {
+    if (!checkIn || !checkOut || !roomId) return false;
+    
+    console.log('Checking overlap for room:', roomId, 'dates:', checkIn, 'to', checkOut);
+    
+    return reservations.some(existingReservation => {
+      // Skip cancelled reservations
+      if (existingReservation.status === 'cancelled') return false;
+      
+      // Skip the current reservation being edited
+      if (mode === 'edit' && reservation && existingReservation.id === reservation.id) return false;
+      
+      // Only check same room
+      if (existingReservation.room_id !== roomId) return false;
+      
+      const existingCheckIn = existingReservation.check_in;
+      const existingCheckOut = existingReservation.check_out;
+      
+      // Check for overlap: new reservation starts before existing ends AND new reservation ends after existing starts
+      const overlap = checkIn < existingCheckOut && checkOut > existingCheckIn;
+      
+      console.log('Comparing with existing reservation:', existingReservation.id, 
+        'dates:', existingCheckIn, 'to', existingCheckOut, 'overlap:', overlap);
+      
+      return overlap;
+    });
   };
 
   // Filter available rooms based on dates and existing reservations
   const getAvailableRooms = () => {
-    // If no dates selected, show only available rooms
+    // If no dates selected, show only rooms with 'available' status
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
@@ -106,15 +132,12 @@ export const ReservationModal = ({
         return false;
       }
 
-      // For editing, allow the current room even if it has reservations
-      if (mode === 'edit' && room.id === formData.room_id) {
-        return true;
-      }
-
       // Check if room has any overlapping reservations for the selected dates
-      // This would need to be implemented with actual reservation data checking
-      // For now, we'll rely on the backend constraint to handle this
-      return true;
+      const hasOverlap = hasDateOverlap(room.id, formData.check_in, formData.check_out);
+      
+      console.log('Room', room.number, 'has overlap:', hasOverlap);
+      
+      return !hasOverlap;
     });
   };
 
@@ -124,6 +147,15 @@ export const ReservationModal = ({
   const handleRoomChange = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
+    
+    // Check if selected room has overlap
+    if (formData.check_in && formData.check_out) {
+      const hasOverlap = hasDateOverlap(roomId, formData.check_in, formData.check_out);
+      if (hasOverlap) {
+        setAvailabilityError('Habitación ya reservada, elija otra');
+        return;
+      }
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -137,12 +169,24 @@ export const ReservationModal = ({
 
   // Handle date changes - reset room selection and clear errors
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-      // Reset room selection when dates change to force user to reselect
-      room_id: field === 'check_in' || field === 'check_out' ? '' : prev.room_id
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // If we have both dates and a selected room, check for overlap
+      if (newFormData.check_in && newFormData.check_out && newFormData.room_id) {
+        const hasOverlap = hasDateOverlap(newFormData.room_id, newFormData.check_in, newFormData.check_out);
+        if (hasOverlap) {
+          // Clear room selection if it now has overlap
+          newFormData.room_id = '';
+        }
+      }
+      
+      return newFormData;
+    });
+    
     setAvailabilityError('');
   };
 
@@ -177,6 +221,13 @@ export const ReservationModal = ({
       setAvailabilityError('Debe seleccionar una habitación disponible para las fechas indicadas');
       return;
     }
+
+    // Final validation for room availability
+    const hasOverlap = hasDateOverlap(formData.room_id, formData.check_in, formData.check_out);
+    if (hasOverlap) {
+      setAvailabilityError('Habitación ya reservada, elija otra');
+      return;
+    }
     
     setIsSubmitting(true);
     setAvailabilityError('');
@@ -198,7 +249,7 @@ export const ReservationModal = ({
       // Handle specific database constraint errors
       if (error.message && (error.message.includes('no_overlapping_reservations') || 
           error.message.includes('Ya existe una reserva'))) {
-        setAvailabilityError('Habitación ya reservada, elija otra. Esta habitación no está disponible para las fechas seleccionadas.');
+        setAvailabilityError('Habitación ya reservada, elija otra');
       } else {
         setAvailabilityError(error.message || 'Error al crear la reserva. Por favor, intenta nuevamente.');
       }
@@ -234,63 +285,23 @@ export const ReservationModal = ({
             </Alert>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
-              <Select value={formData.guest_id} onValueChange={(value) => setFormData({...formData, guest_id: value})}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Seleccionar huésped" />
-                </SelectTrigger>
-                <SelectContent>
-                  {guests.map((guest) => (
-                    <SelectItem key={guest.id} value={guest.id}>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        {guest.first_name} {guest.last_name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="room_id" className="text-sm font-medium">
-                Habitación
-                {formData.check_in && formData.check_out && availableRooms.length === 0 && (
-                  <span className="text-red-500 text-xs ml-2">
-                    (No hay habitaciones disponibles para estas fechas)
-                  </span>
-                )}
-                {(!formData.check_in || !formData.check_out) && (
-                  <span className="text-amber-500 text-xs ml-2">
-                    (Seleccione fechas primero)
-                  </span>
-                )}
-              </Label>
-              <Select 
-                value={formData.room_id} 
-                onValueChange={handleRoomChange}
-                disabled={!formData.check_in || !formData.check_out || availableRooms.length === 0}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Seleccionar habitación" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{room.number} - {getRoomTypeDisplayName(room.type)}</span>
-                        <div className="flex items-center gap-2 ml-2">
-                          <span className="text-xs text-muted-foreground">Max: {room.capacity}</span>
-                          <span className="text-primary font-medium">${room.price}/noche</span>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
+            <Select value={formData.guest_id} onValueChange={(value) => setFormData({...formData, guest_id: value})}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Seleccionar huésped" />
+              </SelectTrigger>
+              <SelectContent>
+                {guests.map((guest) => (
+                  <SelectItem key={guest.id} value={guest.id}>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      {guest.first_name} {guest.last_name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -324,6 +335,44 @@ export const ReservationModal = ({
               </p>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="room_id" className="text-sm font-medium">
+              Habitación
+              {formData.check_in && formData.check_out && availableRooms.length === 0 && (
+                <span className="text-red-500 text-xs ml-2">
+                  (No hay habitaciones disponibles para estas fechas)
+                </span>
+              )}
+              {(!formData.check_in || !formData.check_out) && (
+                <span className="text-amber-500 text-xs ml-2">
+                  (Seleccione fechas primero)
+                </span>
+              )}
+            </Label>
+            <Select 
+              value={formData.room_id} 
+              onValueChange={handleRoomChange}
+              disabled={!formData.check_in || !formData.check_out || availableRooms.length === 0}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Seleccionar habitación" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{room.number} - {getRoomTypeDisplayName(room.type)}</span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <span className="text-xs text-muted-foreground">Max: {room.capacity}</span>
+                        <span className="text-primary font-medium">${room.price}/noche</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {formData.check_in && formData.check_out && validateDates() && availableRooms.length === 0 && (
             <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
