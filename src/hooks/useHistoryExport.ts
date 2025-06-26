@@ -33,33 +33,72 @@ export const useHistoryExport = () => {
       }
     };
 
-    const getGuestName = (record: AuditRecordWithEntity) => {
-      if (record.entityType === 'guests') {
-        const newData = record.new_data || record.old_data;
-        if (newData && newData.first_name && newData.last_name) {
-          return `${newData.first_name} ${newData.last_name}`;
+    const getEntityName = (record: AuditRecordWithEntity) => {
+      try {
+        const data = record.new_data || record.old_data;
+        if (!data || typeof data !== 'object') return 'N/A';
+
+        if (record.entityType === 'guests') {
+          if (data.first_name && data.last_name) {
+            return `${data.first_name} ${data.last_name}`;
+          }
+        } else if (record.entityType === 'reservations') {
+          if (data.guest_name) {
+            return data.guest_name;
+          }
+        } else if (record.entityType === 'rooms') {
+          if (data.number) {
+            return `Habitación ${data.number}`;
+          }
         }
-      } else if (record.entityType === 'reservations') {
-        const newData = record.new_data || record.old_data;
-        if (newData && newData.guest_name) {
-          return newData.guest_name;
-        }
+        return 'N/A';
+      } catch (error) {
+        return 'N/A';
       }
-      return 'N/A';
+    };
+
+    const getEntityDetails = (record: AuditRecordWithEntity) => {
+      try {
+        const data = record.new_data || record.old_data;
+        if (!data || typeof data !== 'object') return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
+
+        if (record.entityType === 'reservations') {
+          return {
+            room: data.room_number || 'N/A',
+            checkIn: data.check_in ? format(new Date(data.check_in), 'dd/MM/yyyy') : 'N/A',
+            checkOut: data.check_out ? format(new Date(data.check_out), 'dd/MM/yyyy') : 'N/A'
+          };
+        } else if (record.entityType === 'rooms') {
+          return {
+            room: data.number || 'N/A',
+            checkIn: 'N/A',
+            checkOut: 'N/A'
+          };
+        }
+        return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
+      } catch (error) {
+        return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
+      }
     };
     
     // Preparar datos para la tabla
-    const historyData = records.map(record => [
-      record.changed_by || 'Sistema',
-      getGuestName(record),
-      getOperationText(record.operation_type),
-      format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es })
-    ]);
+    const historyData = records.map(record => {
+      const details = getEntityDetails(record);
+      return [
+        format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es }),
+        record.changed_by || 'Sistema',
+        getOperationText(record.operation_type),
+        getEntityName(record),
+        details.room,
+        details.checkIn,
+        details.checkOut
+      ];
+    });
     
     // Crear la tabla
     autoTable(doc, {
       startY: 60,
-      head: [['Usuario', 'Huésped', 'Acción', 'Fecha']],
+      head: [['Fecha', 'Usuario', 'Acción', 'Entidad', 'Habitación', 'Check-in', 'Check-out']],
       body: historyData,
       theme: 'striped',
       headStyles: { 
@@ -68,14 +107,17 @@ export const useHistoryExport = () => {
         fontStyle: 'bold'
       },
       styles: { 
-        fontSize: 10,
-        cellPadding: 5
+        fontSize: 8,
+        cellPadding: 3
       },
       columnStyles: {
-        0: { cellWidth: 40 }, // Usuario
-        1: { cellWidth: 50 }, // Huésped
-        2: { cellWidth: 35 }, // Acción
-        3: { cellWidth: 40 }  // Fecha
+        0: { cellWidth: 25 }, // Fecha
+        1: { cellWidth: 20 }, // Usuario
+        2: { cellWidth: 20 }, // Acción
+        3: { cellWidth: 35 }, // Entidad
+        4: { cellWidth: 20 }, // Habitación
+        5: { cellWidth: 20 }, // Check-in
+        6: { cellWidth: 20 }  // Check-out
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]

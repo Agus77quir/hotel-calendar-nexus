@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Search, Filter, Clock, AlertCircle } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FileText, Search, Filter, Clock, AlertCircle, Calendar, User } from 'lucide-react';
 import { useAuditData } from '@/hooks/useAuditData';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
@@ -17,6 +18,8 @@ import { toast } from '@/hooks/use-toast';
 const HistoryPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOperation, setFilterOperation] = useState<'all' | 'INSERT' | 'UPDATE' | 'DELETE'>('all');
+  const [filterUser, setFilterUser] = useState<'all' | 'Admin' | 'Rec 1' | 'Rec 2'>('all');
+  const [dateFilter, setDateFilter] = useState('');
   
   const { guestsAudit, roomsAudit, reservationsAudit, isLoading, error } = useAuditData();
   const { exportHistoryToPDF } = useHistoryExport();
@@ -40,14 +43,18 @@ const HistoryPage = () => {
 
   // Filtrar registros
   const filteredRecords = allRecords.filter(record => {
-    const guestName = getGuestName(record);
+    const entityName = getEntityName(record);
     const matchesSearch = searchTerm === '' || 
       (record.changed_by && record.changed_by.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      guestName.toLowerCase().includes(searchTerm.toLowerCase());
+      entityName.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesOperation = filterOperation === 'all' || record.operation_type === filterOperation;
+    const matchesUser = filterUser === 'all' || record.changed_by === filterUser;
     
-    return matchesSearch && matchesOperation;
+    const matchesDate = dateFilter === '' || 
+      format(new Date(record.changed_at), 'yyyy-MM-dd') === dateFilter;
+    
+    return matchesSearch && matchesOperation && matchesUser && matchesDate;
   });
 
   const getOperationText = (operation: string) => {
@@ -63,28 +70,66 @@ const HistoryPage = () => {
     }
   };
 
-  const getGuestName = (record: AuditRecordWithEntity) => {
+  const getOperationColor = (operation: string) => {
+    switch (operation) {
+      case 'INSERT':
+        return 'bg-green-100 text-green-800';
+      case 'UPDATE':
+        return 'bg-blue-100 text-blue-800';
+      case 'DELETE':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getEntityName = (record: AuditRecordWithEntity) => {
     try {
+      const data = record.new_data || record.old_data;
+      if (!data || typeof data !== 'object') return 'N/A';
+
       if (record.entityType === 'guests') {
-        const data = record.new_data || record.old_data;
-        if (data && typeof data === 'object' && data.first_name && data.last_name) {
+        if (data.first_name && data.last_name) {
           return `${data.first_name} ${data.last_name}`;
         }
       } else if (record.entityType === 'reservations') {
-        const data = record.new_data || record.old_data;
-        if (data && typeof data === 'object' && data.guest_name) {
+        if (data.guest_name) {
           return data.guest_name;
         }
       } else if (record.entityType === 'rooms') {
-        const data = record.new_data || record.old_data;
-        if (data && typeof data === 'object' && data.number) {
+        if (data.number) {
           return `Habitación ${data.number}`;
         }
       }
       return 'N/A';
     } catch (error) {
-      console.error('Error getting guest name:', error);
+      console.error('Error getting entity name:', error);
       return 'N/A';
+    }
+  };
+
+  const getEntityDetails = (record: AuditRecordWithEntity) => {
+    try {
+      const data = record.new_data || record.old_data;
+      if (!data || typeof data !== 'object') return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
+
+      if (record.entityType === 'reservations') {
+        return {
+          room: data.room_number || 'N/A',
+          checkIn: data.check_in ? format(new Date(data.check_in), 'dd/MM/yyyy') : 'N/A',
+          checkOut: data.check_out ? format(new Date(data.check_out), 'dd/MM/yyyy') : 'N/A'
+        };
+      } else if (record.entityType === 'rooms') {
+        return {
+          room: data.number || 'N/A',
+          checkIn: 'N/A',
+          checkOut: 'N/A'
+        };
+      }
+      return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
+    } catch (error) {
+      console.error('Error getting entity details:', error);
+      return { room: 'N/A', checkIn: 'N/A', checkOut: 'N/A' };
     }
   };
 
@@ -111,6 +156,13 @@ const HistoryPage = () => {
         variant: 'destructive'
       });
     }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterOperation('all');
+    setFilterUser('all');
+    setDateFilter('');
   };
 
   if (isLoading) {
@@ -183,43 +235,22 @@ const HistoryPage = () => {
         <BackToHomeButton />
       </div>
 
-      {/* Debug info card - mostrar solo si no hay datos */}
-      {allRecords.length === 0 && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">Información de depuración</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-yellow-700">
-              <p>Estados de las consultas:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Huéspedes: {guestsAudit?.length || 0} registros</li>
-                <li>Habitaciones: {roomsAudit?.length || 0} registros</li>
-                <li>Reservas: {reservationsAudit?.length || 0} registros</li>
-                <li>Cargando: {isLoading ? 'Sí' : 'No'}</li>
-                <li>Error: {error ? 'Sí' : 'No'}</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Filtros y búsqueda */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtros
+            Filtros y Búsqueda
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Usuario o huésped..."
+                  placeholder="Usuario o entidad..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -234,7 +265,7 @@ const HistoryPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="all">Todas las acciones</SelectItem>
                   <SelectItem value="INSERT">Creación</SelectItem>
                   <SelectItem value="UPDATE">Actualización</SelectItem>
                   <SelectItem value="DELETE">Eliminación</SelectItem>
@@ -243,11 +274,44 @@ const HistoryPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Exportar</label>
-              <Button onClick={handleExportPDF} className="w-full flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Exportar PDF
-              </Button>
+              <label className="text-sm font-medium">Usuario</label>
+              <Select value={filterUser} onValueChange={(value: any) => setFilterUser(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los usuarios</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Rec 1">Rec 1</SelectItem>
+                  <SelectItem value="Rec 2">Rec 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Fecha</label>
+              <div className="relative">
+                <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Acciones</label>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={clearFilters} className="flex-1">
+                  Limpiar
+                </Button>
+                <Button onClick={handleExportPDF} className="flex-1 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  PDF
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -270,41 +334,55 @@ const HistoryPage = () => {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted border-b">
-                    <th className="py-3 px-4 text-left font-medium">Usuario</th>
-                    <th className="py-3 px-4 text-left font-medium">Entidad</th>
-                    <th className="py-3 px-4 text-left font-medium">Acción</th>
-                    <th className="py-3 px-4 text-left font-medium">Fecha</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Usuario</TableHead>
+                    <TableHead>Acción</TableHead>
+                    <TableHead>Entidad</TableHead>
+                    <TableHead>Habitación</TableHead>
+                    <TableHead>Check-in</TableHead>
+                    <TableHead>Check-out</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-6 text-center text-muted-foreground">
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-6">
                         No se encontraron registros con los filtros aplicados
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    filteredRecords.map((record) => (
-                      <tr key={record.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4 font-medium">{record.changed_by || 'Sistema'}</td>
-                        <td className="py-3 px-4">{getGuestName(record)}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant="outline">
-                            {getOperationText(record.operation_type)}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es })}
-                        </td>
-                      </tr>
-                    ))
+                    filteredRecords.map((record) => {
+                      const details = getEntityDetails(record);
+                      return (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">
+                            {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              {record.changed_by || 'Sistema'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getOperationColor(record.operation_type)}>
+                              {getOperationText(record.operation_type)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{getEntityName(record)}</TableCell>
+                          <TableCell>{details.room}</TableCell>
+                          <TableCell>{details.checkIn}</TableCell>
+                          <TableCell>{details.checkOut}</TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

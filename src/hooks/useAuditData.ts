@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GuestAudit, RoomAudit, ReservationAudit, AuditType } from '@/types/audit';
 
-export const useAuditData = (auditType?: AuditType, limit = 50) => {
+export const useAuditData = (auditType?: AuditType, limit = 100) => {
   const { data: guestsAudit = [], isLoading: guestsLoading, error: guestsError } = useQuery({
     queryKey: ['guests-audit', limit],
     queryFn: async () => {
@@ -24,7 +24,7 @@ export const useAuditData = (auditType?: AuditType, limit = 50) => {
     },
     enabled: !auditType || auditType === 'guests',
     retry: 1,
-    staleTime: 30000,
+    staleTime: 10000,
   });
 
   const { data: roomsAudit = [], isLoading: roomsLoading, error: roomsError } = useQuery({
@@ -47,7 +47,7 @@ export const useAuditData = (auditType?: AuditType, limit = 50) => {
     },
     enabled: !auditType || auditType === 'rooms',
     retry: 1,
-    staleTime: 30000,
+    staleTime: 10000,
   });
 
   const { data: reservationsAudit = [], isLoading: reservationsLoading, error: reservationsError } = useQuery({
@@ -70,7 +70,7 @@ export const useAuditData = (auditType?: AuditType, limit = 50) => {
     },
     enabled: !auditType || auditType === 'reservations',
     retry: 1,
-    staleTime: 30000,
+    staleTime: 10000,
   });
 
   const isLoading = guestsLoading || roomsLoading || reservationsLoading;
@@ -82,7 +82,6 @@ export const useAuditData = (auditType?: AuditType, limit = 50) => {
     reservationsCount: reservationsAudit?.length || 0,
     isLoading,
     hasErrors: !!hasErrors,
-    errors: { guestsError, roomsError, reservationsError }
   });
 
   return {
