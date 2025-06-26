@@ -76,18 +76,18 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <header className="h-16 md:h-20 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-3 md:px-6 shadow-lg">
               <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
                 <SidebarTrigger>
-                  <Button variant="ghost" size="lg" className="p-2 md:p-3">
+                  <Button variant="ghost" size="lg" className="p-2 md:p-3 flex-shrink-0">
                     <Menu className="h-6 w-6 md:h-9 md:w-9 text-blue-700 drop-shadow-md" />
                   </Button>
                 </SidebarTrigger>
-                <div className="flex items-center gap-2 md:gap-4 min-w-0">
+                <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
                   <img 
                     src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
                     alt="NARDINI SRL" 
                     className="h-8 md:h-12 w-auto object-contain flex-shrink-0"
                   />
-                  <div className="hidden sm:block min-w-0">
-                    <span className="font-bold text-sm md:text-lg text-blue-600 truncate">Gestión de Hoteles</span>
+                  <div className="hidden lg:block min-w-0 flex-shrink">
+                    <span className="font-bold text-sm md:text-lg text-blue-600 block truncate">Gestión de Hoteles</span>
                     <div className="text-xs text-green-600 font-medium">
                       {getSystemStatus()}
                     </div>
@@ -95,8 +95,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                {/* User info */}
-                <div className="hidden md:flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2">
+                {/* User info - hidden on small screens, shown on medium+ */}
+                <div className="hidden xl:flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2">
                   <User className="h-4 w-4 text-blue-600" />
                   <div className="text-sm">
                     <div className="font-medium text-gray-900">{user?.firstName}</div>
@@ -106,7 +106,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="bg-white/80 hover:bg-white h-8 w-8 md:h-10 md:w-10"
+                  className="bg-white/80 hover:bg-white h-8 w-8 md:h-10 md:w-10 flex-shrink-0"
                   onClick={() => setIsSearchOpen(true)}
                   title="Buscar huéspedes (Ctrl+K)"
                 >
@@ -115,7 +115,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="bg-white/80 hover:bg-white flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4"
+                  className="bg-white/80 hover:bg-white flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 flex-shrink-0"
                   title="Cerrar Sesión"
                   size="sm"
                 >
