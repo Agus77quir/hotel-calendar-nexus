@@ -11,12 +11,11 @@ import { useAuditData } from '@/hooks/useAuditData';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AuditRecord } from '@/types/audit';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const AuditPage = () => {
-  const [responsibleFilter, setResponsibleFilter] = useState<string>('');
+  const [responsibleFilter, setResponsibleFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   
   const { guestsAudit, roomsAudit, reservationsAudit, isLoading } = useAuditData();
@@ -30,7 +29,7 @@ const AuditPage = () => {
 
   // Filtrar registros
   const filteredRecords = allAuditRecords.filter(record => {
-    const responsibleMatch = !responsibleFilter || record.changed_by === responsibleFilter;
+    const responsibleMatch = responsibleFilter === 'all' || record.changed_by === responsibleFilter;
     const dateMatch = !dateFilter || format(new Date(record.changed_at), 'yyyy-MM-dd') === dateFilter;
     return responsibleMatch && dateMatch;
   });
@@ -80,19 +79,16 @@ const AuditPage = () => {
   };
 
   const exportToPDF = () => {
-    const doc = new jsPDF('l', 'mm', 'a4'); // Formato horizontal
+    const doc = new jsPDF('l', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Título del reporte
     doc.setFontSize(20);
     doc.text('Reporte de Auditoría', pageWidth / 2, 20, { align: 'center' });
     
-    // Fecha del reporte
     doc.setFontSize(12);
     doc.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 20, 35);
     doc.text(`Total de registros: ${filteredRecords.length}`, 20, 45);
     
-    // Preparar datos para la tabla
     const auditData = filteredRecords.map(record => [
       format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es }),
       record.changed_by || 'Sistema',
@@ -101,7 +97,6 @@ const AuditPage = () => {
       getReservationInfo(record)
     ]);
     
-    // Crear la tabla
     autoTable(doc, {
       startY: 60,
       head: [['Fecha y Hora', 'Responsable', 'Huésped', 'Habitación', 'Reserva']],
@@ -117,18 +112,17 @@ const AuditPage = () => {
         cellPadding: 4
       },
       columnStyles: {
-        0: { cellWidth: 40 }, // Fecha y Hora
-        1: { cellWidth: 30 }, // Responsable
-        2: { cellWidth: 50 }, // Huésped
-        3: { cellWidth: 30 }, // Habitación
-        4: { cellWidth: 50 }  // Reserva
+        0: { cellWidth: 40 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 50 }
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       }
     });
     
-    // Guardar el PDF
     doc.save(`auditoria-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
@@ -169,7 +163,7 @@ const AuditPage = () => {
                   <SelectValue placeholder="Todos los responsables" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="Admin">Admin</SelectItem>
                   <SelectItem value="Rec1">Rec1</SelectItem>
                   <SelectItem value="Rec2">Rec2</SelectItem>

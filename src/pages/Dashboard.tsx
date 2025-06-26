@@ -1,99 +1,87 @@
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CalendarDays, Users, Bed, TrendingUp, Calendar, User, MapPin } from 'lucide-react';
-import { useHotelData } from '@/hooks/useHotelData';
+import { Users, Bed, CalendarDays, TrendingUp, CheckCircle } from 'lucide-react';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { OccupancyChart } from '@/components/Dashboard/OccupancyChart';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { RoomStatusChart } from '@/components/Dashboard/RoomStatusChart';
 import { DailyReservations } from '@/components/Dashboard/DailyReservations';
-import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
-import { format, addDays, subDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
-  const { reservations, guests, rooms, stats, isLoading } = useHotelData();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { user } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(true);
 
-  const handlePreviousDay = () => {
-    setSelectedDate(subDays(selectedDate, 1));
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 1500); // Reducido de 3000ms a 1500ms
 
-  const handleNextDay = () => {
-    setSelectedDate(addDays(selectedDate, 1));
-  };
-
-  const handleToday = () => {
-    setSelectedDate(new Date());
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando...</div>
-      </div>
-    );
-  }
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Resumen general del hotel
-          </p>
-        </div>
-        <ReportExportButtons 
-          reservations={reservations}
-          guests={guests}
-          rooms={rooms}
-        />
+      {showWelcome && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-md border p-4 bg-green-100 border-green-200 text-green-700"
+        >
+          ¡Bienvenido, {user?.name}!
+        </motion.div>
+      )}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Resumen de la actividad y estado actual del hotel.
+        </p>
       </div>
-
-      <StatsCards stats={stats} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OccupancyChart reservations={reservations} rooms={rooms} />
-        <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
+      <StatsCards />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Ocupación Actual
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <OccupancyChart />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Ingresos Mensuales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bed className="h-4 w-4" />
+              Estado de Habitaciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RoomStatusChart />
+          </CardContent>
+        </Card>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Reservas Diarias
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handlePreviousDay}>
-                    ←
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleToday}>
-                    Hoy
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleNextDay}>
-                    →
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DailyReservations 
-                reservations={reservations}
-                rooms={rooms}
-                guests={guests}
-                selectedDate={selectedDate}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <RoomStatusChart rooms={rooms} />
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Reservas del Día</h2>
+        <p className="text-muted-foreground">
+          Listado de reservas para el día de hoy.
+        </p>
+        <DailyReservations />
       </div>
     </div>
   );
