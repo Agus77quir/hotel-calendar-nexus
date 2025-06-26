@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
@@ -30,10 +29,13 @@ const Index = () => {
     });
     
     const lastUpdateDate = new Date(latestReservation.updated_at || latestReservation.created_at);
-    return formatDistanceToNow(lastUpdateDate, { 
+    const timeAgo = formatDistanceToNow(lastUpdateDate, { 
       addSuffix: false, 
       locale: es 
     });
+    
+    // Remove "alrededor de" prefix if present
+    return timeAgo.replace(/^alrededor de\s+/, '');
   };
 
   if (isLoading) {
