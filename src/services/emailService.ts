@@ -1,4 +1,3 @@
-
 export interface EmailNotification {
   to: string;
   subject: string;
@@ -12,6 +11,16 @@ export interface EmailNotification {
     totalAmount: number;
   };
 }
+
+// Function to generate a simple sequential ID based on the UUID
+const generateSimpleId = (uuid: string): string => {
+  // Convert the first 8 characters of UUID to a number and format it
+  const hexString = uuid.replace(/-/g, '').substring(0, 8);
+  const number = parseInt(hexString, 16);
+  // Use modulo to keep it within a reasonable range and format with leading zeros
+  const simpleId = (number % 9999) + 1;
+  return simpleId.toString().padStart(2, '0');
+};
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
   try {
@@ -42,8 +51,11 @@ const generateEmailContent = (notification: EmailNotification): string => {
   let content = `Estimado/a ${guestName},\n\n${message}\n\n`;
   
   if (reservationDetails) {
+    // Generate simple ID from the UUID
+    const simpleId = generateSimpleId(reservationDetails.id);
+    
     content += `Detalles de su reserva:\n`;
-    content += `- ID de Reserva: ${reservationDetails.id}\n`;
+    content += `- ID de Reserva: ${simpleId}\n`;
     content += `- Habitación: ${reservationDetails.roomNumber}\n`;
     content += `- Check-in: ${formatDate(reservationDetails.checkIn)}\n`;
     content += `- Check-out: ${formatDate(reservationDetails.checkOut)}\n`;

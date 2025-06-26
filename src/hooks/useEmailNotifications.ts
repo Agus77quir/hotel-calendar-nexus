@@ -48,7 +48,7 @@ export const useEmailNotifications = () => {
         message: template.message,
         guestName,
         reservationDetails: {
-          id: reservation.id.slice(0, 8),
+          id: reservation.id, // Pass the full UUID, the service will convert it to simple format
           roomNumber: room.number,
           checkIn: reservation.check_in,
           checkOut: reservation.check_out,
