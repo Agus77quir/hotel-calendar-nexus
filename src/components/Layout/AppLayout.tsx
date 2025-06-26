@@ -1,18 +1,29 @@
-
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, Search, LogOut, User } from 'lucide-react';
+import { Menu, Search, LogOut, User, Clock, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  // Update current date and time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -88,8 +99,21 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                   />
                   <div className="hidden lg:block min-w-0 flex-shrink">
                     <span className="font-bold text-sm md:text-lg text-blue-600 block truncate">Gestión de Hoteles</span>
-                    <div className="text-xs text-green-600 font-medium">
-                      {getSystemStatus()}
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1 text-green-600 font-medium">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        {getSystemStatus()}
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <Shield className="h-3 w-3" />
+                        <span className="font-medium">{getRoleDisplayName(user?.role || '')}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <Clock className="h-3 w-3" />
+                        <span className="font-mono">
+                          {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
