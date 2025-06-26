@@ -1,6 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
+import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -60,6 +62,15 @@ const Index = () => {
             <h1 className="text-xl md:text-4xl font-bold">Bienvenido a Nardini SRL Gestión Hotelera</h1>
           </div>
         </div>
+      </div>
+
+      {/* Export Buttons Section */}
+      <div className="flex justify-end">
+        <ReportExportButtons 
+          reservations={reservations}
+          guests={guests}
+          rooms={rooms}
+        />
       </div>
 
       <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
