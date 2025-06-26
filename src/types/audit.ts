@@ -20,4 +20,11 @@ export interface ReservationAudit extends AuditRecord {
   reservation_id: string;
 }
 
+export interface AuditRecordWithEntity extends AuditRecord {
+  entityType: 'guests' | 'rooms' | 'reservations';
+  guest_id?: string;
+  room_id?: string;
+  reservation_id?: string;
+}
+
 export type AuditType = 'guests' | 'rooms' | 'reservations';

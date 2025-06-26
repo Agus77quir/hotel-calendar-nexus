@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +10,10 @@ import { AuditRecordDetails } from '@/components/Audit/AuditRecordDetails';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AuditRecord } from '@/types/audit';
+import { AuditRecordWithEntity } from '@/types/audit';
 
 const HistoryPage = () => {
-  const [selectedRecord, setSelectedRecord] = useState<AuditRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<AuditRecordWithEntity | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'guests' | 'rooms' | 'reservations'>('all');
@@ -23,7 +22,7 @@ const HistoryPage = () => {
   const { guestsAudit, roomsAudit, reservationsAudit, isLoading } = useAuditData();
 
   // Combinar todos los registros de auditoría
-  const allRecords = [
+  const allRecords: AuditRecordWithEntity[] = [
     ...guestsAudit.map(record => ({ ...record, entityType: 'guests' as const })),
     ...roomsAudit.map(record => ({ ...record, entityType: 'rooms' as const })),
     ...reservationsAudit.map(record => ({ ...record, entityType: 'reservations' as const }))
@@ -93,7 +92,7 @@ const HistoryPage = () => {
     }
   };
 
-  const handleViewDetails = (record: any) => {
+  const handleViewDetails = (record: AuditRecordWithEntity) => {
     setSelectedRecord(record);
     setIsDetailsOpen(true);
   };
