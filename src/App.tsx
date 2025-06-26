@@ -14,7 +14,6 @@ import ReservationsPage from "./pages/ReservationsPage";
 import CalendarPage from "./pages/CalendarPage";
 import CheckInOutPage from "./pages/CheckInOutPage";
 import AuditPage from "./pages/AuditPage";
-import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
 import { AppLayout } from "./components/Layout/AppLayout";
 
@@ -36,7 +35,6 @@ const App: React.FC = () => {
               <Route path="/reservations" element={<AppLayout><ReservationsPage /></AppLayout>} />
               <Route path="/calendar" element={<AppLayout><CalendarPage /></AppLayout>} />
               <Route path="/checkin-checkout" element={<AppLayout><CheckInOutPage /></AppLayout>} />
-              <Route path="/history" element={<AppLayout><HistoryPage /></AppLayout>} />
               <Route path="/audit" element={<AppLayout><AuditPage /></AppLayout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

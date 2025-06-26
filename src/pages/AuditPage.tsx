@@ -2,125 +2,135 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Download, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Download, Filter } from 'lucide-react';
 import { useAuditData } from '@/hooks/useAuditData';
-import { AuditRecordDetails } from '@/components/Audit/AuditRecordDetails';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AuditRecord, AuditType } from '@/types/audit';
+import { AuditRecord } from '@/types/audit';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AuditPage = () => {
-  const [selectedTab, setSelectedTab] = useState<AuditType>('guests');
-  const [selectedRecord, setSelectedRecord] = useState<AuditRecord | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [responsibleFilter, setResponsibleFilter] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<string>('');
   
   const { guestsAudit, roomsAudit, reservationsAudit, isLoading } = useAuditData();
 
-  const getOperationColor = (operation: string) => {
-    switch (operation) {
-      case 'INSERT':
-        return 'bg-green-100 text-green-800';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-800';
-      case 'DELETE':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  // Combinar todos los registros de auditoría
+  const allAuditRecords = [
+    ...guestsAudit.map(record => ({ ...record, type: 'guest' })),
+    ...roomsAudit.map(record => ({ ...record, type: 'room' })),
+    ...reservationsAudit.map(record => ({ ...record, type: 'reservation' }))
+  ].sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
+
+  // Filtrar registros
+  const filteredRecords = allAuditRecords.filter(record => {
+    const responsibleMatch = !responsibleFilter || record.changed_by === responsibleFilter;
+    const dateMatch = !dateFilter || format(new Date(record.changed_at), 'yyyy-MM-dd') === dateFilter;
+    return responsibleMatch && dateMatch;
+  });
+
+  const getGuestName = (record: any) => {
+    try {
+      const data = record.new_data || record.old_data;
+      if (record.type === 'guest' && data) {
+        return data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : 'N/A';
+      }
+      if (record.type === 'reservation' && data) {
+        return data.guest_name || 'N/A';
+      }
+      return 'N/A';
+    } catch {
+      return 'N/A';
     }
   };
 
-  const getOperationText = (operation: string) => {
-    switch (operation) {
-      case 'INSERT':
-        return 'Creación';
-      case 'UPDATE':
-        return 'Actualización';
-      case 'DELETE':
-        return 'Eliminación';
-      default:
-        return operation;
+  const getRoomNumber = (record: any) => {
+    try {
+      const data = record.new_data || record.old_data;
+      if (record.type === 'room' && data) {
+        return data.number ? `${data.number}` : 'N/A';
+      }
+      if (record.type === 'reservation' && data) {
+        return data.room_number || 'N/A';
+      }
+      return 'N/A';
+    } catch {
+      return 'N/A';
     }
   };
 
-  const handleViewDetails = (record: AuditRecord) => {
-    setSelectedRecord(record);
-    setIsDetailsOpen(true);
+  const getReservationInfo = (record: any) => {
+    try {
+      const data = record.new_data || record.old_data;
+      if (record.type === 'reservation' && data) {
+        const checkIn = data.check_in ? format(new Date(data.check_in), 'dd/MM/yyyy') : '';
+        const checkOut = data.check_out ? format(new Date(data.check_out), 'dd/MM/yyyy') : '';
+        return checkIn && checkOut ? `${checkIn} - ${checkOut}` : 'N/A';
+      }
+      return 'N/A';
+    } catch {
+      return 'N/A';
+    }
   };
 
-  const exportToCSV = (data: AuditRecord[], type: string) => {
-    const headers = ['Fecha', 'Operación', 'Usuario', 'ID Entidad'];
-    const csvContent = [
-      headers.join(','),
-      ...data.map(record => [
-        format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm:ss'),
-        getOperationText(record.operation_type),
-        record.changed_by || 'Sistema',
-        (record as any)[`${type.slice(0, -1)}_id`] || 'N/A'
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `auditoria_${type}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportToPDF = () => {
+    const doc = new jsPDF('l', 'mm', 'a4'); // Formato horizontal
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Título del reporte
+    doc.setFontSize(20);
+    doc.text('Reporte de Auditoría', pageWidth / 2, 20, { align: 'center' });
+    
+    // Fecha del reporte
+    doc.setFontSize(12);
+    doc.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 20, 35);
+    doc.text(`Total de registros: ${filteredRecords.length}`, 20, 45);
+    
+    // Preparar datos para la tabla
+    const auditData = filteredRecords.map(record => [
+      format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es }),
+      record.changed_by || 'Sistema',
+      getGuestName(record),
+      getRoomNumber(record),
+      getReservationInfo(record)
+    ]);
+    
+    // Crear la tabla
+    autoTable(doc, {
+      startY: 60,
+      head: [['Fecha y Hora', 'Responsable', 'Huésped', 'Habitación', 'Reserva']],
+      body: auditData,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [66, 66, 66],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: { 
+        fontSize: 10,
+        cellPadding: 4
+      },
+      columnStyles: {
+        0: { cellWidth: 40 }, // Fecha y Hora
+        1: { cellWidth: 30 }, // Responsable
+        2: { cellWidth: 50 }, // Huésped
+        3: { cellWidth: 30 }, // Habitación
+        4: { cellWidth: 50 }  // Reserva
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      }
+    });
+    
+    // Guardar el PDF
+    doc.save(`auditoria-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
-
-  const renderAuditTable = (data: AuditRecord[], type: string, entityIdKey: string) => (
-    <div className="rounded-md border overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-muted border-b">
-            <th className="py-3 px-4 text-left font-medium">Fecha y Hora</th>
-            <th className="py-3 px-4 text-left font-medium">Operación</th>
-            <th className="py-3 px-4 text-left font-medium">Usuario</th>
-            <th className="py-3 px-4 text-left font-medium">ID Entidad</th>
-            <th className="py-3 px-4 text-right font-medium">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-6 text-center text-muted-foreground">
-                No se encontraron registros de auditoría
-              </td>
-            </tr>
-          ) : (
-            data.map((record) => (
-              <tr key={record.id} className="border-b hover:bg-muted/50">
-                <td className="py-3 px-4">
-                  {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm:ss', { locale: es })}
-                </td>
-                <td className="py-3 px-4">
-                  <Badge className={getOperationColor(record.operation_type)}>
-                    {getOperationText(record.operation_type)}
-                  </Badge>
-                </td>
-                <td className="py-3 px-4">{record.changed_by || 'Sistema'}</td>
-                <td className="py-3 px-4">
-                  {(record as any)[entityIdKey]?.slice(0, 8)}...
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleViewDetails(record)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -136,89 +146,103 @@ const AuditPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sistema de Auditoría</h1>
           <p className="text-muted-foreground">
-            Registro completo de todos los movimientos y cambios del sistema
+            Registro completo de todos los movimientos del sistema
           </p>
         </div>
         <BackToHomeButton />
       </div>
 
-      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as AuditType)}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="guests">Huéspedes ({guestsAudit.length})</TabsTrigger>
-          <TabsTrigger value="rooms">Habitaciones ({roomsAudit.length})</TabsTrigger>
-          <TabsTrigger value="reservations">Reservas ({reservationsAudit.length})</TabsTrigger>
-        </TabsList>
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="responsible">Responsable</Label>
+              <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los responsables" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Rec1">Rec1</SelectItem>
+                  <SelectItem value="Rec2">Rec2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Fecha</Label>
+              <Input
+                id="date"
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={exportToPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Exportar PDF
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="guests">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Auditoría de Huéspedes</CardTitle>
-                <Button 
-                  variant="outline" 
-                  onClick={() => exportToCSV(guestsAudit, 'guests')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar CSV
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderAuditTable(guestsAudit, 'guests', 'guest_id')}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="rooms">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Auditoría de Habitaciones</CardTitle>
-                <Button 
-                  variant="outline" 
-                  onClick={() => exportToCSV(roomsAudit, 'rooms')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar CSV
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderAuditTable(roomsAudit, 'rooms', 'room_id')}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reservations">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Auditoría de Reservas</CardTitle>
-                <Button 
-                  variant="outline" 
-                  onClick={() => exportToCSV(reservationsAudit, 'reservations')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar CSV
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderAuditTable(reservationsAudit, 'reservations', 'reservation_id')}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <AuditRecordDetails
-        record={selectedRecord}
-        isOpen={isDetailsOpen}
-        onClose={() => setIsDetailsOpen(false)}
-        entityType={selectedTab === 'guests' ? 'Huéspedes' : selectedTab === 'rooms' ? 'Habitaciones' : 'Reservas'}
-      />
+      {/* Tabla de auditoría con scroll horizontal */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Registros de Auditoría ({filteredRecords.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="min-w-[800px]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted border-b">
+                    <th className="py-3 px-4 text-left font-medium">Fecha y Hora</th>
+                    <th className="py-3 px-4 text-left font-medium">Responsable</th>
+                    <th className="py-3 px-4 text-left font-medium">Huésped</th>
+                    <th className="py-3 px-4 text-left font-medium">Habitación</th>
+                    <th className="py-3 px-4 text-left font-medium">Reserva</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                        No se encontraron registros de auditoría
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRecords.map((record) => (
+                      <tr key={record.id} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-4">
+                          {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm:ss', { locale: es })}
+                        </td>
+                        <td className="py-3 px-4">{record.changed_by || 'Sistema'}</td>
+                        <td className="py-3 px-4">{getGuestName(record)}</td>
+                        <td className="py-3 px-4">{getRoomNumber(record)}</td>
+                        <td className="py-3 px-4">{getReservationInfo(record)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 };
