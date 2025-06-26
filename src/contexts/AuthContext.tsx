@@ -37,7 +37,7 @@ const demoUsers: (User & { password: string })[] = [
     firstName: 'Recepcionista',
     lastName: 'Dos',
     role: 'receptionist',
-    password: 'rec2@123',
+    password: 'rec2123',
     createdAt: new Date(),
   },
 ];
