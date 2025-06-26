@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield } from "lucide-react"
+import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield, Clock } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -49,6 +49,12 @@ const allMenuItems = [
     title: "Check-in/out",
     url: "/checkin-checkout",
     icon: CheckSquare,
+    roles: ['admin'],
+  },
+  {
+    title: "Historial",
+    url: "/history",
+    icon: Clock,
     roles: ['admin'],
   },
   {
