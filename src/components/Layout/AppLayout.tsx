@@ -1,3 +1,4 @@
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
@@ -91,29 +92,30 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     <Menu className="h-6 w-6 md:h-9 md:w-9 text-blue-700 drop-shadow-md" />
                   </Button>
                 </SidebarTrigger>
-                <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
-                  <img 
-                    src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
-                    alt="NARDINI SRL" 
-                    className="h-8 md:h-12 w-auto object-contain flex-shrink-0"
-                  />
-                  <div className="hidden lg:block min-w-0 flex-shrink">
-                    <span className="font-bold text-sm md:text-lg text-blue-600 block truncate">Gestión de Hoteles</span>
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-1 text-green-600 font-medium">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        {getSystemStatus()}
-                      </div>
-                      <div className="flex items-center gap-1 text-blue-600">
-                        <Shield className="h-3 w-3" />
-                        <span className="font-medium">{getRoleDisplayName(user?.role || '')}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <Clock className="h-3 w-3" />
-                        <span className="font-mono">
-                          {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
-                        </span>
-                      </div>
+                <div className="flex flex-col gap-1 min-w-0 overflow-hidden flex-1">
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <img 
+                      src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
+                      alt="NARDINI SRL" 
+                      className="h-8 md:h-12 w-auto object-contain flex-shrink-0"
+                    />
+                    <span className="font-bold text-sm md:text-lg text-blue-600 truncate">Gestión de Hoteles</span>
+                  </div>
+                  <div className="flex items-center gap-2 md:gap-3 text-xs flex-wrap">
+                    <div className="flex items-center gap-1 text-green-600 font-medium">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="hidden sm:inline">{getSystemStatus()}</span>
+                      <span className="sm:hidden">Online</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-blue-600">
+                      <Shield className="h-3 w-3" />
+                      <span className="font-medium">{getRoleDisplayName(user?.role || '')}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Clock className="h-3 w-3" />
+                      <span className="font-mono text-xs">
+                        {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
+                      </span>
                     </div>
                   </div>
                 </div>
