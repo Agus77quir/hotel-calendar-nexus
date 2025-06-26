@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Bed, CalendarDays, TrendingUp, CheckCircle } from 'lucide-react';
@@ -7,19 +8,33 @@ import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { RoomStatusChart } from '@/components/Dashboard/RoomStatusChart';
 import { DailyReservations } from '@/components/Dashboard/DailyReservations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHotelData } from '@/hooks/useHotelData';
 import { motion } from 'framer-motion';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { rooms, guests, reservations, stats, isLoading } = useHotelData();
   const [showWelcome, setShowWelcome] = useState(true);
+  const [selectedDate] = useState(new Date());
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);
-    }, 1500); // Reducido de 3000ms a 1500ms
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -31,7 +46,7 @@ const Dashboard = () => {
           transition={{ duration: 0.5 }}
           className="rounded-md border p-4 bg-green-100 border-green-200 text-green-700"
         >
-          ¡Bienvenido, {user?.name}!
+          ¡Bienvenido, {user?.firstName}!
         </motion.div>
       )}
       <div>
@@ -40,7 +55,7 @@ const Dashboard = () => {
           Resumen de la actividad y estado actual del hotel.
         </p>
       </div>
-      <StatsCards />
+      <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
@@ -50,7 +65,7 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <OccupancyChart />
+            <OccupancyChart rooms={rooms} reservations={reservations} />
           </CardContent>
         </Card>
         <Card>
@@ -61,7 +76,7 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RevenueChart />
+            <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
           </CardContent>
         </Card>
         <Card>
@@ -72,7 +87,7 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RoomStatusChart />
+            <RoomStatusChart rooms={rooms} />
           </CardContent>
         </Card>
       </div>
@@ -81,7 +96,12 @@ const Dashboard = () => {
         <p className="text-muted-foreground">
           Listado de reservas para el día de hoy.
         </p>
-        <DailyReservations />
+        <DailyReservations 
+          reservations={reservations} 
+          rooms={rooms} 
+          guests={guests} 
+          selectedDate={selectedDate} 
+        />
       </div>
     </div>
   );
