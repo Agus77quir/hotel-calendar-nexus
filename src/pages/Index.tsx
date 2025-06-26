@@ -6,6 +6,8 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const Index = () => {
   const { stats, rooms, guests, reservations, isLoading } = useHotelData();
@@ -15,6 +17,23 @@ const Index = () => {
   const handleQuickAction = (path: string) => {
     setOpenMobile(false); // Hide mobile menu
     navigate(path);
+  };
+
+  // Calculate the last system update based on most recent reservation activity
+  const getLastUpdate = () => {
+    if (reservations.length === 0) return 'Sin actividad reciente';
+    
+    const latestReservation = reservations.reduce((latest, current) => {
+      const currentDate = new Date(current.updated_at || current.created_at);
+      const latestDate = new Date(latest.updated_at || latest.created_at);
+      return currentDate > latestDate ? current : latest;
+    });
+    
+    const lastUpdateDate = new Date(latestReservation.updated_at || latestReservation.created_at);
+    return formatDistanceToNow(lastUpdateDate, { 
+      addSuffix: true, 
+      locale: es 
+    });
   };
 
   if (isLoading) {
@@ -116,7 +135,7 @@ const Index = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs md:text-sm text-muted-foreground">Última Actualización</span>
-                <span className="text-xs md:text-sm font-medium">Hace 3 días</span>
+                <span className="text-xs md:text-sm font-medium">{getLastUpdate()}</span>
               </div>
             </div>
           </CardContent>
