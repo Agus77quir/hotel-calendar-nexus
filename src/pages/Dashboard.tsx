@@ -20,7 +20,7 @@ const Dashboard = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);
-    }, 1500);
+    }, 800); // Reducido a 800ms para que sea más rápido
 
     return () => clearTimeout(timer);
   }, []);
@@ -43,7 +43,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="rounded-md border p-4 bg-green-100 border-green-200 text-green-700"
         >
           ¡Bienvenido, {user?.firstName}!

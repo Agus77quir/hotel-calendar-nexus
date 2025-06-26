@@ -27,6 +27,9 @@ const AuditPage = () => {
     ...reservationsAudit.map(record => ({ ...record, type: 'reservation' }))
   ].sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
 
+  console.log('All audit records:', allAuditRecords.length);
+  console.log('Sample record:', allAuditRecords[0]);
+
   // Filtrar registros
   const filteredRecords = allAuditRecords.filter(record => {
     const responsibleMatch = responsibleFilter === 'all' || record.changed_by === responsibleFilter;
@@ -215,6 +218,11 @@ const AuditPage = () => {
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-muted-foreground">
                         No se encontraron registros de auditoría
+                        {allAuditRecords.length === 0 && (
+                          <div className="mt-2 text-sm">
+                            Los datos de auditoría se generarán automáticamente cuando se realicen acciones en el sistema.
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ) : (

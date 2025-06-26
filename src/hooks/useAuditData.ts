@@ -20,11 +20,12 @@ export const useAuditData = (auditType?: AuditType, limit = 100) => {
       }
       
       console.log('Guests audit data fetched:', data?.length || 0, 'records');
+      console.log('Sample guests audit record:', data?.[0]);
       return (data || []) as GuestAudit[];
     },
     enabled: !auditType || auditType === 'guests',
     retry: 1,
-    staleTime: 10000,
+    staleTime: 5000,
   });
 
   const { data: roomsAudit = [], isLoading: roomsLoading, error: roomsError } = useQuery({
@@ -43,11 +44,12 @@ export const useAuditData = (auditType?: AuditType, limit = 100) => {
       }
       
       console.log('Rooms audit data fetched:', data?.length || 0, 'records');
+      console.log('Sample rooms audit record:', data?.[0]);
       return (data || []) as RoomAudit[];
     },
     enabled: !auditType || auditType === 'rooms',
     retry: 1,
-    staleTime: 10000,
+    staleTime: 5000,
   });
 
   const { data: reservationsAudit = [], isLoading: reservationsLoading, error: reservationsError } = useQuery({
@@ -66,11 +68,12 @@ export const useAuditData = (auditType?: AuditType, limit = 100) => {
       }
       
       console.log('Reservations audit data fetched:', data?.length || 0, 'records');
+      console.log('Sample reservations audit record:', data?.[0]);
       return (data || []) as ReservationAudit[];
     },
     enabled: !auditType || auditType === 'reservations',
     retry: 1,
-    staleTime: 10000,
+    staleTime: 5000,
   });
 
   const isLoading = guestsLoading || roomsLoading || reservationsLoading;
@@ -82,6 +85,7 @@ export const useAuditData = (auditType?: AuditType, limit = 100) => {
     reservationsCount: reservationsAudit?.length || 0,
     isLoading,
     hasErrors: !!hasErrors,
+    totalRecords: (guestsAudit?.length || 0) + (roomsAudit?.length || 0) + (reservationsAudit?.length || 0)
   });
 
   return {
