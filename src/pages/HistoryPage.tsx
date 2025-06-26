@@ -1,25 +1,24 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Download, Search, Filter, Clock } from 'lucide-react';
+import { FileText, Search, Filter, Clock } from 'lucide-react';
 import { useAuditData } from '@/hooks/useAuditData';
-import { AuditRecordDetails } from '@/components/Audit/AuditRecordDetails';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AuditRecordWithEntity } from '@/types/audit';
+import { useHistoryExport } from '@/hooks/useHistoryExport';
 
 const HistoryPage = () => {
-  const [selectedRecord, setSelectedRecord] = useState<AuditRecordWithEntity | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'guests' | 'rooms' | 'reservations'>('all');
   const [filterOperation, setFilterOperation] = useState<'all' | 'INSERT' | 'UPDATE' | 'DELETE'>('all');
   
   const { guestsAudit, roomsAudit, reservationsAudit, isLoading } = useAuditData();
+  const { exportHistoryToPDF } = useHistoryExport();
 
   // Combinar todos los registros de auditoría
   const allRecords: AuditRecordWithEntity[] = [
@@ -30,28 +29,15 @@ const HistoryPage = () => {
 
   // Filtrar registros
   const filteredRecords = allRecords.filter(record => {
+    const guestName = getGuestName(record);
     const matchesSearch = searchTerm === '' || 
       record.changed_by?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.operation_type.toLowerCase().includes(searchTerm.toLowerCase());
+      guestName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = filterType === 'all' || record.entityType === filterType;
     const matchesOperation = filterOperation === 'all' || record.operation_type === filterOperation;
     
-    return matchesSearch && matchesType && matchesOperation;
+    return matchesSearch && matchesOperation;
   });
-
-  const getOperationColor = (operation: string) => {
-    switch (operation) {
-      case 'INSERT':
-        return 'bg-green-100 text-green-800';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-800';
-      case 'DELETE':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getOperationText = (operation: string) => {
     switch (operation) {
@@ -66,57 +52,24 @@ const HistoryPage = () => {
     }
   };
 
-  const getEntityTypeText = (entityType: string) => {
-    switch (entityType) {
-      case 'guests':
-        return 'Huéspedes';
-      case 'rooms':
-        return 'Habitaciones';
-      case 'reservations':
-        return 'Reservas';
-      default:
-        return entityType;
+  const getGuestName = (record: AuditRecordWithEntity) => {
+    if (record.entityType === 'guests') {
+      const newData = record.new_data || record.old_data;
+      if (newData && newData.first_name && newData.last_name) {
+        return `${newData.first_name} ${newData.last_name}`;
+      }
+    } else if (record.entityType === 'reservations') {
+      // Para reservas, intentamos obtener el nombre del huésped de los datos
+      const newData = record.new_data || record.old_data;
+      if (newData && newData.guest_name) {
+        return newData.guest_name;
+      }
     }
+    return 'N/A';
   };
 
-  const getEntityTypeColor = (entityType: string) => {
-    switch (entityType) {
-      case 'guests':
-        return 'bg-purple-100 text-purple-800';
-      case 'rooms':
-        return 'bg-orange-100 text-orange-800';
-      case 'reservations':
-        return 'bg-cyan-100 text-cyan-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleViewDetails = (record: AuditRecordWithEntity) => {
-    setSelectedRecord(record);
-    setIsDetailsOpen(true);
-  };
-
-  const exportToCSV = () => {
-    const headers = ['Fecha', 'Tipo', 'Operación', 'Usuario', 'ID Entidad'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredRecords.map(record => [
-        format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm:ss'),
-        getEntityTypeText(record.entityType),
-        getOperationText(record.operation_type),
-        record.changed_by || 'Sistema',
-        (record as any)[`${record.entityType.slice(0, -1)}_id`]?.slice(0, 8) || 'N/A'
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `historial_movimientos_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleExportPDF = () => {
+    exportHistoryToPDF(filteredRecords);
   };
 
   if (isLoading) {
@@ -136,7 +89,7 @@ const HistoryPage = () => {
             Historial de Movimientos
           </h1>
           <p className="text-muted-foreground">
-            Registro completo de todos los movimientos del sistema ({allRecords.length} registros)
+            Registro de acciones realizadas en el sistema ({allRecords.length} registros)
           </p>
         </div>
         <BackToHomeButton />
@@ -151,37 +104,22 @@ const HistoryPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Usuario, operación..."
+                  placeholder="Usuario o huésped..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Entidad</label>
-              <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="guests">Huéspedes</SelectItem>
-                  <SelectItem value="rooms">Habitaciones</SelectItem>
-                  <SelectItem value="reservations">Reservas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Operación</label>
+              <label className="text-sm font-medium">Acción</label>
               <Select value={filterOperation} onValueChange={(value: any) => setFilterOperation(value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -196,10 +134,10 @@ const HistoryPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Acciones</label>
-              <Button onClick={exportToCSV} className="w-full flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Exportar CSV
+              <label className="text-sm font-medium">Exportar</label>
+              <Button onClick={handleExportPDF} className="w-full flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Exportar PDF
               </Button>
             </div>
           </div>
@@ -210,7 +148,7 @@ const HistoryPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>
-            Movimientos Recientes ({filteredRecords.length} registros)
+            Historial de Acciones ({filteredRecords.length} registros)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -218,49 +156,31 @@ const HistoryPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted border-b">
-                  <th className="py-3 px-4 text-left font-medium">Fecha y Hora</th>
-                  <th className="py-3 px-4 text-left font-medium">Tipo</th>
-                  <th className="py-3 px-4 text-left font-medium">Operación</th>
                   <th className="py-3 px-4 text-left font-medium">Usuario</th>
-                  <th className="py-3 px-4 text-left font-medium">ID Entidad</th>
-                  <th className="py-3 px-4 text-right font-medium">Acciones</th>
+                  <th className="py-3 px-4 text-left font-medium">Huésped</th>
+                  <th className="py-3 px-4 text-left font-medium">Acción</th>
+                  <th className="py-3 px-4 text-left font-medium">Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <td colSpan={4} className="py-6 text-center text-muted-foreground">
                       No se encontraron registros con los filtros aplicados
                     </td>
                   </tr>
                 ) : (
                   filteredRecords.map((record) => (
                     <tr key={record.id} className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4 font-medium">{record.changed_by || 'Sistema'}</td>
+                      <td className="py-3 px-4">{getGuestName(record)}</td>
                       <td className="py-3 px-4">
-                        {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm:ss', { locale: es })}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge className={getEntityTypeColor(record.entityType)}>
-                          {getEntityTypeText(record.entityType)}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge className={getOperationColor(record.operation_type)}>
+                        <Badge variant="outline">
                           {getOperationText(record.operation_type)}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4">{record.changed_by || 'Sistema'}</td>
                       <td className="py-3 px-4">
-                        {(record as any)[`${record.entityType.slice(0, -1)}_id`]?.slice(0, 8)}...
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleViewDetails(record)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        {format(new Date(record.changed_at), 'dd/MM/yyyy HH:mm', { locale: es })}
                       </td>
                     </tr>
                   ))
@@ -270,13 +190,6 @@ const HistoryPage = () => {
           </div>
         </CardContent>
       </Card>
-
-      <AuditRecordDetails
-        record={selectedRecord}
-        isOpen={isDetailsOpen}
-        onClose={() => setIsDetailsOpen(false)}
-        entityType={selectedRecord ? getEntityTypeText(selectedRecord.entityType) : ''}
-      />
     </div>
   );
 };
