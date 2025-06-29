@@ -96,48 +96,23 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Generate next sequential ID for reservations
-  const getNextReservationId = async () => {
-    try {
-      const { data: existingReservations, error } = await supabase
-        .from('reservations')
-        .select('id')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching reservations for ID:', error);
-        return '01';
-      }
-
-      // Find the highest numeric ID
-      let maxNumber = 0;
-      existingReservations?.forEach(reservation => {
-        const matches = reservation.id.match(/\d+/g);
-        if (matches) {
-          const numbers = matches.map(Number);
-          const maxInId = Math.max(...numbers);
-          if (maxInId > maxNumber) {
-            maxNumber = maxInId;
-          }
-        }
-      });
-
-      // Next ID will be highest number + 1, formatted with leading zeros
-      const nextNumber = maxNumber + 1;
-      return nextNumber.toString().padStart(2, '0');
-    } catch (error) {
-      console.error('Error generating sequential ID:', error);
-      return '01';
-    }
-  };
-
-  // Add guest
+  // Add guest with sequential ID
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
       console.log('Adding guest:', guestData);
+      
+      // Get next sequential ID
+      const { data: nextId, error: idError } = await supabase
+        .rpc('get_next_sequential_id', { table_name: 'guests' });
+      
+      if (idError) {
+        console.error('Error getting next ID:', idError);
+        throw idError;
+      }
+
       const { data, error } = await supabase
         .from('guests')
-        .insert([guestData])
+        .insert([{ ...guestData, id: nextId }])
         .select()
         .single();
       
@@ -199,13 +174,23 @@ export const useHotelData = () => {
     },
   });
 
-  // Add room
+  // Add room with sequential ID
   const addRoomMutation = useMutation({
     mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
       console.log('Adding room:', roomData);
+      
+      // Get next sequential ID
+      const { data: nextId, error: idError } = await supabase
+        .rpc('get_next_sequential_id', { table_name: 'rooms' });
+      
+      if (idError) {
+        console.error('Error getting next ID:', idError);
+        throw idError;
+      }
+
       const { data, error } = await supabase
         .from('rooms')
-        .insert([roomData])
+        .insert([{ ...roomData, id: nextId }])
         .select()
         .single();
       
@@ -267,19 +252,26 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation
+  // Add reservation with sequential ID and email notification
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
       
-      // Generate sequential ID
-      const sequentialId = await getNextReservationId();
+      // Get next sequential ID
+      const { data: nextId, error: idError } = await supabase
+        .rpc('get_next_sequential_id', { table_name: 'reservations' });
       
+      if (idError) {
+        console.error('Error getting next ID:', idError);
+        throw idError;
+      }
+
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
           ...reservationData,
-          id: sequentialId
+          id: nextId,
+          created_by: user?.email || 'sistema'
         }])
         .select()
         .single();
@@ -290,6 +282,33 @@ export const useHotelData = () => {
       }
       
       console.log('Reservation added successfully:', data);
+
+      // Send confirmation email
+      try {
+        const guest = guests.find(g => g.id === reservationData.guest_id);
+        const room = rooms.find(r => r.id === reservationData.room_id);
+        
+        if (guest && room) {
+          await supabase.functions.invoke('send-reservation-email', {
+            body: {
+              to: guest.email,
+              guestName: `${guest.first_name} ${guest.last_name}`,
+              reservationDetails: {
+                id: nextId,
+                roomNumber: room.number,
+                checkIn: reservationData.check_in,
+                checkOut: reservationData.check_out,
+                totalAmount: reservationData.total_amount
+              }
+            }
+          });
+          console.log('Confirmation email sent to:', guest.email);
+        }
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't throw here, reservation was successful
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -303,7 +322,10 @@ export const useHotelData = () => {
       console.log('Updating reservation:', id, reservationData);
       const { data, error } = await supabase
         .from('reservations')
-        .update(reservationData)
+        .update({
+          ...reservationData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select()
         .single();

@@ -117,14 +117,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reservations_guest_id_fkey"
+            foreignKeyName: "fk_reservations_guest_id"
             columns: ["guest_id"]
             isOneToOne: false
             referencedRelation: "guests"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reservations_room_id_fkey"
+            foreignKeyName: "fk_reservations_room_id"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
@@ -453,6 +453,10 @@ export type Database = {
       gbtreekey8_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      get_next_sequential_id: {
+        Args: { table_name: string }
+        Returns: string
       }
       set_current_user: {
         Args: { user_name: string }
