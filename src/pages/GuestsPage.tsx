@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,7 +58,7 @@ const GuestsPage = () => {
         navigate('/reservations');
       } else if (guestModal.mode === 'edit' && guestModal.guest) {
         console.log('Updating guest:', guestModal.guest.id, guestData);
-        await updateGuest(guestModal.guest.id, guestData);
+        await updateGuest({ id: guestModal.guest.id, ...guestData });
         toast({
           title: "Éxito",
           description: "Huésped actualizado correctamente",

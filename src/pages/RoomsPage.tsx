@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,7 @@ const RoomsPage = () => {
     if (roomModal.mode === 'create') {
       addRoom(roomData);
     } else if (roomModal.mode === 'edit' && roomModal.room) {
-      updateRoom(roomModal.room.id, roomData);
+      updateRoom({ id: roomModal.room.id, ...roomData });
     }
   };
 
@@ -47,7 +46,7 @@ const RoomsPage = () => {
 
   const handleMaintenanceToggle = (room: Room, isChecked: boolean) => {
     const newStatus = isChecked ? 'maintenance' : 'available';
-    updateRoom(room.id, { status: newStatus });
+    updateRoom({ id: room.id, status: newStatus });
   };
 
   const getStatusColor = (status: string) => {

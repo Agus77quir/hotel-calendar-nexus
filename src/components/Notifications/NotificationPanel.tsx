@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,21 +123,21 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const handleQuickAction = async (notification: Notification) => {
     try {
       if (notification.type === 'check-in' && notification.reservationId && notification.roomId) {
-        await updateReservation(notification.reservationId, { status: 'checked-in' });
-        await updateRoom(notification.roomId, { status: 'occupied' });
+        await updateReservation({ id: notification.reservationId, status: 'checked-in' });
+        await updateRoom({ id: notification.roomId, status: 'occupied' });
         toast({
           title: "Check-in realizado",
           description: "El huésped ha sido registrado exitosamente"
         });
       } else if (notification.type === 'check-out' && notification.reservationId && notification.roomId) {
-        await updateReservation(notification.reservationId, { status: 'checked-out' });
-        await updateRoom(notification.roomId, { status: 'cleaning' });
+        await updateReservation({ id: notification.reservationId, status: 'checked-out' });
+        await updateRoom({ id: notification.roomId, status: 'cleaning' });
         toast({
           title: "Check-out realizado",
           description: "El huésped ha salido y la habitación está en limpieza"
         });
       } else if (notification.type === 'maintenance' && notification.roomId) {
-        await updateRoom(notification.roomId, { status: 'available' });
+        await updateRoom({ id: notification.roomId, status: 'available' });
         toast({
           title: "Mantenimiento completado",
           description: "La habitación está disponible nuevamente"

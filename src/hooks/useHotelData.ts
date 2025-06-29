@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Room, Guest, Reservation } from '@/types/hotel';
+import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useHotelData = () => {
@@ -84,6 +84,18 @@ export const useHotelData = () => {
     },
   });
 
+  // Calculate stats
+  const stats: HotelStats = {
+    totalRooms: rooms.length,
+    occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
+    availableRooms: rooms.filter(r => r.status === 'available').length,
+    maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
+    totalReservations: reservations.length,
+    todayCheckIns: reservations.filter(r => r.check_in === new Date().toISOString().split('T')[0] && r.status === 'confirmed').length,
+    todayCheckOuts: reservations.filter(r => r.check_out === new Date().toISOString().split('T')[0] && r.status === 'checked-in').length,
+    revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
+  };
+
   // Generate next sequential ID for reservations
   const getNextReservationId = async () => {
     try {
@@ -121,7 +133,7 @@ export const useHotelData = () => {
 
   // Add guest
   const addGuestMutation = useMutation({
-    mutationFn: async (guestData: Omit<Guest, 'id' | 'createdAt'>) => {
+    mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
       console.log('Adding guest:', guestData);
       const { data, error } = await supabase
         .from('guests')
@@ -144,7 +156,7 @@ export const useHotelData = () => {
 
   // Update guest
   const updateGuestMutation = useMutation({
-    mutationFn: async ({ id, ...guestData }: Partial<Guest> & { id: string }) => {
+    mutationFn: async ({ id, ...guestData }: { id: string } & Partial<Omit<Guest, 'id'>>) => {
       console.log('Updating guest:', id, guestData);
       const { data, error } = await supabase
         .from('guests')
@@ -189,7 +201,7 @@ export const useHotelData = () => {
 
   // Add room
   const addRoomMutation = useMutation({
-    mutationFn: async (roomData: Omit<Room, 'id' | 'createdAt'>) => {
+    mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
       console.log('Adding room:', roomData);
       const { data, error } = await supabase
         .from('rooms')
@@ -212,7 +224,7 @@ export const useHotelData = () => {
 
   // Update room
   const updateRoomMutation = useMutation({
-    mutationFn: async ({ id, ...roomData }: Partial<Room> & { id: string }) => {
+    mutationFn: async ({ id, ...roomData }: { id: string } & Partial<Omit<Room, 'id'>>) => {
       console.log('Updating room:', id, roomData);
       const { data, error } = await supabase
         .from('rooms')
@@ -257,7 +269,7 @@ export const useHotelData = () => {
 
   // Add reservation
   const addReservationMutation = useMutation({
-    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
+    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
       
       // Generate sequential ID
@@ -287,7 +299,7 @@ export const useHotelData = () => {
 
   // Update reservation
   const updateReservationMutation = useMutation({
-    mutationFn: async ({ id, ...reservationData }: Partial<Reservation> & { id: string }) => {
+    mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('Updating reservation:', id, reservationData);
       const { data, error } = await supabase
         .from('reservations')
@@ -336,6 +348,7 @@ export const useHotelData = () => {
     guests,
     rooms,
     reservations,
+    stats,
     isLoading,
     addGuest: addGuestMutation.mutateAsync,
     updateGuest: updateGuestMutation.mutateAsync,

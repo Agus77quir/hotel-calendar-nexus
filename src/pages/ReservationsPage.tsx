@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -61,7 +60,7 @@ const ReservationsPage = () => {
     if (reservationModal.mode === 'create') {
       addReservation(reservationData);
     } else if (reservationModal.reservation) {
-      updateReservation(reservationModal.reservation.id, reservationData);
+      updateReservation({ id: reservationModal.reservation.id, ...reservationData });
     }
   };
 

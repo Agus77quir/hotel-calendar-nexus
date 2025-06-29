@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +44,7 @@ const CheckInOutPage = () => {
 
   const handleCheckIn = async (reservationId: string) => {
     try {
-      await updateReservation(reservationId, { status: 'checked-in' });
+      await updateReservation({ id: reservationId, status: 'checked-in' });
       toast({
         title: "Check-in exitoso",
         description: "El huésped ha sido registrado correctamente",
@@ -61,7 +60,7 @@ const CheckInOutPage = () => {
 
   const handleCheckOut = async (reservationId: string) => {
     try {
-      await updateReservation(reservationId, { status: 'checked-out' });
+      await updateReservation({ id: reservationId, status: 'checked-out' });
       toast({
         title: "Check-out exitoso",
         description: "El huésped ha finalizado su estadía",
