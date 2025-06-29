@@ -18,20 +18,13 @@ const AuditPage = () => {
   const [responsibleFilter, setResponsibleFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   
-  const { guestsAudit, roomsAudit, reservationsAudit, isLoading } = useAuditData();
+  const { auditRecords, isLoading } = useAuditData();
 
-  // Combinar todos los registros de auditoría
-  const allAuditRecords = [
-    ...guestsAudit.map(record => ({ ...record, type: 'guest' })),
-    ...roomsAudit.map(record => ({ ...record, type: 'room' })),
-    ...reservationsAudit.map(record => ({ ...record, type: 'reservation' }))
-  ].sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
-
-  console.log('All audit records:', allAuditRecords.length);
-  console.log('Sample record:', allAuditRecords[0]);
+  console.log('Audit records:', auditRecords.length);
+  console.log('Sample record:', auditRecords[0]);
 
   // Filtrar registros
-  const filteredRecords = allAuditRecords.filter(record => {
+  const filteredRecords = auditRecords.filter(record => {
     const responsibleMatch = responsibleFilter === 'all' || record.changed_by === responsibleFilter;
     const dateMatch = !dateFilter || format(new Date(record.changed_at), 'yyyy-MM-dd') === dateFilter;
     return responsibleMatch && dateMatch;
@@ -40,10 +33,10 @@ const AuditPage = () => {
   const getGuestName = (record: any) => {
     try {
       const data = record.new_data || record.old_data;
-      if (record.type === 'guest' && data) {
+      if (record.entityType === 'guests' && data) {
         return data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : 'N/A';
       }
-      if (record.type === 'reservation' && data) {
+      if (record.entityType === 'reservations' && data) {
         return data.guest_name || 'N/A';
       }
       return 'N/A';
@@ -55,10 +48,10 @@ const AuditPage = () => {
   const getRoomNumber = (record: any) => {
     try {
       const data = record.new_data || record.old_data;
-      if (record.type === 'room' && data) {
+      if (record.entityType === 'rooms' && data) {
         return data.number ? `${data.number}` : 'N/A';
       }
-      if (record.type === 'reservation' && data) {
+      if (record.entityType === 'reservations' && data) {
         return data.room_number || 'N/A';
       }
       return 'N/A';
@@ -70,7 +63,7 @@ const AuditPage = () => {
   const getReservationInfo = (record: any) => {
     try {
       const data = record.new_data || record.old_data;
-      if (record.type === 'reservation' && data) {
+      if (record.entityType === 'reservations' && data) {
         const checkIn = data.check_in ? format(new Date(data.check_in), 'dd/MM/yyyy') : '';
         const checkOut = data.check_out ? format(new Date(data.check_out), 'dd/MM/yyyy') : '';
         return checkIn && checkOut ? `${checkIn} - ${checkOut}` : 'N/A';
@@ -218,7 +211,7 @@ const AuditPage = () => {
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-muted-foreground">
                         No se encontraron registros de auditoría
-                        {allAuditRecords.length === 0 && (
+                        {auditRecords.length === 0 && (
                           <div className="mt-2 text-sm">
                             Los datos de auditoría se generarán automáticamente cuando se realicen acciones en el sistema.
                           </div>

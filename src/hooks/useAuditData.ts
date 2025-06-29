@@ -1,11 +1,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { GuestAudit, RoomAudit, ReservationAudit, AuditRecordWithEntity, AuditType } from '@/types/audit';
+import { AuditRecordWithEntity, AuditType } from '@/types/audit';
 
 export const useAuditData = () => {
   // Fetch all audit records from all tables
-  const { data: auditRecords = [], isLoading } = useQuery({
+  const { data: auditRecords = [], isLoading, error } = useQuery({
     queryKey: ['audit-records'],
     queryFn: async () => {
       console.log('Fetching audit records...');
@@ -25,15 +25,15 @@ export const useAuditData = () => {
 
         // Combine and format all records
         const allRecords: AuditRecordWithEntity[] = [
-          ...(guestsAudit.data || []).map((record: GuestAudit) => ({
+          ...(guestsAudit.data || []).map((record: any) => ({
             ...record,
             entityType: 'guests' as const,
           })),
-          ...(roomsAudit.data || []).map((record: RoomAudit) => ({
+          ...(roomsAudit.data || []).map((record: any) => ({
             ...record,
             entityType: 'rooms' as const,
           })),
-          ...(reservationsAudit.data || []).map((record: ReservationAudit) => ({
+          ...(reservationsAudit.data || []).map((record: any) => ({
             ...record,
             entityType: 'reservations' as const,
           }))
@@ -111,6 +111,7 @@ export const useAuditData = () => {
   return {
     auditRecords,
     isLoading,
+    error,
     getFilteredRecords,
     getUniqueUsers,
   };

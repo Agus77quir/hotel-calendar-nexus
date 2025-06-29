@@ -21,28 +21,17 @@ const HistoryPage = () => {
   const [filterUser, setFilterUser] = useState<'all' | 'Admin' | 'Rec 1' | 'Rec 2'>('all');
   const [dateFilter, setDateFilter] = useState('');
   
-  const { guestsAudit, roomsAudit, reservationsAudit, isLoading, error } = useAuditData();
+  const { auditRecords, isLoading, error } = useAuditData();
   const { exportHistoryToPDF } = useHistoryExport();
 
   console.log('HistoryPage render state:', {
-    guestsAuditLength: guestsAudit?.length || 0,
-    roomsAuditLength: roomsAudit?.length || 0,
-    reservationsAuditLength: reservationsAudit?.length || 0,
+    auditRecordsLength: auditRecords?.length || 0,
     isLoading,
     hasError: !!error
   });
 
-  // Combinar todos los registros de auditoría
-  const allRecords: AuditRecordWithEntity[] = [
-    ...(Array.isArray(guestsAudit) ? guestsAudit.map(record => ({ ...record, entityType: 'guests' as const })) : []),
-    ...(Array.isArray(roomsAudit) ? roomsAudit.map(record => ({ ...record, entityType: 'rooms' as const })) : []),
-    ...(Array.isArray(reservationsAudit) ? reservationsAudit.map(record => ({ ...record, entityType: 'reservations' as const })) : [])
-  ].sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
-
-  console.log('Combined records:', allRecords.length);
-
   // Filtrar registros
-  const filteredRecords = allRecords.filter(record => {
+  const filteredRecords = auditRecords.filter(record => {
     const entityName = getEntityName(record);
     const matchesSearch = searchTerm === '' || 
       (record.changed_by && record.changed_by.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -229,7 +218,7 @@ const HistoryPage = () => {
             Historial de Movimientos
           </h1>
           <p className="text-muted-foreground">
-            Registro de acciones realizadas en el sistema ({allRecords.length} registros)
+            Registro de acciones realizadas en el sistema ({auditRecords.length} registros)
           </p>
         </div>
         <BackToHomeButton />
@@ -325,7 +314,7 @@ const HistoryPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {allRecords.length === 0 ? (
+          {auditRecords.length === 0 ? (
             <div className="text-center py-8">
               <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No hay registros de auditoría</h3>

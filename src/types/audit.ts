@@ -1,7 +1,7 @@
 
 export interface AuditRecord {
   id: string;
-  operation_type: 'INSERT' | 'UPDATE' | 'DELETE';
+  operation_type: string; // Changed from union type to string to match Supabase
   old_data?: any;
   new_data?: any;
   changed_by?: string;
