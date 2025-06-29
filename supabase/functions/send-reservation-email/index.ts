@@ -1,13 +1,12 @@
 
-import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailRequest {
+interface ReservationEmailRequest {
   to: string;
   guestName: string;
   reservationDetails: {
@@ -19,22 +18,22 @@ interface EmailRequest {
   };
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { to, guestName, reservationDetails }: EmailRequest = await req.json();
+    const { to, guestName, reservationDetails }: ReservationEmailRequest = await req.json();
 
-    // For now, we'll just log the email details
-    // In production, you would integrate with a service like Resend
     console.log('Sending confirmation email to:', to);
     console.log('Guest:', guestName);
     console.log('Reservation details:', reservationDetails);
 
+    // Simulate email sending (replace with actual email service when ready)
     const emailContent = {
-      subject: 'Confirmación de Reserva - Hotel',
+      subject: "Confirmación de Reserva - Hotel",
       message: `
         Estimado/a ${guestName},
 
@@ -54,34 +53,32 @@ serve(async (req) => {
       `
     };
 
-    // Here you would send the actual email using a service like Resend
-    // For now, we simulate success
     console.log('Email would be sent:', emailContent);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Email de confirmación enviado',
-        emailSent: true 
+        message: 'Email confirmation sent successfully',
+        emailContent 
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
       }
     );
-
-  } catch (error) {
-    console.error('Error in send-reservation-email function:', error);
+  } catch (error: any) {
+    console.error("Error in send-reservation-email function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message,
-        emailSent: false 
-      }),
+      JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
-});
+};
+
+serve(handler);

@@ -96,23 +96,14 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Add guest with sequential ID
+  // Add guest
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
       console.log('Adding guest:', guestData);
       
-      // Get next sequential ID
-      const { data: nextId, error: idError } = await supabase
-        .rpc('get_next_sequential_id', { table_name: 'guests' });
-      
-      if (idError) {
-        console.error('Error getting next ID:', idError);
-        throw idError;
-      }
-
       const { data, error } = await supabase
         .from('guests')
-        .insert([{ ...guestData, id: nextId }])
+        .insert([guestData])
         .select()
         .single();
       
@@ -174,23 +165,14 @@ export const useHotelData = () => {
     },
   });
 
-  // Add room with sequential ID
+  // Add room
   const addRoomMutation = useMutation({
     mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
       console.log('Adding room:', roomData);
       
-      // Get next sequential ID
-      const { data: nextId, error: idError } = await supabase
-        .rpc('get_next_sequential_id', { table_name: 'rooms' });
-      
-      if (idError) {
-        console.error('Error getting next ID:', idError);
-        throw idError;
-      }
-
       const { data, error } = await supabase
         .from('rooms')
-        .insert([{ ...roomData, id: nextId }])
+        .insert([roomData])
         .select()
         .single();
       
@@ -252,25 +234,15 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation with sequential ID and email notification
+  // Add reservation with email notification
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
       
-      // Get next sequential ID
-      const { data: nextId, error: idError } = await supabase
-        .rpc('get_next_sequential_id', { table_name: 'reservations' });
-      
-      if (idError) {
-        console.error('Error getting next ID:', idError);
-        throw idError;
-      }
-
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
           ...reservationData,
-          id: nextId,
           created_by: user?.email || 'sistema'
         }])
         .select()
@@ -289,12 +261,12 @@ export const useHotelData = () => {
         const room = rooms.find(r => r.id === reservationData.room_id);
         
         if (guest && room) {
-          await supabase.functions.invoke('send-reservation-email', {
+          const emailResponse = await supabase.functions.invoke('send-reservation-email', {
             body: {
               to: guest.email,
               guestName: `${guest.first_name} ${guest.last_name}`,
               reservationDetails: {
-                id: nextId,
+                id: data.id,
                 roomNumber: room.number,
                 checkIn: reservationData.check_in,
                 checkOut: reservationData.check_out,
@@ -302,7 +274,12 @@ export const useHotelData = () => {
               }
             }
           });
-          console.log('Confirmation email sent to:', guest.email);
+          
+          if (emailResponse.error) {
+            console.error('Error sending confirmation email:', emailResponse.error);
+          } else {
+            console.log('Confirmation email sent successfully to:', guest.email);
+          }
         }
       } catch (emailError) {
         console.error('Error sending confirmation email:', emailError);
