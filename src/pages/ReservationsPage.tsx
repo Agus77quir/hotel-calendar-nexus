@@ -1,17 +1,13 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Plus, Search, Eye, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
 import { GuestModal } from '@/components/Guests/GuestModal';
-import { BackToHomeButton } from '@/components/ui/back-to-home-button';
-import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
+import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
+import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
 import { Reservation } from '@/types/hotel';
 
 const ReservationsPage = () => {
@@ -61,36 +57,6 @@ const ReservationsPage = () => {
     return matchesSearch && matchesDate;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'checked-in':
-        return 'bg-green-100 text-green-800';
-      case 'checked-out':
-        return 'bg-gray-100 text-gray-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Confirmada';
-      case 'checked-in':
-        return 'Registrado';
-      case 'checked-out':
-        return 'Check-out';
-      case 'cancelled':
-        return 'Cancelada';
-      default:
-        return status;
-    }
-  };
-
   const handleSaveReservation = (reservationData: any) => {
     if (reservationModal.mode === 'create') {
       addReservation(reservationData);
@@ -105,10 +71,8 @@ const ReservationsPage = () => {
     }
   };
 
-  // Manejar el guardado de huésped desde la página de reservas
   const handleSaveGuestFromReservations = async (guestData: any) => {
     await addGuest(guestData);
-    // Cerrar el modal de huésped y mantener al usuario en la página de reservas
     setGuestModal({ isOpen: false, mode: 'create' });
   };
 
@@ -122,35 +86,13 @@ const ReservationsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reservas</h1>
-          <p className="text-muted-foreground">
-            Gestiona todas las reservas del hotel
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <BackToHomeButton />
-          <ReportExportButtons 
-            reservations={reservations}
-            guests={guests}
-            rooms={rooms}
-          />
-          <Button
-            variant="outline"
-            onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nuevo Huésped
-          </Button>
-          <Button
-            onClick={() => setReservationModal({ isOpen: true, mode: 'create' })}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Reserva
-          </Button>
-        </div>
-      </div>
+      <ReservationsHeader
+        reservations={reservations}
+        guests={guests}
+        rooms={rooms}
+        onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
+        onNewGuest={() => setGuestModal({ isOpen: true, mode: 'create' })}
+      />
 
       <ReservationFilters
         onFiltersChange={setDateFilters}
@@ -159,99 +101,24 @@ const ReservationsPage = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar reservas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredReservations.length} reservas encontradas
-            </div>
-          </div>
+          <ReservationsSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            resultCount={filteredReservations.length}
+          />
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted border-b">
-                  <th className="py-3 px-4 text-left font-medium">ID</th>
-                  <th className="py-3 px-4 text-left font-medium">Huésped</th>
-                  <th className="py-3 px-4 text-left font-medium">Habitación</th>
-                  <th className="py-3 px-4 text-left font-medium">Check-in</th>
-                  <th className="py-3 px-4 text-left font-medium">Check-out</th>
-                  <th className="py-3 px-4 text-left font-medium">Estado</th>
-                  <th className="py-3 px-4 text-left font-medium">Total</th>
-                  <th className="py-3 px-4 text-right font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReservations.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-6 text-center text-muted-foreground">
-                      No se encontraron reservas
-                    </td>
-                  </tr>
-                ) : (
-                  filteredReservations.map((reservation) => {
-                    const guest = guests.find(g => g.id === reservation.guest_id);
-                    const room = rooms.find(r => r.id === reservation.room_id);
-
-                    return (
-                      <tr key={reservation.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{reservation.id.slice(0, 8)}...</td>
-                        <td className="py-3 px-4">
-                          {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
-                        </td>
-                        <td className="py-3 px-4">{room?.number || 'N/A'}</td>
-                        <td className="py-3 px-4">
-                          {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                        </td>
-                        <td className="py-3 px-4">
-                          {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge className={getStatusColor(reservation.status)}>
-                            {getStatusText(reservation.status)}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">${reservation.total_amount}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => setReservationModal({
-                                isOpen: true,
-                                mode: 'edit',
-                                reservation
-                              })}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleDeleteReservation(reservation.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ReservationsTable
+            reservations={filteredReservations}
+            guests={guests}
+            rooms={rooms}
+            onEdit={(reservation) => setReservationModal({
+              isOpen: true,
+              mode: 'edit',
+              reservation
+            })}
+            onDelete={handleDeleteReservation}
+          />
         </CardContent>
       </Card>
 
