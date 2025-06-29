@@ -454,6 +454,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      set_current_user: {
+        Args: { user_name: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

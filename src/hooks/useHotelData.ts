@@ -1,33 +1,93 @@
-import { useMockHotelData } from './useMockHotelData';
-import { useEmailNotifications } from './useEmailNotifications';
+
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Room, Reservation, Guest, HotelStats } from '@/types/hotel';
-import { useToast } from '@/hooks/use-toast';
+import { Room, Guest, Reservation } from '@/types/hotel';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useHotelData = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { sendReservationEmail } = useEmailNotifications();
+  const { user } = useAuth();
 
-  // Check if Supabase types are available by testing a simple query
-  const isSupabaseReady = async () => {
-    try {
-      await supabase.from('rooms').select('count').limit(1);
-      return true;
-    } catch (error) {
-      console.log('Supabase types not ready yet, using mock data');
-      return false;
+  // Set current user context for audit purposes
+  useEffect(() => {
+    if (user?.email) {
+      const setUserContext = async () => {
+        try {
+          await supabase.rpc('set_current_user', { user_name: user.email });
+          console.log('User context set for audit:', user.email);
+        } catch (error) {
+          console.error('Error setting user context:', error);
+        }
+      };
+      setUserContext();
     }
-  };
+  }, [user]);
 
-  // Use mock data as fallback
-  const mockData = useMockHotelData();
+  // Fetch guests
+  const { data: guests = [], isLoading: guestsLoading } = useQuery({
+    queryKey: ['guests'],
+    queryFn: async () => {
+      console.log('Fetching guests...');
+      const { data, error } = await supabase
+        .from('guests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching guests:', error);
+        throw error;
+      }
+      
+      console.log('Guests fetched:', data?.length || 0);
+      return (data || []) as Guest[];
+    },
+  });
 
-  // Generate sequential ID
-  const generateSequentialId = async () => {
+  // Fetch rooms
+  const { data: rooms = [], isLoading: roomsLoading } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      console.log('Fetching rooms...');
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('number');
+      
+      if (error) {
+        console.error('Error fetching rooms:', error);
+        throw error;
+      }
+      
+      console.log('Rooms fetched:', data?.length || 0);
+      return (data || []) as Room[];
+    },
+  });
+
+  // Fetch reservations
+  const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: async () => {
+      console.log('Fetching reservations...');
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching reservations:', error);
+        throw error;
+      }
+      
+      console.log('Reservations fetched:', data?.length || 0);
+      return (data || []) as Reservation[];
+    },
+  });
+
+  // Generate next sequential ID for reservations
+  const getNextReservationId = async () => {
     try {
-      const { data: reservations, error } = await supabase
+      const { data: existingReservations, error } = await supabase
         .from('reservations')
         .select('id')
         .order('created_at', { ascending: false });
@@ -39,7 +99,7 @@ export const useHotelData = () => {
 
       // Find the highest numeric ID
       let maxNumber = 0;
-      reservations?.forEach(reservation => {
+      existingReservations?.forEach(reservation => {
         const matches = reservation.id.match(/\d+/g);
         if (matches) {
           const numbers = matches.map(Number);
@@ -50,7 +110,7 @@ export const useHotelData = () => {
         }
       });
 
-      // Next ID will be the highest number + 1, formatted with leading zeros
+      // Next ID will be highest number + 1, formatted with leading zeros
       const nextNumber = maxNumber + 1;
       return nextNumber.toString().padStart(2, '0');
     } catch (error) {
@@ -59,556 +119,232 @@ export const useHotelData = () => {
     }
   };
 
-  // Try to fetch real data, fallback to mock if types aren't ready
-  const { data: rooms = [], isLoading: roomsLoading } = useQuery({
-    queryKey: ['rooms'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('rooms')
-          .select('*')
-          .order('number');
-        
-        if (error) throw error;
-        return data as Room[];
-      } catch (error) {
-        console.log('Using mock rooms data');
-        return mockData.rooms;
-      }
-    },
-  });
-
-  const { data: guests = [], isLoading: guestsLoading } = useQuery({
-    queryKey: ['guests'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('guests')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data as Guest[];
-      } catch (error) {
-        console.log('Using mock guests data');
-        return mockData.guests;
-      }
-    },
-  });
-
-  const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
-    queryKey: ['reservations'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data as Reservation[];
-      } catch (error) {
-        console.log('Using mock reservations data');
-        return mockData.reservations;
-      }
-    },
-  });
-
-  // Calculate comprehensive stats
-  const today = new Date().toISOString().split('T')[0];
-  
-  const stats: HotelStats = {
-    totalRooms: rooms.length,
-    occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
-    availableRooms: rooms.filter(r => r.status === 'available').length,
-    maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
-    totalReservations: reservations.length,
-    todayCheckIns: reservations.filter(r => {
-      return r.check_in === today && (r.status === 'confirmed' || r.status === 'checked-in');
-    }).length,
-    todayCheckOuts: reservations.filter(r => {
-      return r.check_out === today && r.status === 'checked-in';
-    }).length,
-    revenue: reservations
-      .filter(r => r.status !== 'cancelled')
-      .reduce((sum, r) => sum + Number(r.total_amount || 0), 0),
-  };
-
-  // Add guest mutation - with better error handling
+  // Add guest
   const addGuestMutation = useMutation({
-    mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
-      console.log('Attempting to add guest:', guestData);
+    mutationFn: async (guestData: Omit<Guest, 'id' | 'createdAt'>) => {
+      console.log('Adding guest:', guestData);
+      const { data, error } = await supabase
+        .from('guests')
+        .insert([guestData])
+        .select()
+        .single();
       
-      try {
-        // First check if email already exists
-        const { data: existingGuest, error: checkError } = await supabase
-          .from('guests')
-          .select('email')
-          .eq('email', guestData.email)
-          .maybeSingle();
-
-        if (checkError) {
-          console.error('Error checking existing email:', checkError);
-          throw new Error('Error verificando email existente');
-        }
-
-        if (existingGuest) {
-          throw new Error('Ya existe un huésped con este email');
-        }
-
-        const { data, error } = await supabase
-          .from('guests')
-          .insert([guestData])
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Supabase insert error:', error);
-          if (error.code === '23505' && error.message.includes('guests_email_key')) {
-            throw new Error('Ya existe un huésped con este email');
-          }
-          throw new Error(`Error en la base de datos: ${error.message}`);
-        }
-
-        console.log('Guest added successfully:', data);
-        return data;
-      } catch (error: any) {
-        console.error('Error adding guest to Supabase:', error);
-        // Re-throw to let the mutation handle it
+      if (error) {
+        console.error('Error adding guest:', error);
         throw error;
       }
+      
+      console.log('Guest added successfully:', data);
+      return data;
     },
     onSuccess: () => {
-      console.log('Guest mutation succeeded, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['guests'] });
-    },
-    onError: (error: any) => {
-      console.error('Guest mutation failed:', error);
-      // Don't show toast here - let the component handle it
     },
   });
 
-  // Update guest mutation - with better error handling
+  // Update guest
   const updateGuestMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Guest> }) => {
-      try {
-        // If updating email, check for duplicates
-        if (updates.email) {
-          const { data: existingGuest, error: checkError } = await supabase
-            .from('guests')
-            .select('id, email')
-            .eq('email', updates.email)
-            .neq('id', id)
-            .maybeSingle();
-
-          if (checkError) {
-            console.error('Error checking existing email:', checkError);
-            throw new Error('Error verificando email existente');
-          }
-
-          if (existingGuest) {
-            throw new Error('Ya existe un huésped con este email');
-          }
-        }
-
-        const { data, error } = await supabase
-          .from('guests')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Error updating guest:', error);
-          if (error.code === '23505' && error.message.includes('guests_email_key')) {
-            throw new Error('Ya existe un huésped con este email');
-          }
-          throw new Error(`Error actualizando huésped: ${error.message}`);
-        }
-        return data;
-      } catch (error: any) {
-        console.error('Error updating guest in Supabase:', error);
+    mutationFn: async ({ id, ...guestData }: Partial<Guest> & { id: string }) => {
+      console.log('Updating guest:', id, guestData);
+      const { data, error } = await supabase
+        .from('guests')
+        .update(guestData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating guest:', error);
         throw error;
       }
+      
+      console.log('Guest updated successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
-    onError: (error: any) => {
-      console.error('Update guest mutation failed:', error);
-    },
   });
 
-  // Delete guest mutation - with fallback
+  // Delete guest
   const deleteGuestMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        const { error } = await supabase
-          .from('guests')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-      } catch (error) {
-        console.log('Error deleting guest from Supabase, using mock:', error);
-        mockData.deleteGuest(id);
+      console.log('Deleting guest:', id);
+      const { error } = await supabase
+        .from('guests')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting guest:', error);
+        throw error;
       }
+      
+      console.log('Guest deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
-    onError: (error: any) => {
-      console.error('Delete guest mutation failed:', error);
-    },
   });
 
-  // Add room mutation - with fallback
+  // Add room
   const addRoomMutation = useMutation({
-    mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
-      try {
-        const { data, error } = await supabase
-          .from('rooms')
-          .insert([roomData])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.log('Error adding room to Supabase, using mock:', error);
-        mockData.addRoom(roomData);
-        return null;
+    mutationFn: async (roomData: Omit<Room, 'id' | 'createdAt'>) => {
+      console.log('Adding room:', roomData);
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert([roomData])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error adding room:', error);
+        throw error;
       }
+      
+      console.log('Room added successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast({
-        title: "Éxito",
-        description: "Habitación agregada correctamente",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la habitación: " + error.message,
-        variant: "destructive",
-      });
     },
   });
 
-  // Update room mutation - with fallback
+  // Update room
   const updateRoomMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Room> }) => {
-      try {
-        const { data, error } = await supabase
-          .from('rooms')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.log('Error updating room in Supabase, using mock:', error);
-        mockData.updateRoom(id, updates);
-        return null;
+    mutationFn: async ({ id, ...roomData }: Partial<Room> & { id: string }) => {
+      console.log('Updating room:', id, roomData);
+      const { data, error } = await supabase
+        .from('rooms')
+        .update(roomData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating room:', error);
+        throw error;
       }
+      
+      console.log('Room updated successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast({
-        title: "Éxito",
-        description: "Habitación actualizada correctamente",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la habitación: " + error.message,
-        variant: "destructive",
-      });
     },
   });
 
-  // Delete room mutation - with fallback
+  // Delete room
   const deleteRoomMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        const { error } = await supabase
-          .from('rooms')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-      } catch (error) {
-        console.log('Error deleting room from Supabase, using mock:', error);
-        mockData.deleteRoom(id);
+      console.log('Deleting room:', id);
+      const { error } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting room:', error);
+        throw error;
       }
+      
+      console.log('Room deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast({
-        title: "Éxito",
-        description: "Habitación eliminada correctamente",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la habitación: " + error.message,
-        variant: "destructive",
-      });
     },
   });
 
-  // Add reservation mutation - with sequential ID generation, email notifications and improved error handling
+  // Add reservation
   const addReservationMutation = useMutation({
-    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
-      try {
-        // Generate sequential ID
-        const sequentialId = await generateSequentialId();
-
-        // Create reservation with sequential ID
-        const reservationWithId = {
+    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
+      console.log('Adding reservation:', reservationData);
+      
+      // Generate sequential ID
+      const sequentialId = await getNextReservationId();
+      
+      const { data, error } = await supabase
+        .from('reservations')
+        .insert([{
           ...reservationData,
-          id: sequentialId,
-        };
-
-        const { data, error } = await supabase
-          .from('reservations')
-          .insert([reservationWithId])
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Reservation creation error:', error);
-          
-          // Handle specific constraint violations
-          if (error.code === '23P01' && error.message.includes('no_overlapping_reservations')) {
-            throw new Error('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
-          }
-          
-          throw error;
-        }
-        
-        // Update room status if reservation is checked-in
-        if (reservationData.status === 'checked-in') {
-          await supabase
-            .from('rooms')
-            .update({ status: 'occupied' })
-            .eq('id', reservationData.room_id);
-        }
-        
-        return data;
-      } catch (error: any) {
-        console.log('Error adding reservation to Supabase:', error);
-        
-        // Re-throw specific errors to be handled by the component
-        if (error.message.includes('ya está reservada') || 
-            error.message.includes('no_overlapping_reservations')) {
-          throw error;
-        }
-        
-        // For other errors, try mock fallback
-        mockData.addReservation(reservationData);
-        return null;
+          id: sequentialId
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error adding reservation:', error);
+        throw error;
       }
+      
+      console.log('Reservation added successfully:', data);
+      return data;
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      
-      // Send email notification automatically when reservation is created or confirmed
-      const guest = guests.find(g => g.id === variables.guest_id);
-      const room = rooms.find(r => r.id === variables.room_id);
-      
-      if (guest && room && data) {
-        // Use the returned data which has the proper ID and cast status to proper type
-        const fullReservation: Reservation = { 
-          ...variables, 
-          ...data,
-          status: data.status as Reservation['status']
-        };
-        
-        if (variables.status === 'checked-in') {
-          await sendReservationEmail('checkedIn', guest, fullReservation, room);
-        } else if (variables.status === 'confirmed') {
-          await sendReservationEmail('confirmed', guest, fullReservation, room);
-        } else {
-          await sendReservationEmail('created', guest, fullReservation, room);
-        }
-      }
-      
-      toast({
-        title: "Éxito",
-        description: `Reserva ${data?.id} creada correctamente y notificación enviada`,
-      });
-    },
-    onError: (error: any) => {
-      // Don't show toast for constraint violations - let the component handle it
-      if (!error.message.includes('ya está reservada') && 
-          !error.message.includes('no_overlapping_reservations')) {
-        toast({
-          title: "Error",
-          description: "No se pudo crear la reserva: " + error.message,
-          variant: "destructive",
-        });
-      }
     },
   });
 
-  // Update reservation mutation - with email notifications and improved error handling
+  // Update reservation
   const updateReservationMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Reservation> }) => {
-      try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Reservation update error:', error);
-          
-          // Handle specific constraint violations
-          if (error.code === '23P01' && error.message.includes('no_overlapping_reservations')) {
-            throw new Error('Esta habitación ya está reservada para las fechas seleccionadas. Por favor, selecciona otras fechas o una habitación diferente.');
-          }
-          
-          throw error;
-        }
-        
-        return data;
-      } catch (error: any) {
-        console.log('Error updating reservation in Supabase:', error);
-        
-        // Re-throw specific errors to be handled by the component
-        if (error.message.includes('ya está reservada') || 
-            error.message.includes('no_overlapping_reservations')) {
-          throw error;
-        }
-        
-        // For other errors, try mock fallback
-        mockData.updateReservation(id, updates);
-        return null;
+    mutationFn: async ({ id, ...reservationData }: Partial<Reservation> & { id: string }) => {
+      console.log('Updating reservation:', id, reservationData);
+      const { data, error } = await supabase
+        .from('reservations')
+        .update(reservationData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating reservation:', error);
+        throw error;
       }
+      
+      console.log('Reservation updated successfully:', data);
+      return data;
     },
-    onSuccess: async (data, { id, updates }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      
-      // Send email notification based on status change
-      const originalReservation = reservations.find(r => r.id === id);
-      const guest = guests.find(g => g.id === originalReservation?.guest_id);
-      const room = rooms.find(r => r.id === originalReservation?.room_id);
-      
-      if (guest && room && originalReservation && updates.status && data) {
-        const updatedReservation: Reservation = { 
-          ...originalReservation, 
-          ...updates, 
-          ...data,
-          status: data.status as Reservation['status']
-        };
-        
-        switch (updates.status) {
-          case 'confirmed':
-            await sendReservationEmail('confirmed', guest, updatedReservation, room);
-            break;
-          case 'checked-in':
-            await sendReservationEmail('checkedIn', guest, updatedReservation, room);
-            break;
-          case 'checked-out':
-            await sendReservationEmail('checkedOut', guest, updatedReservation, room);
-            break;
-          case 'cancelled':
-            await sendReservationEmail('cancelled', guest, updatedReservation, room);
-            break;
-        }
-      }
-      
-      toast({
-        title: "Éxito",
-        description: "Reserva actualizada correctamente y notificación enviada",
-      });
-    },
-    onError: (error: any) => {
-      // Don't show toast for constraint violations - let the component handle it
-      if (!error.message.includes('ya está reservada') && 
-          !error.message.includes('no_overlapping_reservations')) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar la reserva: " + error.message,
-          variant: "destructive",
-        });
-      }
     },
   });
 
-  // Delete reservation mutation - with fallback
+  // Delete reservation
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        // Get reservation to update room status
-        const { data: reservation } = await supabase
-          .from('reservations')
-          .select('room_id, status')
-          .eq('id', id)
-          .single();
-
-        const { error } = await supabase
-          .from('reservations')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-
-        // Update room status if needed
-        if (reservation && reservation.status === 'checked-in') {
-          await supabase
-            .from('rooms')
-            .update({ status: 'available' })
-            .eq('id', reservation.room_id);
-        }
-      } catch (error) {
-        console.log('Error deleting reservation from Supabase, using mock:', error);
-        mockData.deleteReservation(id);
+      console.log('Deleting reservation:', id);
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting reservation:', error);
+        throw error;
       }
+      
+      console.log('Reservation deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast({
-        title: "Éxito",
-        description: "Reserva eliminada correctamente",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la reserva: " + error.message,
-        variant: "destructive",
-      });
     },
   });
 
+  const isLoading = guestsLoading || roomsLoading || reservationsLoading;
+
   return {
-    rooms,
     guests,
+    rooms,
     reservations,
-    stats,
-    isLoading: roomsLoading || guestsLoading || reservationsLoading,
-    addGuest: (guestData: Omit<Guest, 'id' | 'created_at'>) => addGuestMutation.mutateAsync(guestData),
-    updateGuest: (id: string, updates: Partial<Guest>) => updateGuestMutation.mutateAsync({ id, updates }),
-    deleteGuest: (id: string) => deleteGuestMutation.mutateAsync(id),
-    addRoom: (roomData: Omit<Room, 'id' | 'created_at'>) => addRoomMutation.mutate(roomData),
-    updateRoom: (id: string, updates: Partial<Room>) => updateRoomMutation.mutate({ id, updates }),
-    deleteRoom: (id: string) => deleteRoomMutation.mutate(id),
-    addReservation: (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => 
-      addReservationMutation.mutateAsync(reservationData),
-    updateReservation: (id: string, updates: Partial<Reservation>) => 
-      updateReservationMutation.mutateAsync({ id, updates }),
-    deleteReservation: (id: string) => deleteReservationMutation.mutate(id),
+    isLoading,
+    addGuest: addGuestMutation.mutateAsync,
+    updateGuest: updateGuestMutation.mutateAsync,
+    deleteGuest: deleteGuestMutation.mutateAsync,
+    addRoom: addRoomMutation.mutateAsync,
+    updateRoom: updateRoomMutation.mutateAsync,
+    deleteRoom: deleteRoomMutation.mutateAsync,
+    addReservation: addReservationMutation.mutateAsync,
+    updateReservation: updateReservationMutation.mutateAsync,
+    deleteReservation: deleteReservationMutation.mutateAsync,
   };
 };
