@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -61,6 +60,9 @@ export const ReservationModal = ({
   const [availabilityError, setAvailabilityError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Obtener fecha actual para validación
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     if (reservation && mode === 'edit') {
       setFormData({
@@ -109,7 +111,7 @@ export const ReservationModal = ({
       const existingCheckIn = existingReservation.check_in;
       const existingCheckOut = existingReservation.check_out;
       
-      // Check for overlap: new reservation starts before existing ends AND new reservation ends after existing starts
+      // Check for overlap: new reservation starts before existing ends after existing starts
       const overlap = checkIn < existingCheckOut && checkOut > existingCheckIn;
       
       console.log('Comparing with existing reservation:', existingReservation.id, 
@@ -169,6 +171,12 @@ export const ReservationModal = ({
 
   // Handle date changes - reset room selection and clear errors
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
+    // Validar que la fecha no sea anterior a hoy
+    if (value < today) {
+      setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
+      return;
+    }
+
     setFormData(prev => {
       const newFormData = {
         ...prev,
@@ -205,6 +213,10 @@ export const ReservationModal = ({
     
     const checkIn = new Date(formData.check_in);
     const checkOut = new Date(formData.check_out);
+    const todayDate = new Date(today);
+    
+    // Validar que check-in no sea anterior a hoy
+    if (checkIn < todayDate) return false;
     
     return checkOut > checkIn;
   };
@@ -213,7 +225,11 @@ export const ReservationModal = ({
     e.preventDefault();
     
     if (!validateDates()) {
-      setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
+      if (formData.check_in < today) {
+        setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
+      } else {
+        setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
+      }
       return;
     }
 
@@ -313,6 +329,7 @@ export const ReservationModal = ({
                 onChange={(e) => handleDateChange('check_in', e.target.value)}
                 className="h-10"
                 required
+                min={today}
               />
             </div>
             <div className="space-y-2">
@@ -323,12 +340,20 @@ export const ReservationModal = ({
                 onChange={(e) => handleDateChange('check_out', e.target.value)}
                 className="h-10"
                 required
-                min={formData.check_in}
+                min={formData.check_in || today}
               />
             </div>
           </div>
 
-          {!validateDates() && formData.check_in && formData.check_out && (
+          {(formData.check_in < today || formData.check_out < today) && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-md">
+              <p className="text-red-700 text-sm">
+                No se pueden hacer reservas para fechas anteriores a hoy ({today})
+              </p>
+            </div>
+          )}
+
+          {!validateDates() && formData.check_in && formData.check_out && formData.check_in >= today && (
             <div className="bg-red-50 border border-red-200 p-3 rounded-md">
               <p className="text-red-700 text-sm">
                 La fecha de check-out debe ser posterior a la fecha de check-in

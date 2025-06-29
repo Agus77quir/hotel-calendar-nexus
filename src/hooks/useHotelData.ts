@@ -1,4 +1,3 @@
-
 import { useMockHotelData } from './useMockHotelData';
 import { useEmailNotifications } from './useEmailNotifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +23,41 @@ export const useHotelData = () => {
 
   // Use mock data as fallback
   const mockData = useMockHotelData();
+
+  // Generate sequential ID
+  const generateSequentialId = async () => {
+    try {
+      const { data: reservations, error } = await supabase
+        .from('reservations')
+        .select('id')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reservations for ID:', error);
+        return '01';
+      }
+
+      // Find the highest numeric ID
+      let maxNumber = 0;
+      reservations?.forEach(reservation => {
+        const matches = reservation.id.match(/\d+/g);
+        if (matches) {
+          const numbers = matches.map(Number);
+          const maxInId = Math.max(...numbers);
+          if (maxInId > maxNumber) {
+            maxNumber = maxInId;
+          }
+        }
+      });
+
+      // Next ID will be the highest number + 1, formatted with leading zeros
+      const nextNumber = maxNumber + 1;
+      return nextNumber.toString().padStart(2, '0');
+    } catch (error) {
+      console.error('Error generating sequential ID:', error);
+      return '01';
+    }
+  };
 
   // Try to fetch real data, fallback to mock if types aren't ready
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
@@ -328,13 +362,22 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation mutation - with email notifications and improved error handling
+  // Add reservation mutation - with sequential ID generation, email notifications and improved error handling
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       try {
+        // Generate sequential ID
+        const sequentialId = await generateSequentialId();
+
+        // Create reservation with sequential ID
+        const reservationWithId = {
+          ...reservationData,
+          id: sequentialId,
+        };
+
         const { data, error } = await supabase
           .from('reservations')
-          .insert([reservationData])
+          .insert([reservationWithId])
           .select()
           .single();
         
@@ -399,7 +442,7 @@ export const useHotelData = () => {
       
       toast({
         title: "Éxito",
-        description: "Reserva creada correctamente y notificación enviada",
+        description: `Reserva ${data?.id} creada correctamente y notificación enviada`,
       });
     },
     onError: (error: any) => {
