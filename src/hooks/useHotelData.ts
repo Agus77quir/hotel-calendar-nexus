@@ -243,7 +243,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation with email notification - RESTORED VERSION
+  // Add reservation - UPDATED VERSION
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
@@ -265,58 +265,16 @@ export const useHotelData = () => {
       console.log('Reservation added successfully:', data);
       return data;
     },
-    onSuccess: async (newReservation) => {
+    onSuccess: (newReservation) => {
       invalidateAllQueries();
       
-      // Send confirmation email after successful reservation creation
-      try {
-        console.log('Attempting to send confirmation email for reservation:', newReservation.id);
-        
-        const guest = guests.find(g => g.id === newReservation.guest_id);
-        const room = rooms.find(r => r.id === newReservation.room_id);
-        
-        if (guest && room) {
-          const guestName = `${guest.first_name} ${guest.last_name}`;
-          const template = emailTemplates.reservationCreated(guestName);
-          
-          console.log('Sending email to:', guest.email);
-          console.log('Guest name:', guestName);
-          console.log('Room:', room.number);
-          
-          await sendEmailNotification({
-            to: guest.email,
-            subject: template.subject,
-            message: template.message,
-            guestName,
-            reservationDetails: {
-              id: newReservation.id,
-              roomNumber: room.number,
-              checkIn: newReservation.check_in,
-              checkOut: newReservation.check_out,
-              totalAmount: newReservation.total_amount
-            }
-          });
-
-          toast({
-            title: "Reserva creada exitosamente",
-            description: `Email de confirmación enviado a ${guest.email}`,
-          });
-        } else {
-          console.error('Guest or room not found for email notification');
-          toast({
-            title: "Reserva creada",
-            description: "La reserva fue creada pero no se encontraron los datos para enviar el email",
-            variant: "destructive",
-          });
-        }
-      } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
-        toast({
-          title: "Reserva creada",
-          description: "La reserva fue creada pero hubo un error al enviar el email de confirmación",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Reserva creada exitosamente",
+        description: "La reserva ha sido registrada en el sistema",
+      });
+      
+      // Return the reservation for the confirmation modal
+      return newReservation;
     },
   });
 

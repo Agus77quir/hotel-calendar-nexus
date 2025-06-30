@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -7,6 +8,7 @@ import { GuestModal } from '@/components/Guests/GuestModal';
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
+import { ReservationConfirmationModal } from '@/components/Reservations/ReservationConfirmationModal';
 import { Reservation } from '@/types/hotel';
 
 const ReservationsPage = () => {
@@ -28,6 +30,12 @@ const ReservationsPage = () => {
   const [guestModal, setGuestModal] = useState({
     isOpen: false,
     mode: 'create' as 'create' | 'edit',
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    reservation?: Reservation;
+  }>({
+    isOpen: false,
   });
 
   const filteredReservations = reservations.filter(reservation => {
@@ -56,11 +64,26 @@ const ReservationsPage = () => {
     return matchesSearch && matchesDate;
   });
 
-  const handleSaveReservation = (reservationData: any) => {
-    if (reservationModal.mode === 'create') {
-      addReservation(reservationData);
-    } else if (reservationModal.reservation) {
-      updateReservation({ id: reservationModal.reservation.id, ...reservationData });
+  const handleSaveReservation = async (reservationData: any) => {
+    try {
+      let newReservation;
+      
+      if (reservationModal.mode === 'create') {
+        newReservation = await addReservation(reservationData);
+        // Close the reservation modal
+        setReservationModal({ isOpen: false, mode: 'create' });
+        
+        // Show confirmation modal
+        setConfirmationModal({
+          isOpen: true,
+          reservation: newReservation
+        });
+      } else if (reservationModal.reservation) {
+        await updateReservation({ id: reservationModal.reservation.id, ...reservationData });
+        setReservationModal({ isOpen: false, mode: 'create' });
+      }
+    } catch (error) {
+      console.error('Error saving reservation:', error);
     }
   };
 
@@ -74,6 +97,17 @@ const ReservationsPage = () => {
     await addGuest(guestData);
     setGuestModal({ isOpen: false, mode: 'create' });
   };
+
+  const getConfirmationData = () => {
+    if (!confirmationModal.reservation) return null;
+    
+    const guest = guests.find(g => g.id === confirmationModal.reservation?.guest_id);
+    const room = rooms.find(r => r.id === confirmationModal.reservation?.room_id);
+    
+    return { guest, room };
+  };
+
+  const confirmationData = getConfirmationData();
 
   if (isLoading) {
     return (
@@ -137,6 +171,16 @@ const ReservationsPage = () => {
         onSave={handleSaveGuestFromReservations}
         mode={guestModal.mode}
       />
+
+      {confirmationModal.isOpen && confirmationModal.reservation && confirmationData?.guest && confirmationData?.room && (
+        <ReservationConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal({ isOpen: false })}
+          reservation={confirmationModal.reservation}
+          guest={confirmationData.guest}
+          room={confirmationData.room}
+        />
+      )}
     </div>
   );
 };
