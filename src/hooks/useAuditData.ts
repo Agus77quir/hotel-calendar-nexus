@@ -42,8 +42,14 @@ export const useAuditData = () => {
         // Sort by changed_at descending
         allRecords.sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
 
-        console.log('Audit records fetched:', allRecords.length);
-        return allRecords;
+        // Add sequential IDs starting from 01
+        const recordsWithSequentialIds = allRecords.map((record, index) => ({
+          ...record,
+          sequentialId: (index + 1).toString().padStart(2, '0')
+        }));
+
+        console.log('Audit records fetched:', recordsWithSequentialIds.length);
+        return recordsWithSequentialIds;
       } catch (error) {
         console.error('Error fetching audit records:', error);
         throw error;

@@ -1,3 +1,4 @@
+
 export interface EmailNotification {
   to: string;
   subject: string;
@@ -37,12 +38,14 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
     console.log('Llamando a edge function con datos:', {
       to: notification.to,
       guestName: notification.guestName,
-      reservationDetails: notification.reservationDetails
+      reservationDetails: notification.reservationDetails,
+      from: 'agusquir@gmail.com'
     });
     
     const { data, error } = await supabase.functions.invoke('send-reservation-email', {
       body: {
         to: notification.to,
+        from: 'agusquir@gmail.com',
         guestName: notification.guestName,
         reservationDetails: {
           ...notification.reservationDetails,
@@ -94,7 +97,7 @@ const generateEmailContent = (notification: EmailNotification): string => {
     content += `- Total: $${reservationDetails.totalAmount}\n\n`;
   }
   
-  content += `Gracias por elegirnos.\n\nSaludos cordiales,\nEquipo del Hotel`;
+  content += `Gracias por elegirnos.\n\nSaludos cordiales,\nEquipo del Hotel\n\nContacto: agusquir@gmail.com`;
   
   return content;
 };
