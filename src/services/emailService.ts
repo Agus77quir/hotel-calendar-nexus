@@ -25,11 +25,13 @@ const generateSimpleId = (uuid: string): string => {
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
   try {
-    // Use the Supabase edge function to send actual emails
+    console.log('Enviando notificación de email a:', notification.to);
+    
+    // Try to use the Supabase edge function first
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
+      'https://yoyqanexcqdcolxnnnns.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlveXFhbmV4Y3FkY29seG5ubm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MTQwODgsImV4cCI6MjA2MjI5MDA4OH0.0NvNQuOBmRe6JCajt2bNj7_bfhcgTK_p7aqjieJWxmo'
     );
     
     const { data, error } = await supabase.functions.invoke('send-reservation-email', {
@@ -42,24 +44,27 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
     
     if (error) {
       console.error('Error sending email via edge function:', error);
-      // Fallback to mailto for development
-      const emailBody = generateEmailContent(notification);
-      const mailtoLink = `mailto:${notification.to}?subject=${encodeURIComponent(notification.subject)}&body=${encodeURIComponent(emailBody)}`;
-      window.open(mailtoLink, '_blank');
+      throw new Error('Error al enviar email de confirmación');
     } else {
       console.log('Email sent successfully via edge function:', data);
+      return { success: true };
     }
     
-    return { success: true };
   } catch (error) {
     console.error('Error in email service:', error);
     
     // Fallback to mailto if edge function fails
     const emailBody = generateEmailContent(notification);
     const mailtoLink = `mailto:${notification.to}?subject=${encodeURIComponent(notification.subject)}&body=${encodeURIComponent(emailBody)}`;
-    window.open(mailtoLink, '_blank');
     
-    return { success: true };
+    try {
+      window.open(mailtoLink, '_blank');
+      console.log('Fallback to mailto link opened');
+      return { success: true };
+    } catch (mailtoError) {
+      console.error('Error opening mailto link:', mailtoError);
+      throw new Error('No se pudo enviar el email de confirmación');
+    }
   }
 };
 

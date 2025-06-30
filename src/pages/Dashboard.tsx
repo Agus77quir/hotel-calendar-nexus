@@ -27,9 +27,9 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 sm:h-32 sm:w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground text-sm sm:text-base">Cargando dashboard...</p>
         </div>
       </div>
@@ -37,7 +37,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
       {showWelcome && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -49,48 +49,54 @@ const Dashboard = () => {
           ¡Bienvenido, {user?.firstName}!
         </motion.div>
       )}
+      
       <div className="space-y-1 sm:space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Resumen de la actividad y estado actual del hotel.
         </p>
       </div>
+      
       <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="lg:col-span-1">
+      
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <Card className="md:col-span-1">
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               Ocupación Actual
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <OccupancyChart rooms={rooms} reservations={reservations} />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-1">
+        
+        <Card className="md:col-span-1">
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
               Ingresos Mensuales
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2 xl:col-span-1">
+        
+        <Card className="md:col-span-2 xl:col-span-1">
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
               Estado de Habitaciones
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <RoomStatusChart rooms={rooms} />
           </CardContent>
         </Card>
       </div>
+      
       <div className="space-y-2 sm:space-y-4">
         <div className="space-y-1 sm:space-y-2">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Reservas del Día</h2>

@@ -1,12 +1,16 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
+import { sendEmailNotification, emailTemplates } from '@/services/emailService';
+import { useToast } from '@/hooks/use-toast';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Set current user context for audit purposes
   useEffect(() => {
@@ -267,29 +271,35 @@ export const useHotelData = () => {
         const room = rooms.find(r => r.id === reservationData.room_id);
         
         if (guest && room) {
-          const emailResponse = await supabase.functions.invoke('send-reservation-email', {
-            body: {
-              to: guest.email,
-              guestName: `${guest.first_name} ${guest.last_name}`,
-              reservationDetails: {
-                id: data.id,
-                roomNumber: room.number,
-                checkIn: reservationData.check_in,
-                checkOut: reservationData.check_out,
-                totalAmount: reservationData.total_amount
-              }
+          const guestName = `${guest.first_name} ${guest.last_name}`;
+          const template = emailTemplates.reservationCreated(guestName);
+          
+          await sendEmailNotification({
+            to: guest.email,
+            subject: template.subject,
+            message: template.message,
+            guestName,
+            reservationDetails: {
+              id: data.id,
+              roomNumber: room.number,
+              checkIn: reservationData.check_in,
+              checkOut: reservationData.check_out,
+              totalAmount: reservationData.total_amount
             }
           });
-          
-          if (emailResponse.error) {
-            console.error('Error sending confirmation email:', emailResponse.error);
-          } else {
-            console.log('Confirmation email sent successfully to:', guest.email);
-          }
+
+          toast({
+            title: "Reserva creada",
+            description: `Email de confirmación enviado a ${guest.email}`,
+          });
         }
       } catch (emailError) {
         console.error('Error sending confirmation email:', emailError);
-        // Don't throw here, reservation was successful
+        toast({
+          title: "Reserva creada",
+          description: "La reserva fue creada pero no se pudo enviar el email de confirmación",
+          variant: "destructive",
+        });
       }
       
       return data;

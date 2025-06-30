@@ -93,7 +93,7 @@ export const ReservationModal = ({
       const reservationData = {
         ...formData,
         total_amount: totalAmount,
-        created_by: 'current-user-id', // This should come from auth context
+        created_by: 'current-user-id',
       };
 
       await onSave(reservationData);
@@ -101,7 +101,6 @@ export const ReservationModal = ({
     } catch (error: any) {
       console.error('Error saving reservation:', error);
       
-      // Handle specific database constraint errors
       if (error.message && (error.message.includes('no_overlapping_reservations') || 
           error.message.includes('Ya existe una reserva'))) {
         setAvailabilityError('Habitación ya reservada, elija otra');
@@ -115,62 +114,64 @@ export const ReservationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="pb-4 border-b">
+      <DialogContent className="w-[95vw] max-w-4xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <CalendarDays className="h-6 w-6 text-primary" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            <div>
-              <DialogTitle className="text-xl">
+            <div className="min-w-0">
+              <DialogTitle className="text-lg sm:text-xl">
                 {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Complete los detalles de la reserva
               </p>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-          {availabilityError && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{availabilityError}</AlertDescription>
-            </Alert>
-          )}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+          <form onSubmit={handleSubmit} className="py-4 space-y-4 sm:space-y-6">
+            {availabilityError && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{availabilityError}</AlertDescription>
+              </Alert>
+            )}
 
-          <ReservationFormFields
-            formData={formData}
-            guests={guests}
-            rooms={rooms}
-            availableRooms={availableRooms}
-            selectedRoom={selectedRoom}
-            maxCapacity={maxCapacity}
-            today={today}
-            onFormChange={handleFormChange}
-            onDateChange={handleDateChange}
-            onRoomChange={handleRoomChange}
-            validateDates={validateDates}
-            calculateTotal={calculateTotal}
-          />
+            <ReservationFormFields
+              formData={formData}
+              guests={guests}
+              rooms={rooms}
+              availableRooms={availableRooms}
+              selectedRoom={selectedRoom}
+              maxCapacity={maxCapacity}
+              today={today}
+              onFormChange={handleFormChange}
+              onDateChange={handleDateChange}
+              onRoomChange={handleRoomChange}
+              validateDates={validateDates}
+              calculateTotal={calculateTotal}
+            />
+          </form>
+        </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} className="px-6">
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              className="px-6"
-              disabled={!validateDates() || isSubmitting || !formData.room_id}
-            >
-              {isSubmitting 
-                ? 'Guardando...' 
-                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
-              }
-            </Button>
-          </div>
-        </form>
+        <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0">
+          <Button type="button" variant="outline" onClick={onClose} className="px-4 sm:px-6">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            className="px-4 sm:px-6"
+            disabled={!validateDates() || isSubmitting || !formData.room_id}
+          >
+            {isSubmitting 
+              ? 'Guardando...' 
+              : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+            }
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
