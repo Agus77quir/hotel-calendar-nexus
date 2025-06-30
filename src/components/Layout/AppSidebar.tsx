@@ -19,7 +19,7 @@ const allMenuItems = [
     title: "Dashboard",
     url: "/",
     icon: Home,
-    roles: ['admin', 'receptionist'],
+    roles: ['admin'],
   },
   {
     title: "Huéspedes",

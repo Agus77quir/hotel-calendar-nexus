@@ -11,7 +11,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo users with updated credentials
+// Demo users with original credentials
 const demoUsers: (User & { password: string })[] = [
   {
     id: '1',
@@ -37,7 +37,7 @@ const demoUsers: (User & { password: string })[] = [
     firstName: 'Recepcionista',
     lastName: 'Dos',
     role: 'receptionist',
-    password: 'rec2123',
+    password: 'rec2@123',
     createdAt: new Date(),
   },
 ];
@@ -71,64 +71,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userWithoutPassword);
       localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
       console.log('Login successful for user:', userWithoutPassword.email);
-      
-      // Clear password from memory immediately after login
-      setTimeout(() => {
-        clearPasswordFields();
-      }, 100);
-      
       return true;
     }
     console.log('Login failed - user not found or wrong credentials');
-    
-    // Clear password field on failed login
-    clearPasswordFields();
-    
     return false;
-  };
-
-  const clearPasswordFields = () => {
-    // Clear all password fields
-    const passwordFields = document.querySelectorAll('input[type="password"]');
-    passwordFields.forEach(field => {
-      if (field instanceof HTMLInputElement) {
-        field.value = '';
-        field.setAttribute('autocomplete', 'new-password');
-      }
-    });
-    
-    // Clear any text inputs that might contain passwords
-    const textFields = document.querySelectorAll('input[type="text"]');
-    textFields.forEach(field => {
-      if (field instanceof HTMLInputElement && (field.name === 'email' || field.name === 'username')) {
-        field.value = '';
-        field.setAttribute('autocomplete', 'off');
-      }
-    });
-    
-    // Clear forms
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-      const inputs = form.querySelectorAll('input');
-      inputs.forEach(input => {
-        if (input.type === 'password' || input.name === 'email' || input.name === 'username') {
-          input.value = '';
-        }
-      });
-    });
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('hotelUser');
-    
-    // Clear all sensitive data from forms
-    clearPasswordFields();
-    
-    // Additional cleanup for browser autofill
-    setTimeout(() => {
-      clearPasswordFields();
-    }, 500);
   };
 
   const value = {
