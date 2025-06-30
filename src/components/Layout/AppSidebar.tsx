@@ -79,7 +79,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-gray-200">
       <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2 bg-white/50 rounded-md px-3 py-2">
+          <SidebarGroupLabel className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2 bg-white/20 rounded-md px-3 py-2">
             <Settings className="h-4 w-4" />
             Gestión Hotelera
           </SidebarGroupLabel>
@@ -90,7 +90,7 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === item.url}
-                    className="w-full h-10 px-3 py-2 rounded-md transition-colors hover:bg-gray-100/50 active:bg-gray-200/50 bg-white/50"
+                    className="w-full h-10 px-3 py-2 rounded-md transition-colors hover:bg-gray-100/30 active:bg-gray-200/30 bg-white/20"
                   >
                     <Link 
                       to={item.url} 
