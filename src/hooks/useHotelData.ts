@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -244,7 +243,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation with email notification - FIXED
+  // Add reservation with email notification - RESTORED VERSION
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
@@ -267,23 +266,14 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: async (newReservation) => {
-      console.log('NEW RESERVATION CREATED - Starting email process:', newReservation);
-      
-      // First invalidate queries to get updated data
       invalidateAllQueries();
       
-      // Send confirmation email immediately with current data
+      // Send confirmation email after successful reservation creation
       try {
-        console.log('Looking for guest with ID:', newReservation.guest_id);
-        console.log('Looking for room with ID:', newReservation.room_id);
-        console.log('Available guests:', guests.map(g => ({ id: g.id, name: `${g.first_name} ${g.last_name}` })));
-        console.log('Available rooms:', rooms.map(r => ({ id: r.id, number: r.number })));
+        console.log('Attempting to send confirmation email for reservation:', newReservation.id);
         
         const guest = guests.find(g => g.id === newReservation.guest_id);
         const room = rooms.find(r => r.id === newReservation.room_id);
-        
-        console.log('Found guest:', guest);
-        console.log('Found room:', room);
         
         if (guest && room) {
           const guestName = `${guest.first_name} ${guest.last_name}`;
@@ -291,10 +281,9 @@ export const useHotelData = () => {
           
           console.log('Sending email to:', guest.email);
           console.log('Guest name:', guestName);
-          console.log('Room number:', room.number);
-          console.log('Reservation ID:', newReservation.id);
+          console.log('Room:', room.number);
           
-          const emailResult = await sendEmailNotification({
+          await sendEmailNotification({
             to: guest.email,
             subject: template.subject,
             message: template.message,
@@ -308,35 +297,23 @@ export const useHotelData = () => {
             }
           });
 
-          console.log('Email result:', emailResult);
-
-          if (emailResult.success) {
-            toast({
-              title: "Reserva creada exitosamente",
-              description: `Email de confirmación enviado a ${guest.email}`,
-            });
-          } else {
-            toast({
-              title: "Reserva creada",
-              description: "La reserva fue creada pero hubo un error al enviar el email",
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Reserva creada exitosamente",
+            description: `Email de confirmación enviado a ${guest.email}`,
+          });
         } else {
-          console.error('ERROR: Guest or room not found for email notification');
-          console.error('Guest found:', !!guest, 'Room found:', !!room);
-          
+          console.error('Guest or room not found for email notification');
           toast({
             title: "Reserva creada",
-            description: "La reserva fue creada pero no se pudo enviar el email de confirmación",
+            description: "La reserva fue creada pero no se encontraron los datos para enviar el email",
             variant: "destructive",
           });
         }
       } catch (emailError) {
-        console.error('CRITICAL ERROR sending confirmation email:', emailError);
+        console.error('Error sending confirmation email:', emailError);
         toast({
           title: "Reserva creada",
-          description: "La reserva fue creada pero hubo un error crítico al enviar el email",
+          description: "La reserva fue creada pero hubo un error al enviar el email de confirmación",
           variant: "destructive",
         });
       }

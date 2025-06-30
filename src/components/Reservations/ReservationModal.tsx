@@ -114,7 +114,7 @@ export const ReservationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -131,15 +131,15 @@ export const ReservationModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6">
-          <form onSubmit={handleSubmit} className="py-4 space-y-4 sm:space-y-6">
-            {availabilityError && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{availabilityError}</AlertDescription>
-              </Alert>
-            )}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+          {availabilityError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{availabilityError}</AlertDescription>
+            </Alert>
+          )}
 
+          <div className="space-y-4 sm:space-y-6">
             <ReservationFormFields
               formData={formData}
               guests={guests}
@@ -154,7 +154,7 @@ export const ReservationModal = ({
               validateDates={validateDates}
               calculateTotal={calculateTotal}
             />
-          </form>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0">
