@@ -1,4 +1,3 @@
-
 export interface EmailNotification {
   to: string;
   subject: string;
@@ -19,14 +18,15 @@ const generateSimpleId = (uuid: string): string => {
   const hexString = uuid.replace(/-/g, '').substring(0, 8);
   const number = parseInt(hexString, 16);
   // Use modulo to keep it within a reasonable range and format with leading zeros
-  const simpleId = (number % 9999) + 1;
+  const simpleId = (number % 99) + 1;
   return simpleId.toString().padStart(2, '0');
 };
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
+  console.log('Iniciando envío de email a:', notification.to);
+  console.log('Detalles de reserva:', notification.reservationDetails);
+  
   try {
-    console.log('Enviando notificación de email a:', notification.to);
-    
     // Try to use the Supabase edge function first
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
@@ -34,21 +34,30 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlveXFhbmV4Y3FkY29seG5ubm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MTQwODgsImV4cCI6MjA2MjI5MDA4OH0.0NvNQuOBmRe6JCajt2bNj7_bfhcgTK_p7aqjieJWxmo'
     );
     
+    console.log('Llamando a edge function con datos:', {
+      to: notification.to,
+      guestName: notification.guestName,
+      reservationDetails: notification.reservationDetails
+    });
+    
     const { data, error } = await supabase.functions.invoke('send-reservation-email', {
       body: {
         to: notification.to,
         guestName: notification.guestName,
-        reservationDetails: notification.reservationDetails
+        reservationDetails: {
+          ...notification.reservationDetails,
+          id: notification.reservationDetails?.id ? generateSimpleId(notification.reservationDetails.id) : '01'
+        }
       }
     });
     
     if (error) {
-      console.error('Error sending email via edge function:', error);
-      throw new Error('Error al enviar email de confirmación');
-    } else {
-      console.log('Email sent successfully via edge function:', data);
-      return { success: true };
+      console.error('Error from edge function:', error);
+      throw new Error('Error al enviar email via edge function');
     }
+    
+    console.log('Email sent successfully via edge function:', data);
+    return { success: true };
     
   } catch (error) {
     console.error('Error in email service:', error);
