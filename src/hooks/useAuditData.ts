@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AuditRecordWithEntity, AuditType } from '@/types/audit';
+import { AuditRecordWithEntity } from '@/types/audit';
 
 export const useAuditData = () => {
   // Fetch all audit records from all tables
@@ -18,10 +18,23 @@ export const useAuditData = () => {
           supabase.from('reservations_audit').select('*').order('changed_at', { ascending: false })
         ]);
 
+        console.log('Guests audit raw data:', guestsAudit.data);
+        console.log('Rooms audit raw data:', roomsAudit.data);
+        console.log('Reservations audit raw data:', reservationsAudit.data);
+
         // Check for errors
-        if (guestsAudit.error) throw guestsAudit.error;
-        if (roomsAudit.error) throw roomsAudit.error;
-        if (reservationsAudit.error) throw reservationsAudit.error;
+        if (guestsAudit.error) {
+          console.error('Guests audit error:', guestsAudit.error);
+          throw guestsAudit.error;
+        }
+        if (roomsAudit.error) {
+          console.error('Rooms audit error:', roomsAudit.error);
+          throw roomsAudit.error;
+        }
+        if (reservationsAudit.error) {
+          console.error('Reservations audit error:', reservationsAudit.error);
+          throw reservationsAudit.error;
+        }
 
         // Combine and format all records
         const allRecords: AuditRecordWithEntity[] = [
@@ -42,7 +55,9 @@ export const useAuditData = () => {
         // Sort by changed_at descending
         allRecords.sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
 
-        console.log('Audit records fetched:', allRecords.length);
+        console.log('Final audit records processed:', allRecords.length);
+        console.log('Sample records:', allRecords.slice(0, 3));
+        
         return allRecords;
       } catch (error) {
         console.error('Error fetching audit records:', error);
@@ -51,68 +66,9 @@ export const useAuditData = () => {
     },
   });
 
-  // Filter function for audit records
-  const getFilteredRecords = (filters: {
-    type?: AuditType;
-    operation?: string;
-    user?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => {
-    return auditRecords.filter(record => {
-      // Type filter
-      if (filters.type && record.entityType !== filters.type) {
-        return false;
-      }
-      
-      // Operation filter
-      if (filters.operation && record.operation_type !== filters.operation) {
-        return false;
-      }
-      
-      // User filter
-      if (filters.user && record.changed_by !== filters.user) {
-        return false;
-      }
-      
-      // Date filters
-      if (filters.dateFrom) {
-        const recordDate = new Date(record.changed_at);
-        const fromDate = new Date(filters.dateFrom);
-        if (recordDate < fromDate) {
-          return false;
-        }
-      }
-      
-      if (filters.dateTo) {
-        const recordDate = new Date(record.changed_at);
-        const toDate = new Date(filters.dateTo);
-        toDate.setHours(23, 59, 59, 999); // Include the entire day
-        if (recordDate > toDate) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-  };
-
-  // Get unique users for filtering
-  const getUniqueUsers = () => {
-    const users = new Set<string>();
-    auditRecords.forEach(record => {
-      if (record.changed_by) {
-        users.add(record.changed_by);
-      }
-    });
-    return Array.from(users).sort();
-  };
-
   return {
     auditRecords,
     isLoading,
     error,
-    getFilteredRecords,
-    getUniqueUsers,
   };
 };

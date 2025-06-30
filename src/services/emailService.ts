@@ -1,3 +1,4 @@
+
 export interface EmailNotification {
   to: string;
   subject: string;
@@ -36,7 +37,10 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
     
     const emailPayload = {
       to: notification.to,
+      from: 'agusquir@gmail.com', // Email de envío configurado
       guestName: notification.guestName,
+      subject: notification.subject,
+      message: notification.message,
       reservationDetails: {
         ...notification.reservationDetails,
         id: notification.reservationDetails?.id ? generateSimpleId(notification.reservationDetails.id) : '01'
@@ -55,7 +59,7 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
     }
     
     console.log('Email sent successfully via edge function:', data);
-    return { success: true };
+    return { success: true, data };
     
   } catch (error) {
     console.error('Error in email service:', error);

@@ -27,7 +27,8 @@ const HistoryPage = () => {
   console.log('HistoryPage render state:', {
     auditRecordsLength: auditRecords?.length || 0,
     isLoading,
-    hasError: !!error
+    hasError: !!error,
+    sampleRecords: auditRecords?.slice(0, 2)
   });
 
   // Filtrar registros
@@ -75,6 +76,8 @@ const HistoryPage = () => {
   const getEntityName = (record: AuditRecordWithEntity) => {
     try {
       const data = record.new_data || record.old_data;
+      console.log('Getting entity name for:', record.entityType, data);
+      
       if (!data || typeof data !== 'object') return 'N/A';
 
       if (record.entityType === 'guests') {
@@ -82,16 +85,25 @@ const HistoryPage = () => {
           return `${data.first_name} ${data.last_name}`;
         }
       } else if (record.entityType === 'reservations') {
+        // Try to get guest name from context info first
+        if (data.guest_name) {
+          return `Reserva - ${data.guest_name}`;
+        }
+        // Fallback to reservation ID
         const reservationId = data.id || record.reservation_id;
         if (reservationId) {
-          return `Reserva ${reservationId.toString().padStart(2, '0')}`;
+          // Generate simple sequential ID
+          const hexString = reservationId.toString().replace(/-/g, '').substring(0, 8);
+          const number = parseInt(hexString, 16);
+          const simpleId = (number % 99) + 1;
+          return `Reserva ${simpleId.toString().padStart(2, '0')}`;
         }
       } else if (record.entityType === 'rooms') {
         if (data.number) {
           return `Habitación ${data.number}`;
         }
       }
-      return 'N/A';
+      return `${record.entityType} - N/A`;
     } catch (error) {
       console.error('Error getting entity name:', error);
       return 'N/A';
@@ -178,6 +190,7 @@ const HistoryPage = () => {
   }
 
   if (error) {
+    console.error('Audit page error:', error);
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -198,7 +211,7 @@ const HistoryPage = () => {
               <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
               <h3 className="text-lg font-medium mb-2">Error de conexión</h3>
               <p className="text-muted-foreground mb-4">
-                No se pudieron cargar los registros de auditoría. Verifica la conexión con la base de datos.
+                No se pudieron cargar los registros de auditoría: {error?.message || 'Error desconocido'}
               </p>
               <Button onClick={() => window.location.reload()}>
                 Reintentar
@@ -219,7 +232,7 @@ const HistoryPage = () => {
             Historial de Movimientos
           </h1>
           <p className="text-muted-foreground">
-            Registro de acciones realizadas en el sistema ({auditRecords.length} registros)
+            Registro de acciones realizadas en el sistema ({auditRecords.length} registros totales)
           </p>
         </div>
         <BackToHomeButton />
@@ -311,7 +324,7 @@ const HistoryPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>
-            Historial de Acciones ({filteredRecords.length} registros)
+            Historial de Acciones ({filteredRecords.length} registros mostrados)
           </CardTitle>
         </CardHeader>
         <CardContent>
