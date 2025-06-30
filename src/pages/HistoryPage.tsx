@@ -18,7 +18,7 @@ import { toast } from '@/hooks/use-toast';
 const HistoryPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOperation, setFilterOperation] = useState<'all' | 'INSERT' | 'UPDATE' | 'DELETE'>('all');
-  const [filterUser, setFilterUser] = useState<'all' | 'admin' | 'rec1' | 'rec2'>('all');
+  const [filterUser, setFilterUser] = useState<'all' | 'Admin' | 'Rec 1' | 'Rec 2'>('all');
   const [dateFilter, setDateFilter] = useState('');
   
   const { auditRecords, isLoading, error } = useAuditData();
@@ -82,9 +82,8 @@ const HistoryPage = () => {
           return `${data.first_name} ${data.last_name}`;
         }
       } else if (record.entityType === 'reservations') {
-        const reservationId = data.id || record.reservation_id;
-        if (reservationId) {
-          return `Reserva ${reservationId.toString().padStart(2, '0')}`;
+        if (data.guest_name) {
+          return data.guest_name;
         }
       } else if (record.entityType === 'rooms') {
         if (data.number) {
@@ -271,9 +270,9 @@ const HistoryPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los usuarios</SelectItem>
-                  <SelectItem value="admin">admin</SelectItem>
-                  <SelectItem value="rec1">rec1</SelectItem>
-                  <SelectItem value="rec2">rec2</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Rec 1">Rec 1</SelectItem>
+                  <SelectItem value="Rec 2">Rec 2</SelectItem>
                 </SelectContent>
               </Select>
             </div>

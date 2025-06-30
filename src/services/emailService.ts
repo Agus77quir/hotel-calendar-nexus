@@ -24,7 +24,7 @@ const generateSimpleId = (uuid: string): string => {
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
   console.log('Iniciando envío de email a:', notification.to);
-  console.log('Detalles de notificación completos:', notification);
+  console.log('Detalles de reserva:', notification.reservationDetails);
   
   try {
     // Try to use the Supabase edge function first
@@ -34,24 +34,26 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlveXFhbmV4Y3FkY29seG5ubm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MTQwODgsImV4cCI6MjA2MjI5MDA4OH0.0NvNQuOBmRe6JCajt2bNj7_bfhcgTK_p7aqjieJWxmo'
     );
     
-    const emailPayload = {
+    console.log('Llamando a edge function con datos:', {
       to: notification.to,
       guestName: notification.guestName,
-      reservationDetails: {
-        ...notification.reservationDetails,
-        id: notification.reservationDetails?.id ? generateSimpleId(notification.reservationDetails.id) : '01'
-      }
-    };
-    
-    console.log('Llamando a edge function con payload:', emailPayload);
+      reservationDetails: notification.reservationDetails
+    });
     
     const { data, error } = await supabase.functions.invoke('send-reservation-email', {
-      body: emailPayload
+      body: {
+        to: notification.to,
+        guestName: notification.guestName,
+        reservationDetails: {
+          ...notification.reservationDetails,
+          id: notification.reservationDetails?.id ? generateSimpleId(notification.reservationDetails.id) : '01'
+        }
+      }
     });
     
     if (error) {
       console.error('Error from edge function:', error);
-      throw new Error('Error al enviar email via edge function: ' + JSON.stringify(error));
+      throw new Error('Error al enviar email via edge function');
     }
     
     console.log('Email sent successfully via edge function:', data);
@@ -70,7 +72,7 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
       return { success: true };
     } catch (mailtoError) {
       console.error('Error opening mailto link:', mailtoError);
-      return { success: false, error: 'No se pudo enviar el email de confirmación' };
+      throw new Error('No se pudo enviar el email de confirmación');
     }
   }
 };

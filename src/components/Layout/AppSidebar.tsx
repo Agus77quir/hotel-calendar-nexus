@@ -19,7 +19,7 @@ const allMenuItems = [
     title: "Dashboard",
     url: "/",
     icon: Home,
-    roles: ['admin', 'receptionist'],
+    roles: ['admin'],
   },
   {
     title: "Huéspedes",
@@ -31,7 +31,7 @@ const allMenuItems = [
     title: "Habitaciones",
     url: "/rooms",
     icon: Bed,
-    roles: ['admin', 'receptionist'],
+    roles: ['admin'],
   },
   {
     title: "Reservas",
