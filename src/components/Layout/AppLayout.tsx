@@ -85,72 +85,80 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="flex flex-1 relative z-10">
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="h-16 md:h-20 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-3 md:px-6 shadow-lg">
-              <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
+            <header className="h-14 sm:h-16 md:h-20 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-3 md:px-6 shadow-lg">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
                 <SidebarTrigger>
-                  <Button variant="ghost" size="lg" className="p-2 md:p-3 flex-shrink-0">
-                    <Menu className="h-6 w-6 md:h-9 md:w-9 text-blue-700 drop-shadow-md" />
+                  <Button variant="ghost" size="sm" className="p-1 sm:p-2 md:p-3 flex-shrink-0">
+                    <Menu className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-700 drop-shadow-md" />
                   </Button>
                 </SidebarTrigger>
-                <div className="flex flex-col gap-1 min-w-0 overflow-hidden flex-1">
-                  <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 overflow-hidden flex-1">
+                  <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
                     <img 
                       src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
                       alt="NARDINI SRL" 
-                      className="h-8 md:h-12 w-auto object-contain flex-shrink-0"
+                      className="h-6 sm:h-8 md:h-12 w-auto object-contain flex-shrink-0"
                     />
-                    <span className="font-bold text-sm md:text-lg text-blue-600 truncate">Gestión de Hoteles</span>
+                    <span className="font-bold text-xs sm:text-sm md:text-lg text-blue-600 truncate">
+                      <span className="hidden sm:inline">Gestión de Hoteles</span>
+                      <span className="sm:hidden">Hotel</span>
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 md:gap-3 text-xs flex-wrap">
+                  <div className="flex items-center gap-1 sm:gap-2 md:gap-3 text-xs flex-wrap">
                     <div className="flex items-center gap-1 text-green-600 font-medium">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <span className="hidden sm:inline">{getSystemStatus()}</span>
                       <span className="sm:hidden">Online</span>
                     </div>
                     <div className="flex items-center gap-1 text-blue-600">
-                      <Shield className="h-3 w-3" />
-                      <span className="font-medium">{getRoleDisplayName(user?.role || '')}</span>
+                      <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                      <span className="font-medium text-xs truncate">{getRoleDisplayName(user?.role || '')}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Clock className="h-3 w-3" />
+                    <div className="hidden sm:flex items-center gap-1 text-gray-600">
+                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       <span className="font-mono text-xs">
-                        {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
+                        <span className="hidden md:inline">
+                          {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
+                        </span>
+                        <span className="md:hidden">
+                          {format(currentDateTime, 'dd/MM - HH:mm', { locale: es })}
+                        </span>
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                {/* User info - hidden on small screens, shown on medium+ */}
-                <div className="hidden xl:flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2">
-                  <User className="h-4 w-4 text-blue-600" />
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">{user?.firstName}</div>
-                    <div className="text-xs text-gray-600">{getRoleDisplayName(user?.role || '')}</div>
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+                {/* User info - hidden on small screens, shown on large screens */}
+                <div className="hidden lg:flex items-center gap-2 bg-white/80 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                  <div className="text-xs sm:text-sm">
+                    <div className="font-medium text-gray-900 truncate max-w-20">{user?.firstName}</div>
+                    <div className="text-xs text-gray-600 truncate">{getRoleDisplayName(user?.role || '')}</div>
                   </div>
                 </div>
                 <Button 
                   variant="outline" 
-                  size="icon" 
-                  className="bg-white/80 hover:bg-white h-8 w-8 md:h-10 md:w-10 flex-shrink-0"
+                  size="sm" 
+                  className="bg-white/80 hover:bg-white h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 flex-shrink-0 p-0"
                   onClick={() => setIsSearchOpen(true)}
                   title="Buscar huéspedes (Ctrl+K)"
                 >
-                  <Search className="h-3 w-3 md:h-4 md:w-4" />
+                  <Search className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="bg-white/80 hover:bg-white flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 flex-shrink-0"
+                  className="bg-white/80 hover:bg-white flex items-center gap-1 text-xs px-2 sm:px-3 md:px-4 flex-shrink-0 h-7 sm:h-8 md:h-10"
                   title="Cerrar Sesión"
                   size="sm"
                 >
-                  <LogOut className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Cerrar Sesión</span>
+                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Cerrar</span>
                 </Button>
               </div>
             </header>
-            <main className="flex-1 p-3 md:p-6 overflow-y-auto bg-white/80 backdrop-blur-sm">
+            <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-y-auto bg-white/80 backdrop-blur-sm">
               {children}
             </main>
           </div>

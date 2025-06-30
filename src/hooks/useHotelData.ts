@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -96,6 +95,13 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
+  // Invalidate all queries helper
+  const invalidateAllQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['guests'] });
+    queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+  };
+
   // Add guest
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
@@ -116,7 +122,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      invalidateAllQueries();
     },
   });
 
@@ -140,7 +146,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      invalidateAllQueries();
     },
   });
 
@@ -161,7 +167,7 @@ export const useHotelData = () => {
       console.log('Guest deleted successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      invalidateAllQueries();
     },
   });
 
@@ -185,7 +191,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      invalidateAllQueries();
     },
   });
 
@@ -209,7 +215,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      invalidateAllQueries();
     },
   });
 
@@ -230,7 +236,7 @@ export const useHotelData = () => {
       console.log('Room deleted successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      invalidateAllQueries();
     },
   });
 
@@ -289,7 +295,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      invalidateAllQueries();
     },
   });
 
@@ -316,7 +322,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      invalidateAllQueries();
     },
   });
 
@@ -337,7 +343,7 @@ export const useHotelData = () => {
       console.log('Reservation deleted successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      invalidateAllQueries();
     },
   });
 

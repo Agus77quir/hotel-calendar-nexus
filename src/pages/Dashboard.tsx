@@ -20,7 +20,7 @@ const Dashboard = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);
-    }, 800); // Reducido a 800ms para que sea más rápido
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
@@ -29,38 +29,38 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando dashboard...</p>
+          <div className="animate-spin rounded-full h-16 w-16 sm:h-32 sm:w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm sm:text-base">Cargando dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {showWelcome && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3 }}
-          className="rounded-md border p-4 bg-green-100 border-green-200 text-green-700"
+          className="rounded-md border p-3 sm:p-4 bg-green-100 border-green-200 text-green-700 text-sm sm:text-base"
         >
           ¡Bienvenido, {user?.firstName}!
         </motion.div>
       )}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Resumen de la actividad y estado actual del hotel.
         </p>
       </div>
       <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               Ocupación Actual
             </CardTitle>
           </CardHeader>
@@ -68,10 +68,10 @@ const Dashboard = () => {
             <OccupancyChart rooms={rooms} reservations={reservations} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
               Ingresos Mensuales
             </CardTitle>
           </CardHeader>
@@ -79,10 +79,10 @@ const Dashboard = () => {
             <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bed className="h-4 w-4" />
+        <Card className="lg:col-span-2 xl:col-span-1">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
               Estado de Habitaciones
             </CardTitle>
           </CardHeader>
@@ -91,11 +91,13 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Reservas del Día</h2>
-        <p className="text-muted-foreground">
-          Listado de reservas para el día de hoy.
-        </p>
+      <div className="space-y-2 sm:space-y-4">
+        <div className="space-y-1 sm:space-y-2">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Reservas del Día</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Listado de reservas para el día de hoy.
+          </p>
+        </div>
         <DailyReservations 
           reservations={reservations} 
           rooms={rooms} 

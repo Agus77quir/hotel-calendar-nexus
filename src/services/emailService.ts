@@ -1,3 +1,4 @@
+
 export interface EmailNotification {
   to: string;
   subject: string;
@@ -24,24 +25,41 @@ const generateSimpleId = (uuid: string): string => {
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
   try {
-    // Crear el contenido del email
-    const emailBody = generateEmailContent(notification);
+    // Use the Supabase edge function to send actual emails
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    );
     
-    // Usar mailto para abrir el cliente de correo del usuario
-    const mailtoLink = `mailto:${notification.to}?subject=${encodeURIComponent(notification.subject)}&body=${encodeURIComponent(emailBody)}`;
+    const { data, error } = await supabase.functions.invoke('send-reservation-email', {
+      body: {
+        to: notification.to,
+        guestName: notification.guestName,
+        reservationDetails: notification.reservationDetails
+      }
+    });
     
-    // Abrir el cliente de correo
-    window.open(mailtoLink, '_blank');
-    
-    // También mostrar el contenido en consola para desarrollo
-    console.log('Email enviado a:', notification.to);
-    console.log('Asunto:', notification.subject);
-    console.log('Contenido:', emailBody);
+    if (error) {
+      console.error('Error sending email via edge function:', error);
+      // Fallback to mailto for development
+      const emailBody = generateEmailContent(notification);
+      const mailtoLink = `mailto:${notification.to}?subject=${encodeURIComponent(notification.subject)}&body=${encodeURIComponent(emailBody)}`;
+      window.open(mailtoLink, '_blank');
+    } else {
+      console.log('Email sent successfully via edge function:', data);
+    }
     
     return { success: true };
   } catch (error) {
-    console.error('Error enviando email:', error);
-    return { success: false, error };
+    console.error('Error in email service:', error);
+    
+    // Fallback to mailto if edge function fails
+    const emailBody = generateEmailContent(notification);
+    const mailtoLink = `mailto:${notification.to}?subject=${encodeURIComponent(notification.subject)}&body=${encodeURIComponent(emailBody)}`;
+    window.open(mailtoLink, '_blank');
+    
+    return { success: true };
   }
 };
 
