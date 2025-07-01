@@ -266,13 +266,19 @@ export const useHotelData = () => {
       console.log('Reservation added successfully:', data);
       return data;
     },
-    onSuccess: async (newReservation) => {
+    onSuccess: async (newReservationData) => {
       invalidateAllQueries();
       
       toast({
         title: "Reserva creada exitosamente",
         description: "La reserva ha sido registrada en el sistema",
       });
+
+      // Cast the data to proper Reservation type
+      const newReservation: Reservation = {
+        ...newReservationData,
+        status: newReservationData.status as Reservation['status']
+      };
 
       // Send automated confirmation email
       try {
