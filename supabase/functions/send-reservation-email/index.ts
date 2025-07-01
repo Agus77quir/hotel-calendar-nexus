@@ -43,11 +43,11 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Resend with API key
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    // TODO: Reemplaza 'tu-dominio.com' con tu dominio verificado
-    // Ejemplo: 'reservas@hotelnardini.com' o 'noreply@tudominio.com'
-    const fromEmail = 'reservas@hotelnardini.com'; // 🔄 CAMBIAR POR TU DOMINIO VERIFICADO
+    // TODO: Reemplaza con tu subdominio de Netlify verificado
+    // Ejemplo: 'reservas@hotelnardini.netlify.app'
+    const fromEmail = 'reservas@hotelnardini.netlify.app'; // 🔄 CAMBIAR POR TU SUBDOMINIO DE NETLIFY
 
-    // Send real email using Resend with verified domain
+    // Send real email using Resend with verified Netlify domain
     const emailResponse = await resend.emails.send({
       from: `Hotel Nardini S.R.L <${fromEmail}>`,
       to: [to],
@@ -73,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Check if it's a domain verification error
       if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
-        throw new Error(`DOMINIO NO VERIFICADO: Para enviar emails a cualquier dirección, necesitas verificar un dominio en https://resend.com/domains. Actualmente solo puedes enviar emails de prueba a tu propia dirección registrada.`);
+        throw new Error(`DOMINIO NO VERIFICADO: Para enviar emails a cualquier dirección, necesitas verificar tu subdominio de Netlify en https://resend.com/domains.`);
       }
       
       throw new Error(`Error enviando email: ${emailResponse.error.message || JSON.stringify(emailResponse.error)}`);
@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
     let errorMessage = error.message || 'Error desconocido al enviar email';
     
     if (error.message && error.message.includes('DOMINIO NO VERIFICADO')) {
-      errorMessage = 'CONFIGURACIÓN REQUERIDA: Para enviar emails a todos los huéspedes, debes verificar un dominio personalizado en Resend. Contacta al administrador del sistema.';
+      errorMessage = 'CONFIGURACIÓN REQUERIDA: Para enviar emails a todos los huéspedes, debes verificar tu subdominio de Netlify en Resend.';
     }
     
     return new Response(
