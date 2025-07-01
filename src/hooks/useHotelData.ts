@@ -270,7 +270,7 @@ export const useHotelData = () => {
       
       toast({
         title: "Reserva creada exitosamente",
-        description: "La reserva ha sido registrada y se enviará automáticamente el email de confirmación",
+        description: "La reserva ha sido registrada y el email se enviará automáticamente",
       });
 
       // Cast the data to proper Reservation type
@@ -279,27 +279,40 @@ export const useHotelData = () => {
         status: newReservationData.status as Reservation['status']
       };
 
-      // Send automatic email confirmation
+      // Send automatic email confirmation in the background
       try {
         const guest = guests.find(g => g.id === newReservation.guest_id);
         const room = rooms.find(r => r.id === newReservation.room_id);
         
         if (guest && room) {
-          // Send email automatically without waiting for confirmation
-          sendReservationConfirmationAutomatically(guest, newReservation, room);
-          
-          toast({
-            title: "Email de confirmación enviado",
-            description: `Email enviado automáticamente a ${guest.email}`,
-          });
+          // Send email automatically in background without blocking UI
+          sendReservationConfirmationAutomatically(guest, newReservation, room)
+            .then((success) => {
+              if (success) {
+                toast({
+                  title: "Email enviado",
+                  description: `Confirmación enviada automáticamente a ${guest.email}`,
+                });
+              } else {
+                toast({
+                  title: "Email pendiente",
+                  description: "La reserva fue creada, el email se enviará próximamente",
+                  variant: "destructive",
+                });
+              }
+            })
+            .catch((error) => {
+              console.error('Background email error:', error);
+              toast({
+                title: "Email pendiente",
+                description: "La reserva fue creada, el email se enviará próximamente",
+                variant: "destructive",
+              });
+            });
         }
       } catch (emailError) {
-        console.error('Error sending automatic confirmation email:', emailError);
-        toast({
-          title: "Reserva creada",
-          description: "Reserva creada exitosamente, pero hubo un problema con el email automático",
-          variant: "destructive",
-        });
+        console.error('Error initiating automatic confirmation email:', emailError);
+        // No mostramos toast de error aquí para no confundir al usuario
       }
     },
   });
