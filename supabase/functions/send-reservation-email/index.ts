@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -43,9 +42,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Resend with API key
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    // TODO: Reemplaza con tu subdominio de Netlify verificado
-    // Ejemplo: 'reservas@hotelnardini.netlify.app'
-    const fromEmail = 'reservas@hotelnardini.netlify.app'; // 🔄 CAMBIAR POR TU SUBDOMINIO DE NETLIFY
+    // Usar temporalmente tu email verificado para pruebas
+    // Una vez que verifiques hotellr.netlify.app, cambia a: reservas@hotellr.netlify.app
+    const fromEmail = 'agusquir@gmail.com'; // Tu email verificado temporalmente
 
     // Send real email using Resend with verified Netlify domain
     const emailResponse = await resend.emails.send({
