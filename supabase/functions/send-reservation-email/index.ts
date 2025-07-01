@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -42,11 +43,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Resend with API key
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    // Usar temporalmente tu email verificado para pruebas
-    // Una vez que verifiques hotellr.netlify.app, cambia a: reservas@hotellr.netlify.app
-    const fromEmail = 'agusquir@gmail.com'; // Tu email verificado temporalmente
+    // Usar el dominio gratuito de Resend (sin configuración adicional)
+    const fromEmail = 'onboarding@resend.dev'; // Dominio gratuito de Resend
 
-    // Send real email using Resend with verified Netlify domain
+    // Send real email using Resend with their free domain
     const emailResponse = await resend.emails.send({
       from: `Hotel Nardini S.R.L <${fromEmail}>`,
       to: [to],
@@ -69,12 +69,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error('Error enviando email con Resend:', emailResponse.error);
-      
-      // Check if it's a domain verification error
-      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
-        throw new Error(`DOMINIO NO VERIFICADO: Para enviar emails a cualquier dirección, necesitas verificar tu subdominio de Netlify en https://resend.com/domains.`);
-      }
-      
       throw new Error(`Error enviando email: ${emailResponse.error.message || JSON.stringify(emailResponse.error)}`);
     }
 
@@ -99,19 +93,11 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error en función de email:", error);
     
-    // Provide more specific error messages
-    let errorMessage = error.message || 'Error desconocido al enviar email';
-    
-    if (error.message && error.message.includes('DOMINIO NO VERIFICADO')) {
-      errorMessage = 'CONFIGURACIÓN REQUERIDA: Para enviar emails a todos los huéspedes, debes verificar tu subdominio de Netlify en Resend.';
-    }
-    
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: errorMessage,
-        details: error.toString(),
-        requiresDomainVerification: error.message && error.message.includes('verify a domain')
+        error: error.message || 'Error desconocido al enviar email',
+        details: error.toString()
       }),
       {
         status: 500,
