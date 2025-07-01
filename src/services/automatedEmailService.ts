@@ -38,7 +38,6 @@ export const sendReservationConfirmationAutomatically = async (
 📋 DETALLES DE SU RESERVA:
 • Número de Reserva: ${reservationNumber}
 • Hotel: Hotel Nardini S.R.L
-• Dirección: Av. Principal 123, Centro de la Ciudad
 • Fecha de Llegada: ${arrivalDate}
 • Fecha de Salida: ${departureDate}
 • Tipo de Habitación: Habitación #${room.number} - ${room.type}
@@ -56,10 +55,6 @@ export const sendReservationConfirmationAutomatically = async (
 
 📝 INSTRUCCIONES ESPECIALES:
 Por favor, presente un documento de identidad válido al momento del check-in
-
-📞 CONTACTO DEL HOTEL:
-Teléfono: +1-555-123-4567
-Email: recepcion@hotel.com
 
 Estamos emocionados de recibirle y hacer que su estadía sea memorable.
 
