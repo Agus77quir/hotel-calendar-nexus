@@ -85,7 +85,7 @@ export const useAutomatedEmailService = () => {
     room: Room
   ) => {
     try {
-      console.log('Enviando email de confirmación real a:', guest.email);
+      console.log('🚀 Iniciando envío de email de confirmación a:', guest.email);
       
       const emailData: AutomatedEmailData = {
         guestName: `${guest.first_name} ${guest.last_name}`,
@@ -108,11 +108,12 @@ export const useAutomatedEmailService = () => {
 
       const emailContent = generateAutomatedConfirmationEmail(emailData);
       
-      // Llamar a la función edge real de Supabase
+      console.log('📧 Preparando datos para envío de email...');
+      
+      // Llamar a la función edge corregida de Supabase
       const { data, error } = await supabase.functions.invoke('send-reservation-email', {
         body: {
           to: guest.email,
-          from: 'noreply@hotelsolyluna.com',
           subject: 'Confirmación de Reserva - Hotel Sol y Luna',
           guestName: emailData.guestName,
           emailContent: emailContent,
@@ -127,15 +128,15 @@ export const useAutomatedEmailService = () => {
       });
 
       if (error) {
-        console.error('Error al enviar email:', error);
+        console.error('❌ Error al enviar email:', error);
         throw new Error(`Error enviando email: ${error.message}`);
       }
 
-      console.log('✅ Email enviado exitosamente:', data);
+      console.log('✅ Email de confirmación enviado exitosamente:', data);
       return { success: true, emailId: data?.emailId };
 
     } catch (error) {
-      console.error('Error en servicio de email automatizado:', error);
+      console.error('💥 Error en servicio de email automatizado:', error);
       throw error;
     }
   };
