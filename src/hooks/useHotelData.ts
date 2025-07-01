@@ -4,13 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useAutomatedEmailService } from '@/services/automatedEmailService';
+import { openEmailClient } from '@/services/emailTemplateService';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { sendReservationConfirmationEmail } = useAutomatedEmailService();
 
   // Set current user context for audit purposes
   useEffect(() => {
@@ -244,7 +243,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation with automated email
+  // Add reservation with simple email confirmation
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
@@ -280,23 +279,23 @@ export const useHotelData = () => {
         status: newReservationData.status as Reservation['status']
       };
 
-      // Send automated confirmation email
+      // Open email client for confirmation
       try {
         const guest = guests.find(g => g.id === newReservation.guest_id);
         const room = rooms.find(r => r.id === newReservation.room_id);
         
         if (guest && room) {
-          await sendReservationConfirmationEmail(guest, newReservation, room);
+          openEmailClient(guest, newReservation, room);
           toast({
-            title: "Email de confirmación enviado",
-            description: `Confirmación enviada a ${guest.email}`,
+            title: "Email de confirmación preparado",
+            description: `Se ha abierto su cliente de email para enviar confirmación a ${guest.email}`,
           });
         }
       } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
+        console.error('Error preparing confirmation email:', emailError);
         toast({
           title: "Reserva creada",
-          description: "Reserva creada exitosamente, pero no se pudo enviar el email de confirmación",
+          description: "Reserva creada exitosamente, pero no se pudo preparar el email de confirmación",
           variant: "destructive",
         });
       }
