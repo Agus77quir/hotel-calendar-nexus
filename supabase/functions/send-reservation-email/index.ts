@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface AutomatedReservationEmailRequest {
-  to: string;
+  to: string | string[]; // Permitir tanto string como array de strings
   subject: string;
   guestName: string;
   emailContent: string;
@@ -35,7 +35,10 @@ const handler = async (req: Request): Promise<Response> => {
       reservationDetails 
     }: AutomatedReservationEmailRequest = await req.json();
 
-    console.log('Enviando email de confirmación a:', to);
+    // Convertir to a array si es string
+    const recipients = Array.isArray(to) ? to : [to];
+    
+    console.log('Enviando email de confirmación a:', recipients);
     console.log('Asunto:', subject);
     console.log('Huésped:', guestName);
     console.log('Detalles de reserva:', reservationDetails);
@@ -46,10 +49,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Usar el dominio gratuito de Resend (sin configuración adicional)
     const fromEmail = 'onboarding@resend.dev'; // Dominio gratuito de Resend
 
-    // Send real email using Resend with their free domain
+    // Send real email using Resend with their free domain to multiple recipients
     const emailResponse = await resend.emails.send({
       from: `Hotel Nardini S.R.L <${fromEmail}>`,
-      to: [to],
+      to: recipients, // Ahora puede ser un array de emails
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -77,9 +80,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Email de confirmación enviado exitosamente',
+        message: `Email de confirmación enviado exitosamente a ${recipients.length} destinatario(s)`,
         emailId: emailResponse.data?.id,
-        recipient: to,
+        recipients: recipients,
+        recipientCount: recipients.length,
         emailResponse: emailResponse
       }),
       {

@@ -75,7 +75,8 @@ export const useAutomatedEmailService = () => {
   const sendReservationConfirmationEmail = async (
     guest: Guest,
     reservation: Reservation,
-    room: Room
+    room: Room,
+    additionalEmails?: string[] // Nuevo parámetro opcional para emails adicionales
   ) => {
     try {
       console.log('🚀 Iniciando envío de email de confirmación a:', guest.email);
@@ -96,14 +97,20 @@ export const useAutomatedEmailService = () => {
 
       const emailContent = generateAutomatedConfirmationEmail(emailData);
       
+      // Crear lista de destinatarios: email del huésped + emails adicionales
+      const recipients = [guest.email];
+      if (additionalEmails && additionalEmails.length > 0) {
+        recipients.push(...additionalEmails);
+      }
+      
       console.log('📧 Preparando datos para envío de email...');
-      console.log('🎯 Email destino:', guest.email);
+      console.log('🎯 Emails destino:', recipients);
       console.log('📝 Contenido del email preparado');
       
       // Llamar a la función edge corregida de Supabase
       const { data, error } = await supabase.functions.invoke('send-reservation-email', {
         body: {
-          to: guest.email,
+          to: recipients, // Ahora enviamos array de emails
           subject: 'Confirmación de Reserva - Hotel Nardini S.R.L',
           guestName: emailData.guestName,
           emailContent: emailContent,
@@ -118,23 +125,18 @@ export const useAutomatedEmailService = () => {
 
       if (error) {
         console.error('❌ Error al enviar email:', error);
-        
-        // Check for domain verification issues
-        if (error.message && error.message.includes('CONFIGURACIÓN REQUERIDA')) {
-          throw new Error(`⚠️ CONFIGURACIÓN NECESARIA: ${error.message}`);
-        }
-        
         throw new Error(`Error enviando email: ${error.message}`);
       }
 
       console.log('✅ Email de confirmación enviado exitosamente:', data);
-      console.log('📬 Enviado a:', data?.recipient || guest.email);
+      console.log('📬 Enviado a:', data?.recipients || recipients);
       
       return { 
         success: true, 
         emailId: data?.emailId,
-        recipient: data?.recipient || guest.email,
-        message: `Email enviado exitosamente a ${guest.email}`
+        recipients: data?.recipients || recipients,
+        recipientCount: data?.recipientCount || recipients.length,
+        message: `Email enviado exitosamente a ${recipients.length} destinatario(s)`
       };
 
     } catch (error) {
@@ -142,7 +144,7 @@ export const useAutomatedEmailService = () => {
       
       // Re-throw with more context
       if (error instanceof Error) {
-        throw new Error(`Error de email para ${guest.email}: ${error.message}`);
+        throw new Error(`Error de email: ${error.message}`);
       }
       
       throw error;
