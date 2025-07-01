@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
-import { sendEmailNotification, emailTemplates } from '@/services/emailService';
 import { useToast } from '@/hooks/use-toast';
+import { useAutomatedEmailService } from '@/services/automatedEmailService';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { sendReservationConfirmationEmail } = useAutomatedEmailService();
 
   // Set current user context for audit purposes
   useEffect(() => {
@@ -243,7 +244,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation - UPDATED VERSION
+  // Add reservation with automated email
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
@@ -265,16 +266,34 @@ export const useHotelData = () => {
       console.log('Reservation added successfully:', data);
       return data;
     },
-    onSuccess: (newReservation) => {
+    onSuccess: async (newReservation) => {
       invalidateAllQueries();
       
       toast({
         title: "Reserva creada exitosamente",
         description: "La reserva ha sido registrada en el sistema",
       });
-      
-      // Return the reservation for the confirmation modal
-      return newReservation;
+
+      // Send automated confirmation email
+      try {
+        const guest = guests.find(g => g.id === newReservation.guest_id);
+        const room = rooms.find(r => r.id === newReservation.room_id);
+        
+        if (guest && room) {
+          await sendReservationConfirmationEmail(guest, newReservation, room);
+          toast({
+            title: "Email de confirmación enviado",
+            description: `Confirmación enviada a ${guest.email}`,
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        toast({
+          title: "Reserva creada",
+          description: "Reserva creada exitosamente, pero no se pudo enviar el email de confirmación",
+          variant: "destructive",
+        });
+      }
     },
   });
 
