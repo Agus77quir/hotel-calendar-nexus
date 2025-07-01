@@ -11,11 +11,6 @@ export interface AutomatedEmailData {
   departureDate: string;
   roomType: string;
   numberOfGuests: number;
-  totalPrice: number;
-  currency: string;
-  paymentMethod: string;
-  cardLastFour: string;
-  cancellationPolicy: string;
   hotelContact: string;
   additionalServices?: string;
   specialInstructions?: string;
@@ -51,13 +46,11 @@ Estimado/a ${data.guestName},
 • Fecha de Salida: ${data.departureDate}
 • Tipo de Habitación: ${data.roomType}
 • Número de Huéspedes: ${data.numberOfGuests}
-• Precio Total: ${data.totalPrice} ${data.currency}
-• Método de Pago: ${data.paymentMethod} (${data.cardLastFour})
 
 🏨 INFORMACIÓN IMPORTANTE:
 • Check-in: A partir de las 15:00 horas
 • Check-out: Hasta las 12:00 horas
-• Políticas de Cancelación: ${data.cancellationPolicy}
+• Políticas de Cancelación: Cancelación gratuita hasta 24 horas antes de la llegada
 
 ${data.additionalServices ? `🎁 SERVICIOS INCLUIDOS:\n${data.additionalServices}\n\n` : ''}
 
@@ -90,17 +83,12 @@ export const useAutomatedEmailService = () => {
       const emailData: AutomatedEmailData = {
         guestName: `${guest.first_name} ${guest.last_name}`,
         reservationNumber: generateSimpleId(reservation.id),
-        hotelName: 'Hotel Sol y Luna',
+        hotelName: 'Hotel Nardini S.R.L',
         hotelAddress: 'Av. Principal 123, Centro de la Ciudad',
         arrivalDate: formatDate(reservation.check_in),
         departureDate: formatDate(reservation.check_out),
         roomType: `Habitación #${room.number} - ${room.type}`,
         numberOfGuests: reservation.guests_count || 2,
-        totalPrice: reservation.total_amount,
-        currency: 'USD',
-        paymentMethod: 'Tarjeta de Crédito',
-        cardLastFour: 'XXXX',
-        cancellationPolicy: 'Cancelación gratuita hasta 24 horas antes de la llegada',
         hotelContact: 'Teléfono: +1-555-123-4567 | Email: recepcion@hotel.com',
         additionalServices: 'Desayuno incluido, Acceso a WiFi gratuito, Acceso a la piscina',
         specialInstructions: 'Por favor, presente un documento de identidad válido al momento del check-in'
@@ -114,15 +102,14 @@ export const useAutomatedEmailService = () => {
       const { data, error } = await supabase.functions.invoke('send-reservation-email', {
         body: {
           to: guest.email,
-          subject: 'Confirmación de Reserva - Hotel Sol y Luna',
+          subject: 'Confirmación de Reserva - Hotel Nardini S.R.L',
           guestName: emailData.guestName,
           emailContent: emailContent,
           reservationDetails: {
             id: emailData.reservationNumber,
             roomNumber: room.number,
             checkIn: reservation.check_in,
-            checkOut: reservation.check_out,
-            totalAmount: reservation.total_amount
+            checkOut: reservation.check_out
           }
         }
       });

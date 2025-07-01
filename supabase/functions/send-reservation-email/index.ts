@@ -17,7 +17,6 @@ interface AutomatedReservationEmailRequest {
     roomNumber: string;
     checkIn: string;
     checkOut: string;
-    totalAmount: number;
   };
 }
 
@@ -46,20 +45,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send real email using Resend with verified domain
     const emailResponse = await resend.emails.send({
-      from: 'Hotel Sol y Luna <onboarding@resend.dev>',
+      from: 'Hotel Nardini S.R.L <onboarding@resend.dev>',
       to: [to],
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
-            <h1 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">🏨 Hotel Sol y Luna</h1>
+            <h1 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">🏨 Hotel Nardini S.R.L</h1>
             <div style="background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               <pre style="font-family: Arial, sans-serif; white-space: pre-wrap; line-height: 1.6; color: #333; margin: 0;">${emailContent}</pre>
             </div>
           </div>
           <div style="text-align: center; color: #666; font-size: 12px; margin-top: 20px;">
             <p>Este es un correo automático. Por favor no responda a este mensaje.</p>
-            <p>Hotel Sol y Luna - Su estadía perfecta nos espera</p>
+            <p>Hotel Nardini S.R.L - Su estadía perfecta nos espera</p>
           </div>
         </div>
       `,
