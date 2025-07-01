@@ -43,9 +43,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Resend with API key
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+    // TODO: Reemplaza 'tu-dominio.com' con tu dominio verificado
+    // Ejemplo: 'reservas@hotelnardini.com' o 'noreply@tudominio.com'
+    const fromEmail = 'reservas@hotelnardini.com'; // 🔄 CAMBIAR POR TU DOMINIO VERIFICADO
+
     // Send real email using Resend with verified domain
     const emailResponse = await resend.emails.send({
-      from: 'Hotel Nardini S.R.L <onboarding@resend.dev>',
+      from: `Hotel Nardini S.R.L <${fromEmail}>`,
       to: [to],
       subject: subject,
       html: `
