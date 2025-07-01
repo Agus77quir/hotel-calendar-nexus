@@ -97,6 +97,8 @@ export const useAutomatedEmailService = () => {
       const emailContent = generateAutomatedConfirmationEmail(emailData);
       
       console.log('📧 Preparando datos para envío de email...');
+      console.log('🎯 Email destino:', guest.email);
+      console.log('📝 Contenido del email preparado');
       
       // Llamar a la función edge corregida de Supabase
       const { data, error } = await supabase.functions.invoke('send-reservation-email', {
@@ -116,14 +118,33 @@ export const useAutomatedEmailService = () => {
 
       if (error) {
         console.error('❌ Error al enviar email:', error);
+        
+        // Check for domain verification issues
+        if (error.message && error.message.includes('CONFIGURACIÓN REQUERIDA')) {
+          throw new Error(`⚠️ CONFIGURACIÓN NECESARIA: ${error.message}`);
+        }
+        
         throw new Error(`Error enviando email: ${error.message}`);
       }
 
       console.log('✅ Email de confirmación enviado exitosamente:', data);
-      return { success: true, emailId: data?.emailId };
+      console.log('📬 Enviado a:', data?.recipient || guest.email);
+      
+      return { 
+        success: true, 
+        emailId: data?.emailId,
+        recipient: data?.recipient || guest.email,
+        message: `Email enviado exitosamente a ${guest.email}`
+      };
 
     } catch (error) {
       console.error('💥 Error en servicio de email automatizado:', error);
+      
+      // Re-throw with more context
+      if (error instanceof Error) {
+        throw new Error(`Error de email para ${guest.email}: ${error.message}`);
+      }
+      
       throw error;
     }
   };

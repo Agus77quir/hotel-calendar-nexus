@@ -66,7 +66,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error('Error enviando email con Resend:', emailResponse.error);
-      throw new Error(`Error enviando email: ${emailResponse.error.message}`);
+      
+      // Check if it's a domain verification error
+      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
+        throw new Error(`DOMINIO NO VERIFICADO: Para enviar emails a cualquier dirección, necesitas verificar un dominio en https://resend.com/domains. Actualmente solo puedes enviar emails de prueba a tu propia dirección registrada.`);
+      }
+      
+      throw new Error(`Error enviando email: ${emailResponse.error.message || JSON.stringify(emailResponse.error)}`);
     }
 
     console.log('✅ Email enviado exitosamente con Resend:', emailResponse);
@@ -76,6 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         message: 'Email de confirmación enviado exitosamente',
         emailId: emailResponse.data?.id,
+        recipient: to,
         emailResponse: emailResponse
       }),
       {
@@ -88,11 +95,20 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error en función de email:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = error.message || 'Error desconocido al enviar email';
+    
+    if (error.message && error.message.includes('DOMINIO NO VERIFICADO')) {
+      errorMessage = 'CONFIGURACIÓN REQUERIDA: Para enviar emails a todos los huéspedes, debes verificar un dominio personalizado en Resend. Contacta al administrador del sistema.';
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message || 'Error desconocido al enviar email',
-        details: error.toString()
+        error: errorMessage,
+        details: error.toString(),
+        requiresDomainVerification: error.message && error.message.includes('verify a domain')
       }),
       {
         status: 500,
