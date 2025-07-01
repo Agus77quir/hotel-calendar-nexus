@@ -1,5 +1,6 @@
 
 import { Guest, Room, Reservation } from '@/types/hotel';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AutomatedEmailData {
   guestName: string;
@@ -84,7 +85,7 @@ export const useAutomatedEmailService = () => {
     room: Room
   ) => {
     try {
-      console.log('Preparando email de confirmación para:', guest.email);
+      console.log('Enviando email de confirmación real a:', guest.email);
       
       const emailData: AutomatedEmailData = {
         guestName: `${guest.first_name} ${guest.last_name}`,
@@ -107,27 +108,31 @@ export const useAutomatedEmailService = () => {
 
       const emailContent = generateAutomatedConfirmationEmail(emailData);
       
-      // Show email content immediately
-      const emailPreview = `
-CORREO DE CONFIRMACIÓN ENVIADO:
-==============================
-Para: ${guest.email}
-Huésped: ${emailData.guestName}
-Reserva: ${emailData.reservationNumber}
-==============================
+      // Llamar a la función edge real de Supabase
+      const { data, error } = await supabase.functions.invoke('send-reservation-email', {
+        body: {
+          to: guest.email,
+          from: 'noreply@hotelsolyluna.com',
+          subject: 'Confirmación de Reserva - Hotel Sol y Luna',
+          guestName: emailData.guestName,
+          emailContent: emailContent,
+          reservationDetails: {
+            id: emailData.reservationNumber,
+            roomNumber: room.number,
+            checkIn: reservation.check_in,
+            checkOut: reservation.check_out,
+            totalAmount: reservation.total_amount
+          }
+        }
+      });
 
-${emailContent}
+      if (error) {
+        console.error('Error al enviar email:', error);
+        throw new Error(`Error enviando email: ${error.message}`);
+      }
 
-==============================
-✅ Email procesado exitosamente
-      `;
-      
-      console.log('📧 Email de confirmación generado:', emailPreview);
-      
-      // Show alert with email content
-      alert(emailPreview);
-
-      return { success: true, emailId: 'local-' + Date.now() };
+      console.log('✅ Email enviado exitosamente:', data);
+      return { success: true, emailId: data?.emailId };
 
     } catch (error) {
       console.error('Error en servicio de email automatizado:', error);
