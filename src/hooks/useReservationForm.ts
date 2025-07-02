@@ -65,6 +65,9 @@ export const useReservationForm = ({
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
 
+  // Get selected guest details
+  const selectedGuest = guests.find(g => g.id === formData.guest_id);
+
   // Filter available rooms based on dates and existing reservations
   const getAvailableRooms = () => {
     // If no dates selected, show only rooms with 'available' status
@@ -169,12 +172,22 @@ export const useReservationForm = ({
 
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
+    const selectedGuest = guests.find(g => g.id === formData.guest_id);
+    
     if (!selectedRoom || !formData.check_in || !formData.check_out) return 0;
     
     const checkIn = new Date(formData.check_in);
     const checkOut = new Date(formData.check_out);
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    return selectedRoom.price * nights;
+    const subtotal = selectedRoom.price * nights;
+    
+    // Apply discount if guest is associated
+    if (selectedGuest?.is_associated && selectedGuest.discount_percentage > 0) {
+      const discountAmount = (subtotal * selectedGuest.discount_percentage) / 100;
+      return subtotal - discountAmount;
+    }
+    
+    return subtotal;
   };
 
   const validateDates = () => {
@@ -187,6 +200,7 @@ export const useReservationForm = ({
     isSubmitting,
     today,
     selectedRoom,
+    selectedGuest,
     maxCapacity,
     availableRooms,
     setAvailabilityError,

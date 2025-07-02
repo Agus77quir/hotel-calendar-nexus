@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, DollarSign } from 'lucide-react';
+import { Users, DollarSign, Percent } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 
 interface ReservationFormFieldsProps {
@@ -20,6 +20,7 @@ interface ReservationFormFieldsProps {
   rooms: Room[];
   availableRooms: Room[];
   selectedRoom: Room | undefined;
+  selectedGuest: Guest | undefined;
   maxCapacity: number;
   today: string;
   onFormChange: (field: string, value: any) => void;
@@ -52,6 +53,7 @@ export const ReservationFormFields = ({
   rooms,
   availableRooms,
   selectedRoom,
+  selectedGuest,
   maxCapacity,
   today,
   onFormChange,
@@ -71,14 +73,27 @@ export const ReservationFormFields = ({
           <SelectContent>
             {guests.map((guest) => (
               <SelectItem key={guest.id} value={guest.id}>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {guest.first_name} {guest.last_name}
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {guest.first_name} {guest.last_name}
+                  </div>
+                  {guest.is_associated && (
+                    <div className="flex items-center gap-1 ml-2 text-green-600">
+                      <Percent className="h-3 w-3" />
+                      <span className="text-xs">{guest.discount_percentage}%</span>
+                    </div>
+                  )}
                 </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {selectedGuest?.is_associated && (
+          <div className="text-sm text-green-600 bg-green-50 p-2 rounded-md">
+            Huésped asociado - Descuento del {selectedGuest.discount_percentage}% aplicado
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,18 +242,45 @@ export const ReservationFormFields = ({
 
       {formData.room_id && formData.check_in && formData.check_out && validateDates() && (
         <div className="bg-primary/5 p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <span className="font-medium">Total de la Reserva</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-primary" />
+                <span className="font-medium">Resumen de Costos</span>
+              </div>
             </div>
-            <span className="text-xl font-bold text-primary">${calculateTotal()}</span>
+            
+            {selectedRoom && selectedGuest && (
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span>Habitación {selectedRoom.number} - {formData.guests_count} huésped{formData.guests_count > 1 ? 'es' : ''}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Precio por noche:</span>
+                  <span>${selectedRoom.price}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Noches:</span>
+                  <span>{Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>${(selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))).toFixed(2)}</span>
+                </div>
+                {selectedGuest.is_associated && selectedGuest.discount_percentage > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuento ({selectedGuest.discount_percentage}%):</span>
+                    <span>-${((selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))) * selectedGuest.discount_percentage / 100).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between pt-2 border-t">
+              <span className="text-lg font-bold">TOTAL:</span>
+              <span className="text-xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+            </div>
           </div>
-          {selectedRoom && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              Habitación {selectedRoom.number} - {formData.guests_count} huésped{formData.guests_count > 1 ? 'es' : ''}
-            </div>
-          )}
         </div>
       )}
     </>

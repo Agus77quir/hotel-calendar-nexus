@@ -1,10 +1,19 @@
 
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Edit, Trash2, User, MapPin } from 'lucide-react';
+import { Edit, Trash2, Download } from 'lucide-react';
+import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Room, Guest, Reservation } from '@/types/hotel';
+import { generateReservationPDF } from '@/services/pdfService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -21,188 +30,144 @@ export const ReservationsTable = ({
   onEdit,
   onDelete
 }: ReservationsTableProps) => {
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
+        return <Badge variant="default">Confirmada</Badge>;
       case 'checked-in':
-        return 'bg-green-100 text-green-800';
+        return <Badge className="bg-green-500">Registrado</Badge>;
       case 'checked-out':
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="secondary">Check-out</Badge>;
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return <Badge variant="destructive">Cancelada</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Confirmada';
-      case 'checked-in':
-        return 'Registrado';
-      case 'checked-out':
-        return 'Check-out';
-      case 'cancelled':
-        return 'Cancelada';
-      default:
-        return status;
+  const handleDownloadPDF = (reservation: Reservation) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    
+    if (guest && room) {
+      generateReservationPDF(reservation, guest, room);
     }
   };
 
   if (reservations.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No se encontraron reservas</p>
+      <div className="text-center py-8 text-muted-foreground">
+        No hay reservas para mostrar
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Desktop Table */}
-      <div className="hidden lg:block rounded-md border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-muted border-b">
-              <th className="py-3 px-4 text-left font-medium">ID</th>
-              <th className="py-3 px-4 text-left font-medium">Huésped</th>
-              <th className="py-3 px-4 text-left font-medium">Habitación</th>
-              <th className="py-3 px-4 text-left font-medium">Check-in</th>
-              <th className="py-3 px-4 text-left font-medium">Check-out</th>
-              <th className="py-3 px-4 text-left font-medium">Estado</th>
-              <th className="py-3 px-4 text-left font-medium">Total</th>
-              <th className="py-3 px-4 text-right font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservations.map((reservation) => {
-              const guest = guests.find(g => g.id === reservation.guest_id);
-              const room = rooms.find(r => r.id === reservation.room_id);
-
-              return (
-                <tr key={reservation.id} className="border-b hover:bg-muted/50">
-                  <td className="py-3 px-4">{reservation.id}</td>
-                  <td className="py-3 px-4">
-                    {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
-                  </td>
-                  <td className="py-3 px-4">{room?.number || 'N/A'}</td>
-                  <td className="py-3 px-4">
-                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                  </td>
-                  <td className="py-3 px-4">
-                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge className={getStatusColor(reservation.status)}>
-                      {getStatusText(reservation.status)}
-                    </Badge>
-                  </td>
-                  <td className="py-3 px-4">${reservation.total_amount}</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => onEdit(reservation)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => onDelete(reservation.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Reserva</TableHead>
+            <TableHead>Huésped</TableHead>
+            <TableHead>Habitación</TableHead>
+            <TableHead>Check-in</TableHead>
+            <TableHead>Check-out</TableHead>
+            <TableHead>Huéspedes</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {reservations.map((reservation) => {
+            const guest = guests.find(g => g.id === reservation.guest_id);
+            const room = rooms.find(r => r.id === reservation.room_id);
+            
+            return (
+              <TableRow key={reservation.id}>
+                <TableCell className="font-mono text-sm">
+                  {reservation.id}
+                </TableCell>
+                <TableCell>
+                  {guest ? (
+                    <div>
+                      <div className="font-medium">
+                        {guest.first_name} {guest.last_name}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {guest.email}
+                        {guest.is_associated && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            Asociado {guest.discount_percentage}%
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Cards */}
-      <div className="lg:hidden space-y-3">
-        {reservations.map((reservation) => {
-          const guest = guests.find(g => g.id === reservation.guest_id);
-          const room = rooms.find(r => r.id === reservation.room_id);
-
-          return (
-            <div key={reservation.id} className="border rounded-lg p-4 space-y-3 bg-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">
-                    {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
-                  </span>
-                </div>
-                <Badge className={`${getStatusColor(reservation.status)} text-xs`}>
-                  {getStatusText(reservation.status)}
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground">ID</p>
-                  <p className="font-medium">{reservation.id}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Habitación</p>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span className="font-medium">{room?.number || 'N/A'}</span>
+                  ) : (
+                    <span className="text-muted-foreground">Huésped no encontrado</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {room ? (
+                    <div>
+                      <div className="font-medium">Habitación {room.number}</div>
+                      <div className="text-sm text-muted-foreground capitalize">
+                        {room.type.replace('-', ' ')}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Habitación no encontrada</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
+                </TableCell>
+                <TableCell>
+                  {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
+                </TableCell>
+                <TableCell>
+                  {reservation.guests_count}
+                </TableCell>
+                <TableCell className="font-medium">
+                  ${Number(reservation.total_amount).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {getStatusBadge(reservation.status)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadPDF(reservation)}
+                      title="Descargar PDF"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(reservation)}
+                      title="Editar reserva"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(reservation.id)}
+                      title="Eliminar reserva"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Check-in</p>
-                  <p className="font-medium">
-                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Check-out</p>
-                  <p className="font-medium">
-                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div>
-                  <p className="text-muted-foreground text-xs">Total</p>
-                  <p className="font-bold text-lg">${reservation.total_amount}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onEdit(reservation)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onDelete(reservation.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };

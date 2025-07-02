@@ -1,4 +1,3 @@
-
 export interface Guest {
   id: string;
   first_name: string;
@@ -7,6 +6,8 @@ export interface Guest {
   phone: string;
   document: string;
   nationality: string;
+  is_associated: boolean;
+  discount_percentage: number;
   created_at: string;
 }
 
