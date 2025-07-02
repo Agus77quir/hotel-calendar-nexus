@@ -1,6 +1,33 @@
 import { useState } from 'react';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 
+const mockGuests: Guest[] = [
+  {
+    id: '01',
+    first_name: 'Juan',
+    last_name: 'Pérez',
+    email: 'juan.perez@email.com',
+    phone: '+1234567890',
+    document: '12345678',
+    nationality: 'Mexicano',
+    is_associated: false,
+    discount_percentage: 0,
+    created_at: '2024-01-15T10:00:00Z',
+  },
+  {
+    id: '02',
+    first_name: 'María',
+    last_name: 'González',
+    email: 'maria.gonzalez@email.com',
+    phone: '+1234567891',
+    document: '87654321',
+    nationality: 'Española',
+    is_associated: true,
+    discount_percentage: 15,
+    created_at: '2024-01-16T11:00:00Z',
+  },
+];
+
 export const useMockHotelData = () => {
   const [rooms] = useState<Room[]>([
     {
@@ -225,28 +252,7 @@ export const useMockHotelData = () => {
     },
   ]);
 
-  const [guests, setGuests] = useState<Guest[]>([
-    {
-      id: 'guest-1',
-      first_name: 'Juan',
-      last_name: 'Pérez',
-      email: 'juan.perez@email.com',
-      phone: '+1234567890',
-      document: '12345678',
-      nationality: 'Español',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'guest-2',
-      first_name: 'María',
-      last_name: 'García',
-      email: 'maria.garcia@email.com',
-      phone: '+1234567891',
-      document: '87654321',
-      nationality: 'Argentina',
-      created_at: new Date().toISOString(),
-    },
-  ]);
+  const [guests, setGuests] = useState<Guest[]>(mockGuests);
 
   const [reservations, setReservations] = useState<Reservation[]>([
     {

@@ -9,11 +9,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Download } from 'lucide-react';
+import { Edit, Trash2, Download, MessageCircle } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { generateReservationPDF } from '@/services/pdfService';
+import { sendReservationToWhatsApp } from '@/services/whatsappService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -51,6 +52,15 @@ export const ReservationsTable = ({
     
     if (guest && room) {
       generateReservationPDF(reservation, guest, room);
+    }
+  };
+
+  const handleSendWhatsApp = (reservation: Reservation) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    
+    if (guest && room) {
+      sendReservationToWhatsApp(reservation, guest, room);
     }
   };
 
@@ -136,6 +146,15 @@ export const ReservationsTable = ({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendWhatsApp(reservation)}
+                      title="Enviar por WhatsApp"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
