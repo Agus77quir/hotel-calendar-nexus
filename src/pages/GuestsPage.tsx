@@ -49,7 +49,7 @@ const GuestsPage = () => {
       if (guestModal.mode === 'create') {
         await addGuest(guestData);
       } else if (guestModal.guest) {
-        await updateGuest(guestModal.guest.id, guestData);
+        await updateGuest({ id: guestModal.guest.id, ...guestData });
       }
       setGuestModal({ isOpen: false, mode: 'create' });
     } catch (error) {
