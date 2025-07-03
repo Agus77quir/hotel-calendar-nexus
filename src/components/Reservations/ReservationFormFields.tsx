@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Users, DollarSign, Percent } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 
@@ -15,6 +16,8 @@ interface ReservationFormFieldsProps {
     guests_count: number;
     status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
     special_requests: string;
+    is_associated: boolean;
+    discount_percentage: number;
   };
   guests: Guest[];
   rooms: Room[];
@@ -73,25 +76,51 @@ export const ReservationFormFields = ({
           <SelectContent>
             {guests.map((guest) => (
               <SelectItem key={guest.id} value={guest.id}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    {guest.first_name} {guest.last_name}
-                  </div>
-                  {guest.is_associated && (
-                    <div className="flex items-center gap-1 ml-2 text-green-600">
-                      <Percent className="h-3 w-3" />
-                      <span className="text-xs">{guest.discount_percentage}%</span>
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {guest.first_name} {guest.last_name}
                 </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {selectedGuest?.is_associated && (
-          <div className="text-sm text-green-600 bg-green-50 p-2 rounded-md">
-            Huésped asociado - Descuento del {selectedGuest.discount_percentage}% aplicado
+      </div>
+
+      <div className="space-y-4 border-t pt-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="is_associated"
+            checked={formData.is_associated}
+            onCheckedChange={(checked) => onFormChange('is_associated', !!checked)}
+          />
+          <Label htmlFor="is_associated">Huésped Asociado</Label>
+        </div>
+
+        {formData.is_associated && (
+          <div>
+            <Label htmlFor="discount_percentage">Porcentaje de Descuento</Label>
+            <Select 
+              value={formData.discount_percentage.toString()}
+              onValueChange={(value) => onFormChange('discount_percentage', parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar descuento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5%</SelectItem>
+                <SelectItem value="10">10%</SelectItem>
+                <SelectItem value="15">15%</SelectItem>
+                <SelectItem value="20">20%</SelectItem>
+                <SelectItem value="25">25%</SelectItem>
+                <SelectItem value="30">30%</SelectItem>
+                <SelectItem value="35">35%</SelectItem>
+                <SelectItem value="40">40%</SelectItem>
+                <SelectItem value="45">45%</SelectItem>
+                <SelectItem value="50">50%</SelectItem>
+                <SelectItem value="55">55%</SelectItem>
+                <SelectItem value="60">60%</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>
@@ -250,7 +279,7 @@ export const ReservationFormFields = ({
               </div>
             </div>
             
-            {selectedRoom && selectedGuest && (
+            {selectedRoom && (
               <div className="text-sm space-y-1">
                 <div className="flex justify-between">
                   <span>Habitación {selectedRoom.number} - {formData.guests_count} huésped{formData.guests_count > 1 ? 'es' : ''}</span>
@@ -267,10 +296,10 @@ export const ReservationFormFields = ({
                   <span>Subtotal:</span>
                   <span>${(selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))).toFixed(2)}</span>
                 </div>
-                {selectedGuest.is_associated && selectedGuest.discount_percentage > 0 && (
+                {formData.is_associated && formData.discount_percentage > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Descuento ({selectedGuest.discount_percentage}%):</span>
-                    <span>-${((selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))) * selectedGuest.discount_percentage / 100).toFixed(2)}</span>
+                    <span>Descuento ({formData.discount_percentage}%):</span>
+                    <span>-${((selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))) * formData.discount_percentage / 100).toFixed(2)}</span>
                   </div>
                 )}
               </div>

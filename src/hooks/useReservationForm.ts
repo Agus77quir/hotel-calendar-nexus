@@ -28,6 +28,8 @@ export const useReservationForm = ({
     guests_count: 1,
     status: 'confirmed' as 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled',
     special_requests: '',
+    is_associated: false,
+    discount_percentage: 0,
   });
 
   const [availabilityError, setAvailabilityError] = useState('');
@@ -38,6 +40,8 @@ export const useReservationForm = ({
 
   useEffect(() => {
     if (reservation && mode === 'edit') {
+      // For existing reservations, get associated status from guest data
+      const guest = guests.find(g => g.id === reservation.guest_id);
       setFormData({
         guest_id: reservation.guest_id,
         room_id: reservation.room_id,
@@ -46,6 +50,8 @@ export const useReservationForm = ({
         guests_count: reservation.guests_count,
         status: reservation.status,
         special_requests: reservation.special_requests || '',
+        is_associated: guest?.is_associated || false,
+        discount_percentage: guest?.discount_percentage || 0,
       });
     } else {
       setFormData({
@@ -56,10 +62,12 @@ export const useReservationForm = ({
         guests_count: 1,
         status: 'confirmed',
         special_requests: '',
+        is_associated: false,
+        discount_percentage: 0,
       });
     }
     setAvailabilityError('');
-  }, [reservation, mode, isOpen]);
+  }, [reservation, mode, isOpen, guests]);
 
   // Get selected room details
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
@@ -172,7 +180,6 @@ export const useReservationForm = ({
 
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
-    const selectedGuest = guests.find(g => g.id === formData.guest_id);
     
     if (!selectedRoom || !formData.check_in || !formData.check_out) return 0;
     
@@ -182,8 +189,8 @@ export const useReservationForm = ({
     const subtotal = selectedRoom.price * nights;
     
     // Apply discount if guest is associated
-    if (selectedGuest?.is_associated && selectedGuest.discount_percentage > 0) {
-      const discountAmount = (subtotal * selectedGuest.discount_percentage) / 100;
+    if (formData.is_associated && formData.discount_percentage > 0) {
+      const discountAmount = (subtotal * formData.discount_percentage) / 100;
       return subtotal - discountAmount;
     }
     

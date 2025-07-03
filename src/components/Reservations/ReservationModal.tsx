@@ -92,7 +92,13 @@ export const ReservationModal = ({
       const totalAmount = calculateTotal();
 
       const reservationData = {
-        ...formData,
+        guest_id: formData.guest_id,
+        room_id: formData.room_id,
+        check_in: formData.check_in,
+        check_out: formData.check_out,
+        guests_count: formData.guests_count,
+        status: formData.status,
+        special_requests: formData.special_requests,
         total_amount: totalAmount,
         created_by: 'current-user-id',
       };

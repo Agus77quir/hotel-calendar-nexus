@@ -18,7 +18,7 @@ export const ReservationsSearch = ({
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Buscar reservas..."
+          placeholder="Buscar por huésped, email, habitación o ID..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10"

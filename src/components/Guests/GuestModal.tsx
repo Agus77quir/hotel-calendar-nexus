@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Guest } from '@/types/hotel';
 
 interface GuestModalProps {
@@ -29,8 +28,6 @@ export const GuestModal = ({
     phone: '',
     document: '',
     nationality: '',
-    is_associated: false,
-    discount_percentage: 0,
   });
 
   const [emailError, setEmailError] = useState('');
@@ -45,8 +42,6 @@ export const GuestModal = ({
         phone: guest.phone || '',
         document: guest.document || '',
         nationality: guest.nationality || '',
-        is_associated: guest.is_associated || false,
-        discount_percentage: guest.discount_percentage || 0,
       });
     } else {
       setFormData({
@@ -56,8 +51,6 @@ export const GuestModal = ({
         phone: '',
         document: '',
         nationality: '',
-        is_associated: false,
-        discount_percentage: 0,
       });
     }
     setEmailError('');
@@ -121,7 +114,11 @@ export const GuestModal = ({
     setIsSubmitting(true);
     
     try {
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        is_associated: false,
+        discount_percentage: 0
+      });
       onClose();
     } catch (error) {
       console.error('Error saving guest:', error);
@@ -216,49 +213,6 @@ export const GuestModal = ({
               required
               disabled={isSubmitting}
             />
-          </div>
-
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_associated"
-                checked={formData.is_associated}
-                onCheckedChange={(checked) => setFormData({
-                  ...formData, 
-                  is_associated: !!checked,
-                  discount_percentage: !!checked ? formData.discount_percentage : 0
-                })}
-              />
-              <Label htmlFor="is_associated">Huésped Asociado</Label>
-            </div>
-
-            {formData.is_associated && (
-              <div>
-                <Label htmlFor="discount_percentage">Porcentaje de Descuento</Label>
-                <Select 
-                  value={formData.discount_percentage.toString()}
-                  onValueChange={(value) => setFormData({...formData, discount_percentage: parseInt(value)})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar descuento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="10">10%</SelectItem>
-                    <SelectItem value="15">15%</SelectItem>
-                    <SelectItem value="20">20%</SelectItem>
-                    <SelectItem value="25">25%</SelectItem>
-                    <SelectItem value="30">30%</SelectItem>
-                    <SelectItem value="35">35%</SelectItem>
-                    <SelectItem value="40">40%</SelectItem>
-                    <SelectItem value="45">45%</SelectItem>
-                    <SelectItem value="50">50%</SelectItem>
-                    <SelectItem value="55">55%</SelectItem>
-                    <SelectItem value="60">60%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end gap-2">
