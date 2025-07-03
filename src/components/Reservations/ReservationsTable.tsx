@@ -9,12 +9,13 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Download, MessageCircle } from 'lucide-react';
+import { Edit, Trash2, Download, MessageCircle, Mail } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { generateReservationPDF } from '@/services/pdfService';
 import { sendReservationToWhatsApp } from '@/services/whatsappService';
+import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -61,6 +62,15 @@ export const ReservationsTable = ({
     
     if (guest && room) {
       sendReservationToWhatsApp(reservation, guest, room);
+    }
+  };
+
+  const handleSendEmail = (reservation: Reservation) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    
+    if (guest && room) {
+      sendReservationConfirmationAutomatically(guest, reservation, room);
     }
   };
 
@@ -154,6 +164,15 @@ export const ReservationsTable = ({
                       className="text-green-600 hover:text-green-700 hover:bg-green-50"
                     >
                       <MessageCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendEmail(reservation)}
+                      title="Confirmar por Email"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Mail className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"

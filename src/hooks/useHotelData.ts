@@ -270,7 +270,7 @@ export const useHotelData = () => {
       
       toast({
         title: "Reserva creada exitosamente",
-        description: "La reserva ha sido registrada y se enviará automáticamente el email de confirmación",
+        description: "La reserva ha sido registrada. Use el botón de email para enviar confirmación.",
       });
 
       // Cast the data to proper Reservation type
@@ -279,28 +279,6 @@ export const useHotelData = () => {
         status: newReservationData.status as Reservation['status']
       };
 
-      // Send automatic email confirmation
-      try {
-        const guest = guests.find(g => g.id === newReservation.guest_id);
-        const room = rooms.find(r => r.id === newReservation.room_id);
-        
-        if (guest && room) {
-          // Send email automatically without waiting for confirmation
-          sendReservationConfirmationAutomatically(guest, newReservation, room);
-          
-          toast({
-            title: "Email de confirmación enviado",
-            description: `Email enviado automáticamente a ${guest.email}`,
-          });
-        }
-      } catch (emailError) {
-        console.error('Error sending automatic confirmation email:', emailError);
-        toast({
-          title: "Reserva creada",
-          description: "Reserva creada exitosamente, pero hubo un problema con el email automático",
-          variant: "destructive",
-        });
-      }
     },
   });
 

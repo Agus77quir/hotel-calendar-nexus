@@ -12,30 +12,36 @@ export type Database = {
       guests: {
         Row: {
           created_at: string
+          discount_percentage: number | null
           document: string
           email: string
           first_name: string
           id: string
+          is_associated: boolean | null
           last_name: string
           nationality: string
           phone: string
         }
         Insert: {
           created_at?: string
+          discount_percentage?: number | null
           document: string
           email: string
           first_name: string
           id?: string
+          is_associated?: boolean | null
           last_name: string
           nationality: string
           phone: string
         }
         Update: {
           created_at?: string
+          discount_percentage?: number | null
           document?: string
           email?: string
           first_name?: string
           id?: string
+          is_associated?: boolean | null
           last_name?: string
           nationality?: string
           phone?: string
