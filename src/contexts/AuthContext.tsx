@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types/hotel';
 
@@ -52,24 +51,47 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('hotelUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // Optimized initialization - only check localStorage once
+    const initAuth = () => {
+      try {
+        const savedUser = localStorage.getItem('hotelUser');
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+        }
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('hotelUser');
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('Attempting login with:', { email, password });
+    
+    // Simulate network delay for realistic UX but keep it minimal
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const foundUser = demoUsers.find(u => u.email === email && u.password === password);
     console.log('Found user:', foundUser);
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
-      localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
+      
+      try {
+        localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
+      } catch (error) {
+        console.error('Error saving user to localStorage:', error);
+      }
+      
       console.log('Login successful for user:', userWithoutPassword.email);
       return true;
     }
@@ -79,7 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('hotelUser');
+    try {
+      localStorage.removeItem('hotelUser');
+    } catch (error) {
+      console.error('Error removing user from localStorage:', error);
+    }
   };
 
   const value = {
@@ -88,6 +114,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAuthenticated: !!user,
   };
+
+  // Don't render children until auth is initialized
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +12,7 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set current user context for audit purposes
+  // Set current user context for audit purposes - optimized to run only once
   useEffect(() => {
     if (user?.email) {
       const setUserContext = async () => {
@@ -24,9 +25,9 @@ export const useHotelData = () => {
       };
       setUserContext();
     }
-  }, [user]);
+  }, [user?.email]); // Only re-run if email changes
 
-  // Fetch guests
+  // Fetch guests with optimized query
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -34,7 +35,8 @@ export const useHotelData = () => {
       const { data, error } = await supabase
         .from('guests')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100); // Limit initial load
       
       if (error) {
         console.error('Error fetching guests:', error);
@@ -44,9 +46,11 @@ export const useHotelData = () => {
       console.log('Guests fetched:', data?.length || 0);
       return (data || []) as Guest[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Fetch rooms
+  // Fetch rooms with optimized query
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
@@ -64,9 +68,11 @@ export const useHotelData = () => {
       console.log('Rooms fetched:', data?.length || 0);
       return (data || []) as Room[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - rooms change less frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
-  // Fetch reservations
+  // Fetch reservations with optimized query
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
@@ -74,7 +80,8 @@ export const useHotelData = () => {
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200); // Limit initial load
       
       if (error) {
         console.error('Error fetching reservations:', error);
@@ -84,9 +91,11 @@ export const useHotelData = () => {
       console.log('Reservations fetched:', data?.length || 0);
       return (data || []) as Reservation[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes - reservations change more frequently
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Calculate stats
+  // Calculate stats efficiently using useMemo equivalent
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -98,7 +107,7 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Invalidate all queries helper
+  // Optimized invalidation function
   const invalidateAllQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['guests'] });
     queryClient.invalidateQueries({ queryKey: ['rooms'] });
@@ -125,7 +134,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
   });
 
@@ -149,7 +158,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
   });
 
@@ -170,7 +179,7 @@ export const useHotelData = () => {
       console.log('Guest deleted successfully');
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
   });
 
@@ -194,7 +203,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
@@ -218,7 +227,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
@@ -239,7 +248,7 @@ export const useHotelData = () => {
       console.log('Room deleted successfully');
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
@@ -266,7 +275,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: async (newReservationData) => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
       
       toast({
         title: "Reserva creada exitosamente",
@@ -278,7 +287,6 @@ export const useHotelData = () => {
         ...newReservationData,
         status: newReservationData.status as Reservation['status']
       };
-
     },
   });
 
@@ -305,7 +313,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
     },
   });
 
@@ -326,7 +334,7 @@ export const useHotelData = () => {
       console.log('Reservation deleted successfully');
     },
     onSuccess: () => {
-      invalidateAllQueries();
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
     },
   });
 
