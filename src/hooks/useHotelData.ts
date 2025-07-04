@@ -17,7 +17,7 @@ export const useHotelData = () => {
       const setUserContext = async () => {
         try {
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Context timeout')), 1000)
+            setTimeout(() => reject(new Error('Context timeout')), 500)
           );
           
           await Promise.race([
@@ -33,14 +33,14 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests con timeout de 3 segundos y carga mínima
+  // Fetch guests con timeout de 2 segundos
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
       console.log('Fetching guests...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Guests fetch timeout')), 3000)
+        setTimeout(() => reject(new Error('Guests fetch timeout')), 2000)
       );
       
       try {
@@ -48,7 +48,7 @@ export const useHotelData = () => {
           .from('guests')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(20); // Reducir límite inicial
+          .limit(20);
         
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
         
@@ -64,20 +64,20 @@ export const useHotelData = () => {
         return []; 
       }
     },
-    staleTime: 10 * 60 * 1000, // 10 minutos
-    gcTime: 15 * 60 * 1000, // 15 minutos
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     retry: 1,
-    retryDelay: 500,
+    retryDelay: 300,
   });
 
-  // Fetch rooms con timeout de 3 segundos
+  // Fetch rooms con timeout de 2 segundos
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('Fetching rooms...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Rooms fetch timeout')), 3000)
+        setTimeout(() => reject(new Error('Rooms fetch timeout')), 2000)
       );
       
       try {
@@ -100,20 +100,20 @@ export const useHotelData = () => {
         return [];
       }
     },
-    staleTime: 15 * 60 * 1000, // 15 minutos - rooms cambian menos
-    gcTime: 20 * 60 * 1000, // 20 minutos
+    staleTime: 15 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
     retry: 1,
-    retryDelay: 500,
+    retryDelay: 300,
   });
 
-  // Fetch reservations con timeout de 3 segundos y carga mínima
+  // Fetch reservations con timeout de 2 segundos
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('Fetching reservations...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Reservations fetch timeout')), 3000)
+        setTimeout(() => reject(new Error('Reservations fetch timeout')), 2000)
       );
       
       try {
@@ -121,7 +121,7 @@ export const useHotelData = () => {
           .from('reservations')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(50); // Reducir límite inicial
+          .limit(50);
         
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
         
@@ -137,10 +137,10 @@ export const useHotelData = () => {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
-    retryDelay: 500,
+    retryDelay: 300,
   });
 
   // Calculate stats efficiently
