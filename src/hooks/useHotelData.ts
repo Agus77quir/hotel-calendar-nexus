@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,14 +34,14 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests with timeout and error handling
+  // Fetch guests with 6-second timeout
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
       console.log('Fetching guests...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Guests fetch timeout')), 10000)
+        setTimeout(() => reject(new Error('Guests fetch timeout')), 6000)
       );
       
       try {
@@ -70,14 +71,14 @@ export const useHotelData = () => {
     retryDelay: 1000,
   });
 
-  // Fetch rooms with timeout and error handling
+  // Fetch rooms with 6-second timeout
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('Fetching rooms...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Rooms fetch timeout')), 10000)
+        setTimeout(() => reject(new Error('Rooms fetch timeout')), 6000)
       );
       
       try {
@@ -106,14 +107,14 @@ export const useHotelData = () => {
     retryDelay: 1000,
   });
 
-  // Fetch reservations with timeout and error handling
+  // Fetch reservations with 6-second timeout
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('Fetching reservations...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Reservations fetch timeout')), 10000)
+        setTimeout(() => reject(new Error('Reservations fetch timeout')), 6000)
       );
       
       try {
