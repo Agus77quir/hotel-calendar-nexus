@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,90 +11,139 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set current user context for audit purposes - optimized to run only once
+  // Set current user context for audit purposes with timeout
   useEffect(() => {
     if (user?.email) {
       const setUserContext = async () => {
         try {
-          await supabase.rpc('set_current_user', { user_name: user.email });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Context timeout')), 3000)
+          );
+          
+          await Promise.race([
+            supabase.rpc('set_current_user', { user_name: user.email }),
+            timeoutPromise
+          ]);
           console.log('User context set for audit:', user.email);
         } catch (error) {
-          console.error('Error setting user context:', error);
+          console.error('Error setting user context (proceeding anyway):', error);
         }
       };
       setUserContext();
     }
-  }, [user?.email]); // Only re-run if email changes
+  }, [user?.email]);
 
-  // Fetch guests with optimized query
+  // Fetch guests with timeout and error handling
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
       console.log('Fetching guests...');
-      const { data, error } = await supabase
-        .from('guests')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100); // Limit initial load
       
-      if (error) {
-        console.error('Error fetching guests:', error);
-        throw error;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Guests fetch timeout')), 10000)
+      );
+      
+      try {
+        const fetchPromise = supabase
+          .from('guests')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        
+        if (error) {
+          console.error('Error fetching guests:', error);
+          return []; // Return empty array instead of throwing
+        }
+        
+        console.log('Guests fetched:', data?.length || 0);
+        return (data || []) as Guest[];
+      } catch (error) {
+        console.error('Guests fetch failed:', error);
+        return []; // Return empty array on timeout/error
       }
-      
-      console.log('Guests fetched:', data?.length || 0);
-      return (data || []) as Guest[];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    retryDelay: 1000,
   });
 
-  // Fetch rooms with optimized query
+  // Fetch rooms with timeout and error handling
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('Fetching rooms...');
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('number');
       
-      if (error) {
-        console.error('Error fetching rooms:', error);
-        throw error;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Rooms fetch timeout')), 10000)
+      );
+      
+      try {
+        const fetchPromise = supabase
+          .from('rooms')
+          .select('*')
+          .order('number');
+        
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        
+        if (error) {
+          console.error('Error fetching rooms:', error);
+          return [];
+        }
+        
+        console.log('Rooms fetched:', data?.length || 0);
+        return (data || []) as Room[];
+      } catch (error) {
+        console.error('Rooms fetch failed:', error);
+        return [];
       }
-      
-      console.log('Rooms fetched:', data?.length || 0);
-      return (data || []) as Room[];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes - rooms change less frequently
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: 1,
+    retryDelay: 1000,
   });
 
-  // Fetch reservations with optimized query
+  // Fetch reservations with timeout and error handling
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('Fetching reservations...');
-      const { data, error } = await supabase
-        .from('reservations')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200); // Limit initial load
       
-      if (error) {
-        console.error('Error fetching reservations:', error);
-        throw error;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Reservations fetch timeout')), 10000)
+      );
+      
+      try {
+        const fetchPromise = supabase
+          .from('reservations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        
+        if (error) {
+          console.error('Error fetching reservations:', error);
+          return [];
+        }
+        
+        console.log('Reservations fetched:', data?.length || 0);
+        return (data || []) as Reservation[];
+      } catch (error) {
+        console.error('Reservations fetch failed:', error);
+        return [];
       }
-      
-      console.log('Reservations fetched:', data?.length || 0);
-      return (data || []) as Reservation[];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - reservations change more frequently
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+    retryDelay: 1000,
   });
 
-  // Calculate stats efficiently using useMemo equivalent
+  // Calculate stats efficiently
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,

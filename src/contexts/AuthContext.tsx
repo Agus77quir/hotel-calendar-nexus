@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types/hotel';
 
@@ -54,7 +55,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Optimized initialization - only check localStorage once
+    // Force initialization timeout - nunca más de 2 segundos
+    const initTimeout = setTimeout(() => {
+      console.log('Auth initialization timeout - proceeding without saved user');
+      setIsInitialized(true);
+    }, 2000);
+
     const initAuth = () => {
       try {
         const savedUser = localStorage.getItem('hotelUser');
@@ -66,18 +72,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('hotelUser');
       } finally {
+        clearTimeout(initTimeout);
         setIsInitialized(true);
       }
     };
 
-    initAuth();
+    // Execute immediately with minimal delay
+    setTimeout(initAuth, 50);
+
+    return () => clearTimeout(initTimeout);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('Attempting login with:', { email, password });
     
-    // Simulate network delay for realistic UX but keep it minimal
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Minimal delay for UX
+    await new Promise(resolve => setTimeout(resolve, 50));
     
     const foundUser = demoUsers.find(u => u.email === email && u.password === password);
     console.log('Found user:', foundUser);
@@ -115,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
   };
 
-  // Don't render children until auth is initialized
+  // Render immediately after timeout
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
