@@ -55,12 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Force initialization timeout - nunca más de 2 segundos
-    const initTimeout = setTimeout(() => {
-      console.log('Auth initialization timeout - proceeding without saved user');
-      setIsInitialized(true);
-    }, 2000);
-
+    // Inicialización inmediata y más rápida
     const initAuth = () => {
       try {
         const savedUser = localStorage.getItem('hotelUser');
@@ -72,22 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('hotelUser');
       } finally {
-        clearTimeout(initTimeout);
         setIsInitialized(true);
       }
     };
 
-    // Execute immediately with minimal delay
-    setTimeout(initAuth, 50);
-
-    return () => clearTimeout(initTimeout);
+    // Ejecutar inmediatamente sin delay
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('Attempting login with:', { email, password });
-    
-    // Minimal delay for UX
-    await new Promise(resolve => setTimeout(resolve, 50));
     
     const foundUser = demoUsers.find(u => u.email === email && u.password === password);
     console.log('Found user:', foundUser);
@@ -125,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
   };
 
-  // Render immediately after timeout
+  // Renderizar inmediatamente después de la inicialización
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">

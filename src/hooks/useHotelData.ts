@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,13 +11,13 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set current user context for audit purposes with timeout
+  // Set current user context para audit - optimizado
   useEffect(() => {
     if (user?.email) {
       const setUserContext = async () => {
         try {
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Context timeout')), 3000)
+            setTimeout(() => reject(new Error('Context timeout')), 1000)
           );
           
           await Promise.race([
@@ -34,14 +33,14 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests with 6-second timeout
+  // Fetch guests con timeout de 3 segundos y carga mínima
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
       console.log('Fetching guests...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Guests fetch timeout')), 6000)
+        setTimeout(() => reject(new Error('Guests fetch timeout')), 3000)
       );
       
       try {
@@ -49,36 +48,36 @@ export const useHotelData = () => {
           .from('guests')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(20); // Reducir límite inicial
         
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
         
         if (error) {
           console.error('Error fetching guests:', error);
-          return []; // Return empty array instead of throwing
+          return []; 
         }
         
         console.log('Guests fetched:', data?.length || 0);
         return (data || []) as Guest[];
       } catch (error) {
         console.error('Guests fetch failed:', error);
-        return []; // Return empty array on timeout/error
+        return []; 
       }
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos
     retry: 1,
-    retryDelay: 1000,
+    retryDelay: 500,
   });
 
-  // Fetch rooms with 6-second timeout
+  // Fetch rooms con timeout de 3 segundos
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('Fetching rooms...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Rooms fetch timeout')), 6000)
+        setTimeout(() => reject(new Error('Rooms fetch timeout')), 3000)
       );
       
       try {
@@ -101,20 +100,20 @@ export const useHotelData = () => {
         return [];
       }
     },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutos - rooms cambian menos
+    gcTime: 20 * 60 * 1000, // 20 minutos
     retry: 1,
-    retryDelay: 1000,
+    retryDelay: 500,
   });
 
-  // Fetch reservations with 6-second timeout
+  // Fetch reservations con timeout de 3 segundos y carga mínima
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('Fetching reservations...');
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Reservations fetch timeout')), 6000)
+        setTimeout(() => reject(new Error('Reservations fetch timeout')), 3000)
       );
       
       try {
@@ -122,7 +121,7 @@ export const useHotelData = () => {
           .from('reservations')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(50); // Reducir límite inicial
         
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
         
@@ -138,10 +137,10 @@ export const useHotelData = () => {
         return [];
       }
     },
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
     retry: 1,
-    retryDelay: 1000,
+    retryDelay: 500,
   });
 
   // Calculate stats efficiently

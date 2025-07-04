@@ -17,14 +17,15 @@ import AuditPage from "./pages/AuditPage";
 import NotFound from "./pages/NotFound";
 import { AppLayout } from "./components/Layout/AppLayout";
 
-// Optimized QueryClient configuration for better performance
+// Configuración optimizada del QueryClient para mejor rendimiento
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      retry: 1, // Reduce retries for faster error handling
-      refetchOnWindowFocus: false, // Prevent unnecessary refetches
+      staleTime: 10 * 60 * 1000, // 10 minutos
+      gcTime: 15 * 60 * 1000, // 15 minutos 
+      retry: 1, // Un solo reintento
+      refetchOnWindowFocus: false, // Evitar refetches innecesarios
+      refetchOnReconnect: false, // Evitar refetches en reconexión
     },
     mutations: {
       retry: 1,
