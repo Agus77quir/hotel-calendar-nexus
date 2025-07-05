@@ -97,12 +97,20 @@ const Dashboard = () => {
         </Card>
       </div>
       
-      <DailyReservations 
-        reservations={reservations} 
-        rooms={rooms} 
-        guests={guests} 
-        selectedDate={selectedDate} 
-      />
+      <div className="space-y-2 sm:space-y-4">
+        <div className="space-y-1 sm:space-y-2">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Reservas del Día</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Listado de reservas para el día de hoy.
+          </p>
+        </div>
+        <DailyReservations 
+          reservations={reservations} 
+          rooms={rooms} 
+          guests={guests} 
+          selectedDate={selectedDate} 
+        />
+      </div>
     </div>
   );
 };
