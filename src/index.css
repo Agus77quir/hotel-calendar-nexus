@@ -99,10 +99,14 @@
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
+    /* Safari-specific optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
-/* Custom scrollbar styles */
+/* Safari-compatible scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -115,15 +119,54 @@
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+  -webkit-border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* Glass effect for cards */
+/* Glass effect for cards - Safari compatible */
 .glass-effect {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-appearance: none) {
+  /* Safari-specific styles */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  textarea,
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* Prevent text selection issues in Safari */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Safari touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+  button, 
+  .cursor-pointer {
+    cursor: default;
+  }
 }

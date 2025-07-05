@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,20 +12,25 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set current user context para audit - optimizado
+  // Set current user context para audit - optimizado para Safari
   useEffect(() => {
     if (user?.email) {
       const setUserContext = async () => {
         try {
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Context timeout')), 500)
-          );
+          // Safari-compatible timeout implementation
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 500);
           
-          await Promise.race([
-            supabase.rpc('set_current_user', { user_name: user.email }),
-            timeoutPromise
-          ]);
-          console.log('User context set for audit:', user.email);
+          try {
+            await supabase.rpc('set_current_user', { 
+              user_name: user.email 
+            });
+            clearTimeout(timeoutId);
+            console.log('User context set for audit:', user.email);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+          }
         } catch (error) {
           console.error('Error setting user context (proceeding anyway):', error);
         }
@@ -33,35 +39,51 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests con timeout de 2 segundos
+  // Safari-compatible fetch function
+  const safeFetch = async (queryFn: () => Promise<any>, timeoutMs: number) => {
+    return new Promise(async (resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Request timeout'));
+      }, timeoutMs);
+
+      try {
+        const result = await queryFn();
+        clearTimeout(timeoutId);
+        resolve(result);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    });
+  };
+
+  // Fetch guests con timeout de 2 segundos - Safari compatible
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
       console.log('Fetching guests...');
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Guests fetch timeout')), 2000)
-      );
-      
       try {
-        const fetchPromise = supabase
-          .from('guests')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20);
+        const result = await safeFetch(async () => {
+          const { data, error } = await supabase
+            .from('guests')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(20);
+          
+          if (error) {
+            console.error('Error fetching guests:', error);
+            return [];
+          }
+          
+          return data || [];
+        }, 2000);
         
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-        
-        if (error) {
-          console.error('Error fetching guests:', error);
-          return []; 
-        }
-        
-        console.log('Guests fetched:', data?.length || 0);
-        return (data || []) as Guest[];
+        console.log('Guests fetched:', (result as any[])?.length || 0);
+        return result as Guest[];
       } catch (error) {
         console.error('Guests fetch failed:', error);
-        return []; 
+        return [];
       }
     },
     staleTime: 10 * 60 * 1000,
@@ -70,31 +92,29 @@ export const useHotelData = () => {
     retryDelay: 300,
   });
 
-  // Fetch rooms con timeout de 2 segundos
+  // Fetch rooms con timeout de 2 segundos - Safari compatible
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('Fetching rooms...');
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Rooms fetch timeout')), 2000)
-      );
-      
       try {
-        const fetchPromise = supabase
-          .from('rooms')
-          .select('*')
-          .order('number');
+        const result = await safeFetch(async () => {
+          const { data, error } = await supabase
+            .from('rooms')
+            .select('*')
+            .order('number');
+          
+          if (error) {
+            console.error('Error fetching rooms:', error);
+            return [];
+          }
+          
+          return data || [];
+        }, 2000);
         
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-        
-        if (error) {
-          console.error('Error fetching rooms:', error);
-          return [];
-        }
-        
-        console.log('Rooms fetched:', data?.length || 0);
-        return (data || []) as Room[];
+        console.log('Rooms fetched:', (result as any[])?.length || 0);
+        return result as Room[];
       } catch (error) {
         console.error('Rooms fetch failed:', error);
         return [];
@@ -106,32 +126,30 @@ export const useHotelData = () => {
     retryDelay: 300,
   });
 
-  // Fetch reservations con timeout de 2 segundos
+  // Fetch reservations con timeout de 2 segundos - Safari compatible
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('Fetching reservations...');
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Reservations fetch timeout')), 2000)
-      );
-      
       try {
-        const fetchPromise = supabase
-          .from('reservations')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
+        const result = await safeFetch(async () => {
+          const { data, error } = await supabase
+            .from('reservations')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+          
+          if (error) {
+            console.error('Error fetching reservations:', error);
+            return [];
+          }
+          
+          return data || [];
+        }, 2000);
         
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-        
-        if (error) {
-          console.error('Error fetching reservations:', error);
-          return [];
-        }
-        
-        console.log('Reservations fetched:', data?.length || 0);
-        return (data || []) as Reservation[];
+        console.log('Reservations fetched:', (result as any[])?.length || 0);
+        return result as Reservation[];
       } catch (error) {
         console.error('Reservations fetch failed:', error);
         return [];

@@ -55,47 +55,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Inicialización inmediata y más rápida
+    // Safari-compatible initialization
     const initAuth = () => {
       try {
-        const savedUser = localStorage.getItem('hotelUser');
-        if (savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-        }
+        // Use requestAnimationFrame for better Safari compatibility
+        requestAnimationFrame(() => {
+          try {
+            const savedUser = localStorage.getItem('hotelUser');
+            if (savedUser) {
+              const parsedUser = JSON.parse(savedUser);
+              setUser(parsedUser);
+            }
+          } catch (error) {
+            console.error('Error parsing saved user:', error);
+            // Safari-safe localStorage cleanup
+            try {
+              localStorage.removeItem('hotelUser');
+            } catch (storageError) {
+              console.error('Error cleaning localStorage:', storageError);
+            }
+          } finally {
+            setIsInitialized(true);
+          }
+        });
       } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('hotelUser');
-      } finally {
+        console.error('Error during auth initialization:', error);
         setIsInitialized(true);
       }
     };
 
-    // Ejecutar inmediatamente sin delay
     initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('Attempting login with:', { email, password });
     
-    const foundUser = demoUsers.find(u => u.email === email && u.password === password);
-    console.log('Found user:', foundUser);
-    
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      
+    // Safari-compatible Promise handling
+    return new Promise((resolve) => {
       try {
-        localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
+        const foundUser = demoUsers.find(u => u.email === email && u.password === password);
+        console.log('Found user:', foundUser);
+        
+        if (foundUser) {
+          const { password: _, ...userWithoutPassword } = foundUser;
+          setUser(userWithoutPassword);
+          
+          // Safari-safe localStorage handling
+          try {
+            localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
+          } catch (error) {
+            console.error('Error saving user to localStorage:', error);
+          }
+          
+          console.log('Login successful for user:', userWithoutPassword.email);
+          resolve(true);
+        } else {
+          console.log('Login failed - user not found or wrong credentials');
+          resolve(false);
+        }
       } catch (error) {
-        console.error('Error saving user to localStorage:', error);
+        console.error('Login error:', error);
+        resolve(false);
       }
-      
-      console.log('Login successful for user:', userWithoutPassword.email);
-      return true;
-    }
-    console.log('Login failed - user not found or wrong credentials');
-    return false;
+    });
   };
 
   const logout = () => {
@@ -114,11 +136,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
   };
 
-  // Renderizar inmediatamente después de la inicialización
+  // Safari-compatible loading state
   if (!isInitialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-blue-600 text-sm">Iniciando sistema...</p>
+        </div>
       </div>
     );
   }
