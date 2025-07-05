@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -216,29 +217,29 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="fixed top-20 right-6 w-96 z-[99999] pointer-events-auto">
-      <Card className="shadow-2xl border bg-white">
-        <CardHeader className="pb-3">
+    <div className="fixed inset-x-2 top-16 md:top-20 md:right-6 md:left-auto w-auto md:w-96 z-[99999] pointer-events-auto">
+      <Card className="shadow-2xl border bg-white max-h-[80vh] md:max-h-[90vh] flex flex-col">
+        <CardHeader className="pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">Notificaciones</CardTitle>
+              <CardTitle className="text-base md:text-lg">Notificaciones</CardTitle>
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge variant="destructive" className="text-xs min-w-[20px] h-5">
                   {unreadCount}
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {notifications.length > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={clearAllNotifications}
-                  className="text-xs text-red-600 hover:text-red-700"
+                  className="text-xs text-red-600 hover:text-red-700 px-2 py-1 h-7"
                   title="Eliminar todas"
                 >
                   <Trash2 className="h-3 w-3 mr-1" />
-                  Limpiar
+                  <span className="hidden sm:inline">Limpiar</span>
                 </Button>
               )}
               {unreadCount > 0 && (
@@ -246,70 +247,83 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={markAllAsRead}
-                  className="text-xs"
+                  className="text-xs px-2 py-1 h-7"
                 >
-                  Marcar todo
+                  <span className="hidden sm:inline">Marcar todo</span>
+                  <span className="sm:hidden">✓</span>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onClose}
+                className="h-7 w-7 -webkit-tap-highlight-color-transparent"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="max-h-96 overflow-y-auto">
+        <CardContent className="p-0 flex-1 overflow-hidden">
+          <div className="max-h-full overflow-y-auto -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>
             {notifications.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No hay notificaciones</p>
+                <p className="text-sm">No hay notificaciones</p>
               </div>
             ) : (
               <div className="space-y-1">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b hover:bg-muted/50 transition-colors ${
+                    className={`p-3 md:p-4 border-b hover:bg-muted/50 transition-colors touch-manipulation ${
                       !notification.isRead ? 'bg-blue-50' : ''
                     } ${getPriorityColor(notification.priority)}`}
+                    style={{ 
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation'
+                    }}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-1">
+                      <div className="mt-1 flex-shrink-0">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <p className="font-medium text-sm truncate">
                             {notification.title}
                           </p>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               {notification.time}
                             </span>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => deleteNotification(notification.id)}
-                              className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50 -webkit-tap-highlight-color-transparent flex-shrink-0"
+                              style={{ WebkitTapHighlightColor: 'transparent' }}
                               title="Eliminar notificación"
                             >
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {notification.message}
                         </p>
-                        <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center justify-between mt-3 gap-2">
                           <div className="flex items-center gap-2">
                             {!notification.isRead && (
-                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                              <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
                             )}
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => markAsRead(notification.id)}
-                              className="text-xs"
+                              className="text-xs h-6 px-2 -webkit-tap-highlight-color-transparent"
+                              style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                               Marcar leída
                             </Button>
@@ -318,11 +332,18 @@ export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
                             <Button
                               size="sm"
                               onClick={() => handleQuickAction(notification)}
-                              className="text-xs"
+                              className="text-xs h-7 px-3 -webkit-tap-highlight-color-transparent flex-shrink-0"
+                              style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              {notification.type === 'check-in' ? 'Check-in' : 
-                               notification.type === 'check-out' ? 'Check-out' : 'Completar'}
+                              <span className="hidden sm:inline">
+                                {notification.type === 'check-in' ? 'Check-in' : 
+                                 notification.type === 'check-out' ? 'Check-out' : 'Completar'}
+                              </span>
+                              <span className="sm:hidden">
+                                {notification.type === 'check-in' ? 'In' : 
+                                 notification.type === 'check-out' ? 'Out' : 'OK'}
+                              </span>
                             </Button>
                           )}
                         </div>
