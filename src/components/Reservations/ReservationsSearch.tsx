@@ -24,7 +24,7 @@ export const ReservationsSearch = ({
           className="pl-10"
         />
       </div>
-      <div className="text-sm text-muted-foreground whitespace-nowrap">
+      <div className="text-sm text-muted-foreground">
         {resultCount} reservas encontradas
       </div>
     </div>
