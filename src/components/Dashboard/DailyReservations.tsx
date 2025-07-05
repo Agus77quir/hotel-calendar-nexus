@@ -5,6 +5,8 @@ import { Calendar, User, Clock, MapPin } from 'lucide-react';
 import { Reservation, Room, Guest } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
+import { useState, useMemo } from 'react';
 
 interface DailyReservationsProps {
   reservations: Reservation[];
@@ -14,6 +16,8 @@ interface DailyReservationsProps {
 }
 
 export const DailyReservations = ({ reservations, rooms, guests, selectedDate }: DailyReservationsProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
   
   const dayReservations = reservations.filter(reservation => {
@@ -21,6 +25,33 @@ export const DailyReservations = ({ reservations, rooms, guests, selectedDate }:
     const checkOut = reservation.check_out;
     return checkIn <= selectedDateStr && checkOut >= selectedDateStr;
   });
+
+  const filteredReservations = useMemo(() => {
+    if (!searchTerm.trim()) return dayReservations;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    return dayReservations.filter(reservation => {
+      const guest = guests.find(g => g.id === reservation.guest_id);
+      const room = rooms.find(r => r.id === reservation.room_id);
+      
+      if (!guest) return false;
+      
+      const guestFullName = `${guest.first_name} ${guest.last_name}`.toLowerCase();
+      const guestEmail = guest.email.toLowerCase();
+      const roomNumber = room?.number || '';
+      const reservationId = reservation.id.toLowerCase();
+      
+      return (
+        guest.first_name.toLowerCase().includes(searchLower) ||
+        guest.last_name.toLowerCase().includes(searchLower) ||
+        guestFullName.includes(searchLower) ||
+        guestEmail.includes(searchLower) ||
+        roomNumber.includes(searchLower) ||
+        reservationId.includes(searchLower)
+      );
+    });
+  }, [dayReservations, searchTerm, guests, rooms]);
 
   const checkInsToday = reservations.filter(r => r.check_in === selectedDateStr);
   const checkOutsToday = reservations.filter(r => r.check_out === selectedDateStr);
@@ -94,14 +125,24 @@ export const DailyReservations = ({ reservations, rooms, guests, selectedDate }:
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {dayReservations.length === 0 ? (
+          <div className="mb-4">
+            <ReservationsSearch
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              resultCount={filteredReservations.length}
+            />
+          </div>
+
+          {filteredReservations.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No hay reservas para esta fecha</p>
+              <p className="text-gray-500">
+                {searchTerm ? 'No se encontraron reservas que coincidan con la búsqueda' : 'No hay reservas para esta fecha'}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {dayReservations.map((reservation) => {
+              {filteredReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
                 const isCheckInToday = reservation.check_in === selectedDateStr;
