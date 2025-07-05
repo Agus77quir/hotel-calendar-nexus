@@ -38,20 +38,21 @@ export const DailyReservations = ({ reservations, rooms, guests, selectedDate }:
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Reservas del {format(selectedDate, 'dd \'de\' MMMM \'de\' yyyy', { locale: es })}
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Reservas del {format(selectedDate, 'dd \'de\' MMMM \'de\' yyyy', { locale: es })}
+            </CardTitle>
+            <div className="flex-shrink-0">
+              <ReservationsSearch
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                resultCount={filteredReservations.length}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <ReservationsSearch
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              resultCount={filteredReservations.length}
-            />
-          </div>
-
           <DailyReservationsList
             reservations={filteredReservations}
             rooms={rooms}
