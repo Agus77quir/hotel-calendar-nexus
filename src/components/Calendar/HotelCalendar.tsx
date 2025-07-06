@@ -1,9 +1,11 @@
-import { useState } from 'react';
+
+import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Plus, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { CalendarDays, Plus, User, Search } from 'lucide-react';
 import { Reservation, Room, Guest } from '@/types/hotel';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,6 +20,7 @@ interface HotelCalendarProps {
 
 export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, onDateSelect }: HotelCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -35,6 +38,33 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
   };
 
   const selectedDateReservations = getReservationsForDate(selectedDate);
+
+  const filteredReservations = useMemo(() => {
+    if (!searchTerm.trim()) return selectedDateReservations;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    return selectedDateReservations.filter(reservation => {
+      const guest = guests.find(g => g.id === reservation.guest_id);
+      const room = rooms.find(r => r.id === reservation.room_id);
+      
+      if (!guest) return false;
+      
+      const guestFullName = `${guest.first_name} ${guest.last_name}`.toLowerCase();
+      const guestEmail = guest.email.toLowerCase();
+      const roomNumber = room?.number || '';
+      const reservationId = reservation.id.toLowerCase();
+      
+      return (
+        guest.first_name.toLowerCase().includes(searchLower) ||
+        guest.last_name.toLowerCase().includes(searchLower) ||
+        guestFullName.includes(searchLower) ||
+        guestEmail.includes(searchLower) ||
+        roomNumber.includes(searchLower) ||
+        reservationId.includes(searchLower)
+      );
+    });
+  }, [selectedDateReservations, searchTerm, guests, rooms]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -131,14 +161,33 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {selectedDateReservations.length === 0 ? (
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por huésped, email, habitación..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {searchTerm && (
+              <div className="text-sm text-muted-foreground mt-2">
+                {filteredReservations.length} reservas encontradas
+              </div>
+            )}
+          </div>
+
+          {filteredReservations.length === 0 ? (
             <div className="text-center py-8">
               <CalendarDays className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No hay reservas para esta fecha</p>
+              <p className="text-gray-500">
+                {searchTerm ? 'No se encontraron reservas que coincidan con la búsqueda' : 'No hay reservas para esta fecha'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {selectedDateReservations.map((reservation) => {
+              {filteredReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
                 const isCheckIn = isSameDay(new Date(reservation.check_in), selectedDate);
