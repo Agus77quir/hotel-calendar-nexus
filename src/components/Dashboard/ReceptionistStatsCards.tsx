@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BedDouble, Wrench, Calendar, Clock } from 'lucide-react';
+import { BedDouble, Wrench, Calendar, Clock, Bed } from 'lucide-react';
 import { HotelStats, Room } from '@/types/hotel';
 
 interface ReceptionistStatsCardsProps {
@@ -17,7 +17,16 @@ export const ReceptionistStatsCards = ({ stats, rooms = [] }: ReceptionistStatsC
     return numA - numB;
   });
 
+  // Only show these specific cards for receptionists
   const cards = [
+    {
+      title: 'Habitaciones Totales',
+      value: stats.totalRooms,
+      icon: Bed,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      subtitle: 'Total disponible'
+    },
     {
       title: 'Habitaciones Ocupadas',
       value: stats.occupiedRooms,
@@ -55,7 +64,7 @@ export const ReceptionistStatsCards = ({ stats, rooms = [] }: ReceptionistStatsC
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

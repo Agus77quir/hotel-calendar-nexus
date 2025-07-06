@@ -1,9 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
+import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
 import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { useHotelData } from '@/hooks/useHotelData';
+import { useAuth } from '@/contexts/AuthContext';
 import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -11,9 +13,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const Index = () => {
+  const { user } = useAuth();
   const { stats, rooms, guests, reservations, isLoading } = useHotelData();
   const { setOpenMobile } = useSidebar();
   const navigate = useNavigate();
+
+  const isReceptionist = user?.role === 'receptionist';
 
   const handleQuickAction = (path: string) => {
     setOpenMobile(false); // Hide mobile menu
@@ -64,16 +69,23 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Export Buttons Section */}
-      <div className="flex justify-end">
-        <ReportExportButtons 
-          reservations={reservations}
-          guests={guests}
-          rooms={rooms}
-        />
-      </div>
+      {/* Export Buttons Section - Only for admins */}
+      {!isReceptionist && (
+        <div className="flex justify-end">
+          <ReportExportButtons 
+            reservations={reservations}
+            guests={guests}
+            rooms={rooms}
+          />
+        </div>
+      )}
 
-      <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+      {/* Stats Cards - Different for receptionists */}
+      {isReceptionist ? (
+        <ReceptionistStatsCards stats={stats} rooms={rooms} />
+      ) : (
+        <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+      )}
 
       {/* Calendar Section */}
       <div className="mb-6">
@@ -86,7 +98,7 @@ const Index = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-        {/* Quick Actions Card with Icons */}
+        {/* Quick Actions Card with Icons - Restrict for receptionists */}
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
@@ -107,19 +119,22 @@ const Index = () => {
                 </div>
               </div>
               
-              <div 
-                className="relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 transition-all duration-200 border border-green-200 active:scale-95"
-                onClick={() => handleQuickAction('/rooms')}
-              >
-                <div className="text-center">
-                  <Building2 className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-green-600" />
-                  <p className="font-semibold text-green-800 text-sm md:text-base">Habitaciones</p>
-                  <p className="text-xs text-green-600 mt-1">Estado y disponibilidad</p>
+              {/* Only show Rooms for admins */}
+              {!isReceptionist && (
+                <div 
+                  className="relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 transition-all duration-200 border border-green-200 active:scale-95"
+                  onClick={() => handleQuickAction('/rooms')}
+                >
+                  <div className="text-center">
+                    <Building2 className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-green-600" />
+                    <p className="font-semibold text-green-800 text-sm md:text-base">Habitaciones</p>
+                    <p className="text-xs text-green-600 mt-1">Estado y disponibilidad</p>
+                  </div>
                 </div>
-              </div>
+              )}
               
               <div 
-                className="relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 transition-all duration-200 border border-purple-200 col-span-1 sm:col-span-2 active:scale-95"
+                className={`relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 transition-all duration-200 border border-purple-200 active:scale-95 ${isReceptionist ? 'col-span-1 sm:col-span-2' : 'col-span-1 sm:col-span-2'}`}
                 onClick={() => handleQuickAction('/reservations')}
               >
                 <div className="text-center">
