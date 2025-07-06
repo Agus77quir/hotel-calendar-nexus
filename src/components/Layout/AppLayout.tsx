@@ -4,17 +4,15 @@ import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, Search, LogOut, User, Clock, Shield } from 'lucide-react';
+import { Menu, LogOut, User, Clock, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   // Update current date and time every second
@@ -32,22 +30,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
-
-  // Keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
-      if (e.key === 'Escape') {
-        setIsSearchOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -139,15 +121,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="bg-white/80 hover:bg-white h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 flex-shrink-0 p-0"
-                  onClick={() => setIsSearchOpen(true)}
-                  title="Buscar huéspedes (Ctrl+K)"
-                >
-                  <Search className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
                   onClick={handleLogout}
                   className="bg-white/80 hover:bg-white flex items-center gap-1 text-xs px-2 sm:px-3 md:px-4 flex-shrink-0 h-7 sm:h-8 md:h-10"
                   title="Cerrar Sesión"
@@ -166,11 +139,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         
         <Footer />
       </div>
-
-      <FloatingGuestSearch 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
-      />
     </SidebarProvider>
   );
 };

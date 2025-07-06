@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Bed, CalendarDays, TrendingUp, CheckCircle } from 'lucide-react';
@@ -98,12 +97,6 @@ const Dashboard = () => {
       </div>
       
       <div className="space-y-2 sm:space-y-4">
-        <div className="space-y-1 sm:space-y-2">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Reservas del Día</h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Listado de reservas para el día de hoy.
-          </p>
-        </div>
         <DailyReservations 
           reservations={reservations} 
           rooms={rooms} 
