@@ -39,12 +39,15 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
 
   const selectedDateReservations = getReservationsForDate(selectedDate);
 
-  const filteredReservations = useMemo(() => {
-    if (!searchTerm.trim()) return selectedDateReservations;
+  // When searching, show all matching reservations; when not searching, show only selected date reservations
+  const displayedReservations = useMemo(() => {
+    const baseReservations = searchTerm.trim() ? reservations : selectedDateReservations;
+    
+    if (!searchTerm.trim()) return baseReservations;
     
     const searchLower = searchTerm.toLowerCase().trim();
     
-    return selectedDateReservations.filter(reservation => {
+    return baseReservations.filter(reservation => {
       const guest = guests.find(g => g.id === reservation.guest_id);
       const room = rooms.find(r => r.id === reservation.room_id);
       
@@ -64,7 +67,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
         reservationId.includes(searchLower)
       );
     });
-  }, [selectedDateReservations, searchTerm, guests, rooms]);
+  }, [searchTerm, reservations, selectedDateReservations, guests, rooms]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -157,7 +160,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-gray-800">
-            Reservas para {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
+            {searchTerm.trim() ? 'Resultados de búsqueda' : `Reservas para ${format(selectedDate, 'dd MMMM yyyy', { locale: es })}`}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -173,12 +176,12 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
             </div>
             {searchTerm && (
               <div className="text-sm text-muted-foreground mt-2">
-                {filteredReservations.length} reservas encontradas
+                {displayedReservations.length} reservas encontradas
               </div>
             )}
           </div>
 
-          {filteredReservations.length === 0 ? (
+          {displayedReservations.length === 0 ? (
             <div className="text-center py-8">
               <CalendarDays className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500">
@@ -187,7 +190,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
             </div>
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {filteredReservations.map((reservation) => {
+              {displayedReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
                 const isCheckIn = isSameDay(new Date(reservation.check_in), selectedDate);
