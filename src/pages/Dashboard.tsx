@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Bed, CalendarDays, TrendingUp, CheckCircle } from 'lucide-react';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
+import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
 import { OccupancyChart } from '@/components/Dashboard/OccupancyChart';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { RoomStatusChart } from '@/components/Dashboard/RoomStatusChart';
@@ -15,6 +17,8 @@ const Dashboard = () => {
   const { rooms, guests, reservations, stats, isLoading } = useHotelData();
   const [showWelcome, setShowWelcome] = useState(true);
   const [selectedDate] = useState(new Date());
+
+  const isReceptionist = user?.role === 'receptionist';
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,45 +60,51 @@ const Dashboard = () => {
         </p>
       </div>
       
-      <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+      {isReceptionist ? (
+        <ReceptionistStatsCards stats={stats} rooms={rooms} />
+      ) : (
+        <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+      )}
       
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <Card className="md:col-span-1">
-          <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
-              Ocupación Actual
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            <OccupancyChart rooms={rooms} reservations={reservations} />
-          </CardContent>
-        </Card>
-        
-        <Card className="md:col-span-1">
-          <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-              Ingresos Mensuales
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
-          </CardContent>
-        </Card>
-        
-        <Card className="md:col-span-2 xl:col-span-1">
-          <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
-              Estado de Habitaciones
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            <RoomStatusChart rooms={rooms} />
-          </CardContent>
-        </Card>
-      </div>
+      {!isReceptionist && (
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <Card className="md:col-span-1">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                Ocupación Actual
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-6">
+              <OccupancyChart rooms={rooms} reservations={reservations} />
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-1">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                Ingresos Mensuales
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-6">
+              <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-2 xl:col-span-1">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
+                Estado de Habitaciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-6">
+              <RoomStatusChart rooms={rooms} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="space-y-2 sm:space-y-4">
         <DailyReservations 
