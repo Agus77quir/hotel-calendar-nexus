@@ -77,38 +77,47 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background Image - New hotel image */}
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Enhanced Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105 filter brightness-110 contrast-105 saturate-110"
         style={{ backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)' }}
       />
       
-      {/* Gradient overlay - minimal */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/10 to-blue-100/10 z-10" />
+      {/* Enhanced overlay for better text visibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-blue-900/30 to-black/50 z-10" />
+      
+      {/* Decorative overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 z-15" />
       
       <div className="w-full max-w-md relative z-20">
-        <div className="text-center mb-6">
-          <div className="flex justify-center items-center gap-2 mb-4">
-            <Hotel className="h-10 w-10 text-blue-600" />
+        <div className="text-center mb-8">
+          <div className="flex justify-center items-center gap-3 mb-6">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-full shadow-2xl">
+              <Hotel className="h-10 w-10 text-white drop-shadow-lg" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">Nardini S.R.L</h1>
-              <p className="text-sm text-muted-foreground">Sistema de Gestión Hotelera</p>
+              <h1 className="text-4xl font-bold text-white drop-shadow-2xl filter brightness-110">
+                Nardini S.R.L
+              </h1>
+              <p className="text-lg text-white/95 font-medium drop-shadow-lg filter brightness-105">
+                Sistema de Gestión Hotelera
+              </p>
             </div>
           </div>
         </div>
 
-        <Card className="bg-white/40 backdrop-blur-sm border-white/30 shadow-xl">
-          <CardHeader>
-            <CardTitle>Iniciar Sesión</CardTitle>
-            <CardDescription>
+        <Card className="bg-white/25 backdrop-blur-lg border-white/20 shadow-2xl ring-1 ring-white/10">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-white drop-shadow-lg">Iniciar Sesión</CardTitle>
+            <CardDescription className="text-white/90 text-base font-medium drop-shadow-sm">
               Ingresa tus credenciales para acceder al sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div className="space-y-2">
-                <Label htmlFor="email">Usuario</Label>
+                <Label htmlFor="email" className="text-white font-medium drop-shadow-sm">Usuario</Label>
                 <Input
                   id="email"
                   name="email"
@@ -121,10 +130,11 @@ export const LoginForm = () => {
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
+                  className="bg-white/90 border-white/30 backdrop-blur-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className="text-white font-medium drop-shadow-sm">Contraseña</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -138,12 +148,13 @@ export const LoginForm = () => {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    className="bg-white/90 border-white/30 backdrop-blur-sm"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-600"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -154,7 +165,11 @@ export const LoginForm = () => {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg" 
+                disabled={loading}
+              >
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>

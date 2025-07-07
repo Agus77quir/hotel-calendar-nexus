@@ -55,18 +55,37 @@ const Index = () => {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* Hero Section with Landscape Image */}
-      <div className="relative h-40 md:h-64 rounded-lg overflow-hidden">
+      {/* Enhanced Hero Section with Full Image Display */}
+      <div className="relative h-48 md:h-80 rounded-xl overflow-hidden shadow-2xl group">
         <img 
-          src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&h=400"
-          alt="Paisaje montañoso"
-          className="w-full h-full object-cover"
+          src="/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png"
+          alt="Vista del hotel"
+          className="w-full h-full object-cover transform scale-105 filter brightness-110 contrast-105 saturate-110 transition-all duration-700 group-hover:scale-110 group-hover:brightness-115"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
-          <div className="text-center text-white">
-            <h1 className="text-xl md:text-4xl font-bold">Bienvenido a Nardini SRL Gestión Hotelera</h1>
+        
+        {/* Enhanced gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-blue-900/20 to-black/40" />
+        
+        {/* Decorative overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10" />
+        
+        {/* Enhanced text content */}
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          <div className="text-center text-white max-w-4xl">
+            <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 drop-shadow-2xl filter brightness-110">
+              Bienvenido a Nardini SRL
+            </h1>
+            <p className="text-lg md:text-2xl font-semibold drop-shadow-lg filter brightness-105">
+              Sistema de Gestión Hotelera
+            </p>
           </div>
         </div>
+        
+        {/* Decorative corner elements */}
+        <div className="absolute top-4 left-4 w-12 h-12 border-l-2 border-t-2 border-white/30 rounded-tl-lg"></div>
+        <div className="absolute top-4 right-4 w-12 h-12 border-r-2 border-t-2 border-white/30 rounded-tr-lg"></div>
+        <div className="absolute bottom-4 left-4 w-12 h-12 border-l-2 border-b-2 border-white/30 rounded-bl-lg"></div>
+        <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-white/30 rounded-br-lg"></div>
       </div>
 
       {/* Export Buttons Section - Only for admins */}
