@@ -60,7 +60,7 @@ const Index = () => {
         <img 
           src="/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png"
           alt="Vista del hotel"
-          className="w-full h-full object-cover transform scale-105 filter brightness-110 contrast-105 saturate-110 transition-all duration-700 group-hover:scale-110 group-hover:brightness-115"
+          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
         />
         
         {/* Enhanced gradient overlay */}

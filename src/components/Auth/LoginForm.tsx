@@ -78,10 +78,13 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Enhanced Background Image */}
+      {/* Enhanced Background Image with better coverage */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105 filter brightness-110 contrast-105 saturate-110"
-        style={{ backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)' }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)',
+          backgroundSize: 'cover'
+        }}
       />
       
       {/* Enhanced overlay for better text visibility */}
