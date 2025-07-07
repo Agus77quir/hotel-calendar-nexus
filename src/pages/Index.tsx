@@ -55,16 +55,16 @@ const Index = () => {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* Hero Section with New Image */}
+      {/* Hero Section with Landscape Image */}
       <div className="relative h-40 md:h-64 rounded-lg overflow-hidden">
         <img 
-          src="/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png"
-          alt="Hotel Nardini"
+          src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&h=400"
+          alt="Paisaje montañoso"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="text-center text-white">
-            <h1 className="text-xl md:text-4xl font-bold drop-shadow-lg">Bienvenido a Nardini SRL Gestión Hotelera</h1>
+            <h1 className="text-xl md:text-4xl font-bold">Bienvenido a Nardini SRL Gestión Hotelera</h1>
           </div>
         </div>
       </div>
