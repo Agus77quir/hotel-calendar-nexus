@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -21,7 +20,7 @@ const Index = () => {
   const isReceptionist = user?.role === 'receptionist';
 
   const handleQuickAction = (path: string) => {
-    setOpenMobile(false); // Hide mobile menu
+    setOpenMobile(false);
     navigate(path);
   };
 
@@ -55,18 +54,28 @@ const Index = () => {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      {/* Hero Section with New Image */}
-      <div className="relative h-40 md:h-64 rounded-lg overflow-hidden">
+      {/* Enhanced Hero Section */}
+      <div className="relative h-48 md:h-80 rounded-xl overflow-hidden shadow-2xl">
         <img 
           src="/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png"
           alt="Hotel Nardini"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center scale-105 transition-transform duration-700 hover:scale-100"
+          style={{ 
+            filter: 'brightness(0.85) contrast(1.1) saturate(1.1)'
+          }}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
-          <div className="text-center text-white">
-            <h1 className="text-xl md:text-4xl font-bold drop-shadow-lg">Bienvenido a Nardini SRL Gestión Hotelera</h1>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50 flex items-center justify-center p-6">
+          <div className="text-center text-white max-w-4xl">
+            <h1 className="text-2xl md:text-5xl font-bold drop-shadow-2xl leading-tight tracking-wide">
+              Bienvenido a Nardini SRL
+            </h1>
+            <p className="text-lg md:text-xl font-medium drop-shadow-lg mt-2 opacity-95">
+              Sistema de Gestión Hotelera
+            </p>
           </div>
         </div>
+        {/* Decorative border */}
+        <div className="absolute inset-0 ring-1 ring-white/20 ring-inset rounded-xl"></div>
       </div>
 
       {/* Export Buttons Section - Only for admins */}
