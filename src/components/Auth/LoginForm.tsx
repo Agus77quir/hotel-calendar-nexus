@@ -77,41 +77,38 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Image - Enhanced display */}
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Background Image - Full visibility */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 z-0"
-        style={{ 
-          backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)',
-          filter: 'brightness(0.9) contrast(1.1)'
-        }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+        style={{ backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)' }}
       />
       
-      {/* Enhanced gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/40 z-10" />
+      {/* Minimal overlay for readability */}
+      <div className="absolute inset-0 bg-black/20 z-10" />
       
       <div className="w-full max-w-md relative z-20">
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center gap-3 mb-6">
-            <Hotel className="h-12 w-12 text-white drop-shadow-2xl" />
+        <div className="text-center mb-6">
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <Hotel className="h-10 w-10 text-white drop-shadow-lg" />
             <div>
-              <h1 className="text-4xl font-bold text-white drop-shadow-2xl tracking-wide">Nardini S.R.L</h1>
-              <p className="text-base text-white/95 drop-shadow-lg font-medium">Sistema de Gestión Hotelera</p>
+              <h1 className="text-3xl font-bold text-white drop-shadow-lg">Nardini S.R.L</h1>
+              <p className="text-sm text-white/90 drop-shadow">Sistema de Gestión Hotelera</p>
             </div>
           </div>
         </div>
 
-        <Card className="bg-white/95 backdrop-blur-md border-white/60 shadow-2xl ring-1 ring-white/20">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-xl">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-base">
+        <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-2xl">
+          <CardHeader>
+            <CardTitle>Iniciar Sesión</CardTitle>
+            <CardDescription>
               Ingresa tus credenciales para acceder al sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-sm font-medium">Usuario</Label>
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+              <div className="space-y-2">
+                <Label htmlFor="email">Usuario</Label>
                 <Input
                   id="email"
                   name="email"
@@ -124,11 +121,10 @@ export const LoginForm = () => {
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="h-11"
                 />
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="password" className="text-sm font-medium">Contraseña</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -142,7 +138,6 @@ export const LoginForm = () => {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
-                    className="h-11 pr-10"
                   />
                   <Button
                     type="button"
@@ -159,7 +154,7 @@ export const LoginForm = () => {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11 text-base font-medium" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
