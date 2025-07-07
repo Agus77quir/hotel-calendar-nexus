@@ -78,10 +78,10 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background Image - Landscape much more visible */}
+      {/* Background Image - New hotel image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80 z-0"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&h=400)' }}
+        style={{ backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)' }}
       />
       
       {/* Gradient overlay - minimal */}
