@@ -38,6 +38,14 @@ export const useReservationForm = ({
   // Get today's date for validation
   const today = new Date().toISOString().split('T')[0];
 
+  // Auto-suggest check-out date (default to 1 night stay)
+  const getDefaultCheckOut = (checkIn: string) => {
+    if (!checkIn) return '';
+    const checkInDate = new Date(checkIn);
+    checkInDate.setDate(checkInDate.getDate() + 1);
+    return checkInDate.toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     if (reservation && mode === 'edit') {
       // For existing reservations, get associated status from guest data
@@ -54,12 +62,17 @@ export const useReservationForm = ({
         discount_percentage: guest?.discount_percentage || 0,
       });
     } else {
+      // For new reservations, set smart defaults
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const defaultCheckIn = tomorrow.toISOString().split('T')[0];
+      
       setFormData({
         guest_id: '',
         room_id: '',
-        check_in: '',
-        check_out: '',
-        guests_count: 1,
+        check_in: defaultCheckIn,
+        check_out: getDefaultCheckOut(defaultCheckIn),
+        guests_count: 2, // Default to 2 guests for better UX
         status: 'confirmed',
         special_requests: '',
         is_associated: false,
@@ -76,20 +89,15 @@ export const useReservationForm = ({
   // Get selected guest details
   const selectedGuest = guests.find(g => g.id === formData.guest_id);
 
-  // Filter available rooms based on dates and existing reservations
-  const getAvailableRooms = () => {
-    // If no dates selected, show only rooms with 'available' status
+  // Auto-suggest best available room when dates change
+  const getBestAvailableRoom = () => {
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
 
-    return rooms.filter(room => {
-      // Room must be available
-      if (room.status !== 'available') {
-        return false;
-      }
+    const availableRooms = rooms.filter(room => {
+      if (room.status !== 'available') return false;
 
-      // Check if room has any overlapping reservations for the selected dates
       const hasOverlap = hasDateOverlap(
         room.id, 
         formData.check_in, 
@@ -98,13 +106,30 @@ export const useReservationForm = ({
         reservation?.id
       );
       
-      console.log('Room', room.number, 'has overlap:', hasOverlap);
-      
       return !hasOverlap;
+    });
+
+    // Sort by capacity (smallest first) then by price (lowest first) for smart suggestions
+    return availableRooms.sort((a, b) => {
+      if (a.capacity !== b.capacity) {
+        return a.capacity - b.capacity;
+      }
+      return a.price - b.price;
     });
   };
 
-  const availableRooms = getAvailableRooms();
+  const availableRooms = getBestAvailableRoom();
+
+  // Auto-select best room when dates are set and no room is selected
+  useEffect(() => {
+    if (mode === 'create' && !formData.room_id && formData.check_in && formData.check_out && availableRooms.length > 0) {
+      // Auto-select the first available room that fits the guest count
+      const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
+      if (suitableRoom) {
+        handleRoomChange(suitableRoom.id);
+      }
+    }
+  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
   // Handle room change - adjust guest count if it exceeds new room capacity
   const handleRoomChange = (roomId: string) => {
@@ -136,10 +161,10 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes - reset room selection and clear errors
+  // Handle date changes - auto-suggest checkout and reset room selection
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    // Validate that date is not before today
-    if (value < today) {
+    // Validate that date is not before today (except for check_out)
+    if (field === 'check_in' && value < today) {
       setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
       return;
     }
@@ -149,6 +174,11 @@ export const useReservationForm = ({
         ...prev,
         [field]: value,
       };
+      
+      // Auto-set checkout date when checkin changes (for new reservations)
+      if (field === 'check_in' && mode === 'create' && !prev.check_out) {
+        newFormData.check_out = getDefaultCheckOut(value);
+      }
       
       // If we have both dates and a selected room, check for overlap
       if (newFormData.check_in && newFormData.check_out && newFormData.room_id) {
@@ -176,6 +206,14 @@ export const useReservationForm = ({
       ...prev,
       [field]: value
     }));
+
+    // Auto-update discount when association status changes
+    if (field === 'is_associated' && value === false) {
+      setFormData(prev => ({
+        ...prev,
+        discount_percentage: 0
+      }));
+    }
   };
 
   const calculateTotal = () => {

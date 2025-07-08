@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -7,9 +8,12 @@ import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
 import { Reservation } from '@/types/hotel';
+import { useToast } from '@/hooks/use-toast';
+import { handleReservationAutomation } from '@/services/reservationAutomationService';
 
 const ReservationsPage = () => {
   const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
     dateFrom?: string;
@@ -54,25 +58,98 @@ const ReservationsPage = () => {
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
+      let savedReservation;
+      
       if (reservationModal.mode === 'create') {
-        await addReservation(reservationData);
+        savedReservation = await addReservation(reservationData);
+        
+        // Handle automation for new reservations
+        const guest = guests.find(g => g.id === reservationData.guest_id);
+        const room = rooms.find(r => r.id === reservationData.room_id);
+        
+        if (guest && room) {
+          const automationResults = await handleReservationAutomation(
+            savedReservation, 
+            guest, 
+            room,
+            {
+              sendEmail: true,
+              sendWhatsApp: false, // User can manually send WhatsApp if needed
+              updateGuestStatus: true
+            }
+          );
+          
+          // Show automation results
+          if (automationResults.emailSent) {
+            toast({
+              title: "Reserva creada exitosamente",
+              description: `Email de confirmación enviado automáticamente a ${guest.email}`,
+            });
+          } else if (automationResults.errors.length > 0) {
+            toast({
+              title: "Reserva creada",
+              description: `Reserva guardada, pero: ${automationResults.errors.join(', ')}`,
+              variant: "destructive",
+            });
+          }
+        }
+        
         setReservationModal({ isOpen: false, mode: 'create' });
       } else if (reservationModal.reservation) {
         await updateReservation({ id: reservationModal.reservation.id, ...reservationData });
+        
+        toast({
+          title: "Reserva actualizada",
+          description: "La reserva ha sido actualizada exitosamente",
+        });
+        
         setReservationModal({ isOpen: false, mode: 'create' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving reservation:', error);
+      
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la reserva. Intenta nuevamente.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDeleteReservation = (id: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta reserva?')) {
-      deleteReservation(id);
+  const handleDeleteReservation = async (id: string) => {
+    const reservation = reservations.find(r => r.id === id);
+    const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
+    
+    const confirmMessage = guest 
+      ? `¿Estás seguro de que quieres eliminar la reserva de ${guest.first_name} ${guest.last_name}?`
+      : '¿Estás seguro de que quieres eliminar esta reserva?';
+      
+    if (window.confirm(confirmMessage)) {
+      try {
+        await deleteReservation(id);
+        toast({
+          title: "Reserva eliminada",
+          description: "La reserva ha sido eliminada exitosamente",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar la reserva. Intenta nuevamente.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleNewReservationForGuest = (guestId: string) => {
+    const guest = guests.find(g => g.id === guestId);
+    if (guest) {
+      toast({
+        title: "Nueva reserva",
+        description: `Creando reserva para ${guest.first_name} ${guest.last_name}`,
+      });
+    }
+    
     setReservationModal({ 
       isOpen: true, 
       mode: 'create',
@@ -83,7 +160,7 @@ const ReservationsPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando...</div>
+        <div className="text-lg">Cargando sistema automatizado...</div>
       </div>
     );
   }

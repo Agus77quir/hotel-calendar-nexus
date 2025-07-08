@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,7 +9,9 @@ import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { NewGuestForm } from './NewGuestForm';
 import { hasDateOverlap } from '@/utils/reservationValidation';
+import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -31,9 +34,10 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest } = useHotelData();
+  const { reservations, addGuest, updateGuest } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
+  const { toast } = useToast();
   
   const {
     formData,
@@ -60,6 +64,24 @@ export const ReservationModal = ({
     isOpen
   });
 
+  // Auto-update guest count when room changes
+  useEffect(() => {
+    if (selectedRoom && mode === 'create') {
+      // Auto-set guest count to room capacity for new reservations
+      if (formData.guests_count === 1 && selectedRoom.capacity > 1) {
+        handleFormChange('guests_count', Math.min(selectedRoom.capacity, 2));
+      }
+    }
+  }, [selectedRoom, mode, formData.guests_count, handleFormChange]);
+
+  // Auto-update guest association info when guest changes
+  useEffect(() => {
+    if (selectedGuest && mode === 'create') {
+      handleFormChange('is_associated', selectedGuest.is_associated || false);
+      handleFormChange('discount_percentage', selectedGuest.discount_percentage || 0);
+    }
+  }, [selectedGuest, mode, handleFormChange]);
+
   // Set preselected guest when modal opens
   useEffect(() => {
     if (preselectedGuestId && mode === 'create' && isOpen) {
@@ -72,11 +94,25 @@ export const ReservationModal = ({
     try {
       const newGuest = await addGuest(guestData);
       console.log('New guest created:', newGuest);
-      // Select the new guest
+      
+      // Auto-select the new guest and apply their association status
       handleFormChange('guest_id', newGuest.id);
+      handleFormChange('is_associated', newGuest.is_associated || false);
+      handleFormChange('discount_percentage', newGuest.discount_percentage || 0);
+      
       setShowNewGuestForm(false);
+      
+      toast({
+        title: "Huésped creado",
+        description: `${newGuest.first_name} ${newGuest.last_name} ha sido creado y seleccionado automáticamente.`,
+      });
     } catch (error) {
       console.error('Error creating guest:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear el huésped. Intenta nuevamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsCreatingGuest(false);
     }
@@ -130,7 +166,47 @@ export const ReservationModal = ({
         created_by: 'current-user-id',
       };
 
+      // Update guest with association info if changed
+      if (selectedGuest && (selectedGuest.is_associated !== formData.is_associated || 
+          selectedGuest.discount_percentage !== formData.discount_percentage)) {
+        await updateGuest({
+          id: selectedGuest.id,
+          is_associated: formData.is_associated,
+          discount_percentage: formData.discount_percentage,
+        });
+      }
+
       await onSave(reservationData);
+
+      // Auto-send confirmation email for new reservations
+      if (mode === 'create' && selectedGuest && selectedRoom) {
+        try {
+          const emailSent = await sendReservationConfirmationAutomatically(
+            selectedGuest,
+            { ...reservationData, id: 'temp-id', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Reservation,
+            selectedRoom
+          );
+          
+          if (emailSent) {
+            toast({
+              title: "Reserva creada",
+              description: `Reserva confirmada y email de confirmación enviado automáticamente a ${selectedGuest.email}`,
+            });
+          } else {
+            toast({
+              title: "Reserva creada",
+              description: "Reserva confirmada. No se pudo enviar el email de confirmación automáticamente.",
+            });
+          }
+        } catch (emailError) {
+          console.error('Error sending automatic email:', emailError);
+          toast({
+            title: "Reserva creada",
+            description: "Reserva confirmada, pero hubo un problema enviando el email automático.",
+          });
+        }
+      }
+
       onClose();
     } catch (error: any) {
       console.error('Error saving reservation:', error);
@@ -164,7 +240,7 @@ export const ReservationModal = ({
                 {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
               </DialogTitle>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Complete los detalles de la reserva
+                {mode === 'create' ? 'Sistema automático de confirmación activado' : 'Complete los detalles de la reserva'}
               </p>
             </div>
           </div>
@@ -187,18 +263,18 @@ export const ReservationModal = ({
           ) : (
             <div className="space-y-4 sm:space-y-6">
               {!preselectedGuestId && (
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                   <div>
-                    <h3 className="font-medium">¿Huésped no registrado?</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Puedes crear un nuevo huésped desde aquí
+                    <h3 className="font-medium text-blue-900">Crear Huésped Rápido</h3>
+                    <p className="text-sm text-blue-700">
+                      Se aplicarán automáticamente descuentos y configuraciones
                     </p>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowNewGuestForm(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100"
                   >
                     <Plus className="h-4 w-4" />
                     Nuevo Huésped
@@ -226,18 +302,18 @@ export const ReservationModal = ({
         </div>
 
         {!showNewGuestForm && (
-          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0">
+          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0 bg-gray-50">
             <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6">
               Cancelar
             </Button>
             <Button 
               onClick={handleSubmit}
-              className="px-4 sm:px-6"
+              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               disabled={!validateDates() || isSubmitting || !formData.room_id}
             >
               {isSubmitting 
-                ? 'Guardando...' 
-                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+                ? 'Procesando...' 
+                : mode === 'create' ? 'Crear y Confirmar Automáticamente' : 'Actualizar Reserva'
               }
             </Button>
           </div>
