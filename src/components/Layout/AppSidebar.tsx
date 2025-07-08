@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Home, Users, Bed, Calendar, ClipboardList, CheckSquare, Shield, Settings } from "lucide-react"
+import { Home, Bed, Calendar, ClipboardList, CheckSquare, Shield, Settings } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -22,9 +22,9 @@ const allMenuItems = [
     roles: ['admin'],
   },
   {
-    title: "Huéspedes",
-    url: "/guests",
-    icon: Users,
+    title: "Reservas",
+    url: "/reservations",
+    icon: ClipboardList,
     roles: ['admin', 'receptionist'],
   },
   {
@@ -32,12 +32,6 @@ const allMenuItems = [
     url: "/rooms",
     icon: Bed,
     roles: ['admin'],
-  },
-  {
-    title: "Reservas",
-    url: "/reservations",
-    icon: ClipboardList,
-    roles: ['admin', 'receptionist'],
   },
   {
     title: "Calendario",

@@ -8,7 +8,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import GuestsPage from "./pages/GuestsPage";
 import RoomsPage from "./pages/RoomsPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import CalendarPage from "./pages/CalendarPage";
@@ -44,9 +43,8 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<AppLayout><Index /></AppLayout>} />
-              <Route path="/guests" element={<AppLayout><GuestsPage /></AppLayout>} />
-              <Route path="/rooms" element={<AppLayout><RoomsPage /></AppLayout>} />
               <Route path="/reservations" element={<AppLayout><ReservationsPage /></AppLayout>} />
+              <Route path="/rooms" element={<AppLayout><RoomsPage /></AppLayout>} />
               <Route path="/calendar" element={<AppLayout><CalendarPage /></AppLayout>} />
               <Route path="/checkin-checkout" element={<AppLayout><CheckInOutPage /></AppLayout>} />
               <Route path="/audit" element={<AppLayout><AuditPage /></AppLayout>} />

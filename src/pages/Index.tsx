@@ -6,7 +6,7 @@ import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
+import { Building2, Calendar, TrendingUp } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -128,13 +128,13 @@ const Index = () => {
           <CardContent className="p-4 md:p-6 pt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div 
-                className="relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-all duration-200 border border-blue-200 active:scale-95"
-                onClick={() => handleQuickAction('/guests')}
+                className="relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 transition-all duration-200 border border-purple-200 active:scale-95"
+                onClick={() => handleQuickAction('/reservations')}
               >
                 <div className="text-center">
-                  <Users className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-blue-600" />
-                  <p className="font-semibold text-blue-800 text-sm md:text-base">Huéspedes</p>
-                  <p className="text-xs text-blue-600 mt-1">Gestionar registros</p>
+                  <Calendar className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-purple-600" />
+                  <p className="font-semibold text-purple-800 text-sm md:text-base">Reservas</p>
+                  <p className="text-xs text-purple-600 mt-1">Gestionar reservas y huéspedes</p>
                 </div>
               </div>
               
@@ -151,17 +151,6 @@ const Index = () => {
                   </div>
                 </div>
               )}
-              
-              <div 
-                className={`relative group cursor-pointer rounded-lg p-4 md:p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 transition-all duration-200 border border-purple-200 active:scale-95 ${isReceptionist ? 'col-span-1 sm:col-span-2' : 'col-span-1 sm:col-span-2'}`}
-                onClick={() => handleQuickAction('/reservations')}
-              >
-                <div className="text-center">
-                  <Calendar className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-purple-600" />
-                  <p className="font-semibold text-purple-800 text-sm md:text-base">Nueva Reserva</p>
-                  <p className="text-xs text-purple-600 mt-1">Crear nueva reservación</p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
