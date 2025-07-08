@@ -6,11 +6,12 @@ import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Calendar, TrendingUp } from 'lucide-react';
+import { Building2, Calendar, TrendingUp, Plus } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const { user } = useAuth();
@@ -88,6 +89,29 @@ const Index = () => {
         <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-white/30 rounded-br-lg"></div>
       </div>
 
+      {/* Quick Access to Reservations - Prominent Section */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-xl md:text-2xl">
+            <Calendar className="h-6 w-6 md:h-7 md:w-7 text-purple-600" />
+            Gestión de Reservas
+          </CardTitle>
+          <p className="text-muted-foreground text-sm md:text-base">
+            Accede rápidamente a crear nuevas reservas y gestionar huéspedes
+          </p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Button 
+            onClick={() => handleQuickAction('/reservations')}
+            size="lg"
+            className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Nueva Reserva
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Export Buttons Section - Only for admins */}
       {!isReceptionist && (
         <div className="flex justify-end">
@@ -122,7 +146,7 @@ const Index = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-              Acciones Rápidas
+              Acciones Adicionales
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -133,8 +157,8 @@ const Index = () => {
               >
                 <div className="text-center">
                   <Calendar className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-3 text-purple-600" />
-                  <p className="font-semibold text-purple-800 text-sm md:text-base">Reservas</p>
-                  <p className="text-xs text-purple-600 mt-1">Gestionar reservas y huéspedes</p>
+                  <p className="font-semibold text-purple-800 text-sm md:text-base">Ver Todas las Reservas</p>
+                  <p className="text-xs text-purple-600 mt-1">Lista completa y filtros</p>
                 </div>
               </div>
               
