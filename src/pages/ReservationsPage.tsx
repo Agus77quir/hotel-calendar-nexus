@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -21,6 +20,7 @@ const ReservationsPage = () => {
     isOpen: boolean;
     mode: 'create' | 'edit';
     reservation?: Reservation;
+    preselectedGuestId?: string;
   }>({
     isOpen: false,
     mode: 'create',
@@ -72,6 +72,14 @@ const ReservationsPage = () => {
     }
   };
 
+  const handleNewReservationForGuest = (guestId: string) => {
+    setReservationModal({ 
+      isOpen: true, 
+      mode: 'create',
+      preselectedGuestId: guestId
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -113,6 +121,7 @@ const ReservationsPage = () => {
               reservation
             })}
             onDelete={handleDeleteReservation}
+            onNewReservationForGuest={handleNewReservationForGuest}
           />
         </CardContent>
       </Card>
@@ -125,6 +134,7 @@ const ReservationsPage = () => {
         guests={guests}
         reservation={reservationModal.reservation}
         mode={reservationModal.mode}
+        preselectedGuestId={reservationModal.preselectedGuestId}
       />
     </div>
   );

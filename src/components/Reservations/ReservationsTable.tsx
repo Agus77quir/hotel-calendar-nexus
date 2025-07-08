@@ -1,4 +1,3 @@
-
 import { 
   Table,
   TableBody,
@@ -9,7 +8,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Download, MessageCircle, Mail } from 'lucide-react';
+import { Edit, Trash2, Download, MessageCircle, Mail, Plus } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,6 +22,7 @@ interface ReservationsTableProps {
   rooms: Room[];
   onEdit: (reservation: Reservation) => void;
   onDelete: (id: string) => void;
+  onNewReservationForGuest?: (guestId: string) => void;
 }
 
 export const ReservationsTable = ({
@@ -30,7 +30,8 @@ export const ReservationsTable = ({
   guests,
   rooms,
   onEdit,
-  onDelete
+  onDelete,
+  onNewReservationForGuest
 }: ReservationsTableProps) => {
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
@@ -71,6 +72,12 @@ export const ReservationsTable = ({
     
     if (guest && room) {
       sendReservationConfirmationAutomatically(guest, reservation, room);
+    }
+  };
+
+  const handleNewReservation = (guestId: string) => {
+    if (onNewReservationForGuest) {
+      onNewReservationForGuest(guestId);
     }
   };
 
@@ -164,6 +171,15 @@ export const ReservationsTable = ({
                       className="text-green-600 hover:text-green-700 hover:bg-green-50"
                     >
                       <MessageCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleNewReservation(reservation.guest_id)}
+                      title="Nueva reserva para este huésped"
+                      className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    >
+                      <Plus className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"

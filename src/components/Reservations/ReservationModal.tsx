@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -9,7 +8,7 @@ import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { NewGuestForm } from './NewGuestForm';
 import { hasDateOverlap } from '@/utils/reservationValidation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -19,6 +18,7 @@ interface ReservationModalProps {
   guests: Guest[];
   reservation?: Reservation;
   mode: 'create' | 'edit';
+  preselectedGuestId?: string;
 }
 
 export const ReservationModal = ({
@@ -28,7 +28,8 @@ export const ReservationModal = ({
   rooms,
   guests,
   reservation,
-  mode
+  mode,
+  preselectedGuestId
 }: ReservationModalProps) => {
   const { reservations, addGuest } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
@@ -58,6 +59,13 @@ export const ReservationModal = ({
     mode,
     isOpen
   });
+
+  // Set preselected guest when modal opens
+  useEffect(() => {
+    if (preselectedGuestId && mode === 'create' && isOpen) {
+      handleFormChange('guest_id', preselectedGuestId);
+    }
+  }, [preselectedGuestId, mode, isOpen, handleFormChange]);
 
   const handleCreateGuest = async (guestData: any) => {
     setIsCreatingGuest(true);
@@ -178,23 +186,25 @@ export const ReservationModal = ({
             />
           ) : (
             <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium">¿Huésped no registrado?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Puedes crear un nuevo huésped desde aquí
-                  </p>
+              {!preselectedGuestId && (
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <h3 className="font-medium">¿Huésped no registrado?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Puedes crear un nuevo huésped desde aquí
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNewGuestForm(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nuevo Huésped
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowNewGuestForm(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nuevo Huésped
-                </Button>
-              </div>
+              )}
 
               <ReservationFormFields
                 formData={formData}
