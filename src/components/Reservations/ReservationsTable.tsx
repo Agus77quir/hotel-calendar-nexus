@@ -1,3 +1,4 @@
+
 import { 
   Table,
   TableBody,
@@ -8,13 +9,11 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Download, MessageCircle, Mail, Plus } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { generateReservationPDF } from '@/services/pdfService';
-import { sendReservationToWhatsApp } from '@/services/whatsappService';
-import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
+import { ReservationQuickActions } from './ReservationQuickActions';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -23,6 +22,7 @@ interface ReservationsTableProps {
   onEdit: (reservation: Reservation) => void;
   onDelete: (id: string) => void;
   onNewReservationForGuest?: (guestId: string) => void;
+  onStatusChange?: (reservationId: string, newStatus: Reservation['status']) => void;
 }
 
 export const ReservationsTable = ({
@@ -31,7 +31,8 @@ export const ReservationsTable = ({
   rooms,
   onEdit,
   onDelete,
-  onNewReservationForGuest
+  onNewReservationForGuest,
+  onStatusChange
 }: ReservationsTableProps) => {
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
@@ -48,30 +49,9 @@ export const ReservationsTable = ({
     }
   };
 
-  const handleDownloadPDF = (reservation: Reservation) => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    
-    if (guest && room) {
-      generateReservationPDF(reservation, guest, room);
-    }
-  };
-
-  const handleSendWhatsApp = (reservation: Reservation) => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    
-    if (guest && room) {
-      sendReservationToWhatsApp(reservation, guest, room);
-    }
-  };
-
-  const handleSendEmail = (reservation: Reservation) => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    
-    if (guest && room) {
-      sendReservationConfirmationAutomatically(guest, reservation, room);
+  const handleStatusChange = async (reservationId: string, newStatus: Reservation['status']) => {
+    if (onStatusChange) {
+      await onStatusChange(reservationId, newStatus);
     }
   };
 
@@ -99,10 +79,10 @@ export const ReservationsTable = ({
             <TableHead>Habitación</TableHead>
             <TableHead>Check-in</TableHead>
             <TableHead>Check-out</TableHead>
-            <TableHead>Huéspedes</TableHead>
             <TableHead>Total</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead>Acciones Automáticas</TableHead>
+            <TableHead className="text-right">Gestión</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -110,41 +90,35 @@ export const ReservationsTable = ({
             const guest = guests.find(g => g.id === reservation.guest_id);
             const room = rooms.find(r => r.id === reservation.room_id);
             
+            if (!guest || !room) return null;
+            
             return (
               <TableRow key={reservation.id}>
                 <TableCell className="font-mono text-sm">
-                  {reservation.id}
+                  {reservation.id.slice(0, 8)}
                 </TableCell>
                 <TableCell>
-                  {guest ? (
-                    <div>
-                      <div className="font-medium">
-                        {guest.first_name} {guest.last_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {guest.email}
-                        {guest.is_associated && (
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            Asociado {guest.discount_percentage}%
-                          </Badge>
-                        )}
-                      </div>
+                  <div>
+                    <div className="font-medium">
+                      {guest.first_name} {guest.last_name}
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">Huésped no encontrado</span>
-                  )}
+                    <div className="text-sm text-muted-foreground">
+                      {guest.email}
+                      {guest.is_associated && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Asociado {guest.discount_percentage}%
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {room ? (
-                    <div>
-                      <div className="font-medium">Habitación {room.number}</div>
-                      <div className="text-sm text-muted-foreground capitalize">
-                        {room.type.replace('-', ' ')}
-                      </div>
+                  <div>
+                    <div className="font-medium">#{room.number}</div>
+                    <div className="text-sm text-muted-foreground capitalize">
+                      {room.type.replace('-', ' ')} • {reservation.guests_count} huésped{reservation.guests_count > 1 ? 'es' : ''}
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">Habitación no encontrada</span>
-                  )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
@@ -152,52 +126,23 @@ export const ReservationsTable = ({
                 <TableCell>
                   {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
                 </TableCell>
-                <TableCell>
-                  {reservation.guests_count}
-                </TableCell>
                 <TableCell className="font-medium">
                   ${Number(reservation.total_amount).toFixed(2)}
                 </TableCell>
                 <TableCell>
                   {getStatusBadge(reservation.status)}
                 </TableCell>
+                <TableCell>
+                  <ReservationQuickActions
+                    reservation={reservation}
+                    guest={guest}
+                    room={room}
+                    onStatusChange={handleStatusChange}
+                    onNewReservation={handleNewReservation}
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSendWhatsApp(reservation)}
-                      title="Enviar por WhatsApp"
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleNewReservation(reservation.guest_id)}
-                      title="Nueva reserva para este huésped"
-                      className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSendEmail(reservation)}
-                      title="Confirmar por Email"
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownloadPDF(reservation)}
-                      title="Descargar PDF"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

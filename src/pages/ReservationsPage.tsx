@@ -141,6 +141,30 @@ const ReservationsPage = () => {
     }
   };
 
+  const handleStatusChange = async (reservationId: string, newStatus: Reservation['status']) => {
+    try {
+      await updateReservation({ id: reservationId, status: newStatus });
+      
+      const statusText = {
+        'confirmed': 'confirmada',
+        'checked-in': 'registrada (check-in)',
+        'checked-out': 'finalizada (check-out)',
+        'cancelled': 'cancelada'
+      }[newStatus];
+      
+      toast({
+        title: "Estado actualizado",
+        description: `La reserva ha sido ${statusText} exitosamente`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado de la reserva",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleNewReservationForGuest = (guestId: string) => {
     const guest = guests.find(g => g.id === guestId);
     if (guest) {
@@ -199,6 +223,7 @@ const ReservationsPage = () => {
             })}
             onDelete={handleDeleteReservation}
             onNewReservationForGuest={handleNewReservationForGuest}
+            onStatusChange={handleStatusChange}
           />
         </CardContent>
       </Card>

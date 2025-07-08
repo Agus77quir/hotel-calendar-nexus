@@ -81,6 +81,8 @@ export const getReservationSuggestions = (
   notes: string[];
 } => {
   const suggestions = {
+    suggestedRoom: undefined as Room | undefined,
+    suggestedDates: undefined as { checkIn: string; checkOut: string } | undefined,
     suggestedGuestCount: 2,
     notes: [] as string[]
   };
