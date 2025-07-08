@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus, UserPlus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { Room, Guest, Reservation } from '@/types/hotel';
@@ -10,15 +10,13 @@ interface ReservationsHeaderProps {
   guests: Guest[];
   rooms: Room[];
   onNewReservation: () => void;
-  onNewGuest: () => void;
 }
 
 export const ReservationsHeader = ({ 
   reservations, 
   guests, 
   rooms, 
-  onNewReservation, 
-  onNewGuest 
+  onNewReservation
 }: ReservationsHeaderProps) => {
   return (
     <div className="flex items-start justify-between">
@@ -38,13 +36,6 @@ export const ReservationsHeader = ({
           />
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={onNewGuest}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nuevo Huésped
-          </Button>
           <Button onClick={onNewReservation}>
             <Plus className="h-4 w-4 mr-2" />
             Nueva Reserva

@@ -4,14 +4,13 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
-import { GuestModal } from '@/components/Guests/GuestModal';
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
 import { Reservation } from '@/types/hotel';
 
 const ReservationsPage = () => {
-  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, addGuest, isLoading } = useHotelData();
+  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
     dateFrom?: string;
@@ -25,10 +24,6 @@ const ReservationsPage = () => {
   }>({
     isOpen: false,
     mode: 'create',
-  });
-  const [guestModal, setGuestModal] = useState({
-    isOpen: false,
-    mode: 'create' as 'create' | 'edit',
   });
 
   const filteredReservations = reservations.filter(reservation => {
@@ -77,11 +72,6 @@ const ReservationsPage = () => {
     }
   };
 
-  const handleSaveGuestFromReservations = async (guestData: any) => {
-    await addGuest(guestData);
-    setGuestModal({ isOpen: false, mode: 'create' });
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -97,7 +87,6 @@ const ReservationsPage = () => {
         guests={guests}
         rooms={rooms}
         onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
-        onNewGuest={() => setGuestModal({ isOpen: true, mode: 'create' })}
       />
 
       <ReservationFilters
@@ -136,13 +125,6 @@ const ReservationsPage = () => {
         guests={guests}
         reservation={reservationModal.reservation}
         mode={reservationModal.mode}
-      />
-
-      <GuestModal
-        isOpen={guestModal.isOpen}
-        onClose={() => setGuestModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveGuestFromReservations}
-        mode={guestModal.mode}
       />
     </div>
   );

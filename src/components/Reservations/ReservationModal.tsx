@@ -3,11 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { CalendarDays, AlertTriangle } from 'lucide-react';
+import { CalendarDays, AlertTriangle, Plus } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
+import { NewGuestForm } from './NewGuestForm';
 import { hasDateOverlap } from '@/utils/reservationValidation';
+import { useState } from 'react';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -28,7 +30,9 @@ export const ReservationModal = ({
   reservation,
   mode
 }: ReservationModalProps) => {
-  const { reservations } = useHotelData();
+  const { reservations, addGuest } = useHotelData();
+  const [showNewGuestForm, setShowNewGuestForm] = useState(false);
+  const [isCreatingGuest, setIsCreatingGuest] = useState(false);
   
   const {
     formData,
@@ -54,6 +58,21 @@ export const ReservationModal = ({
     mode,
     isOpen
   });
+
+  const handleCreateGuest = async (guestData: any) => {
+    setIsCreatingGuest(true);
+    try {
+      const newGuest = await addGuest(guestData);
+      console.log('New guest created:', newGuest);
+      // Select the new guest
+      handleFormChange('guest_id', newGuest.id);
+      setShowNewGuestForm(false);
+    } catch (error) {
+      console.error('Error creating guest:', error);
+    } finally {
+      setIsCreatingGuest(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,8 +138,13 @@ export const ReservationModal = ({
     }
   };
 
+  const handleClose = () => {
+    setShowNewGuestForm(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -146,40 +170,68 @@ export const ReservationModal = ({
             </Alert>
           )}
 
-          <div className="space-y-4 sm:space-y-6">
-            <ReservationFormFields
-              formData={formData}
-              guests={guests}
-              rooms={rooms}
-              availableRooms={availableRooms}
-              selectedRoom={selectedRoom}
-              selectedGuest={selectedGuest}
-              maxCapacity={maxCapacity}
-              today={today}
-              onFormChange={handleFormChange}
-              onDateChange={handleDateChange}
-              onRoomChange={handleRoomChange}
-              validateDates={validateDates}
-              calculateTotal={calculateTotal}
+          {showNewGuestForm ? (
+            <NewGuestForm
+              onSave={handleCreateGuest}
+              onCancel={() => setShowNewGuestForm(false)}
+              isSubmitting={isCreatingGuest}
             />
-          </div>
+          ) : (
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <h3 className="font-medium">¿Huésped no registrado?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Puedes crear un nuevo huésped desde aquí
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewGuestForm(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nuevo Huésped
+                </Button>
+              </div>
+
+              <ReservationFormFields
+                formData={formData}
+                guests={guests}
+                rooms={rooms}
+                availableRooms={availableRooms}
+                selectedRoom={selectedRoom}
+                selectedGuest={selectedGuest}
+                maxCapacity={maxCapacity}
+                today={today}
+                onFormChange={handleFormChange}
+                onDateChange={handleDateChange}
+                onRoomChange={handleRoomChange}
+                validateDates={validateDates}
+                calculateTotal={calculateTotal}
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} className="px-4 sm:px-6">
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            className="px-4 sm:px-6"
-            disabled={!validateDates() || isSubmitting || !formData.room_id}
-          >
-            {isSubmitting 
-              ? 'Guardando...' 
-              : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
-            }
-          </Button>
-        </div>
+        {!showNewGuestForm && (
+          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0">
+            <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              className="px-4 sm:px-6"
+              disabled={!validateDates() || isSubmitting || !formData.room_id}
+            >
+              {isSubmitting 
+                ? 'Guardando...' 
+                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+              }
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
