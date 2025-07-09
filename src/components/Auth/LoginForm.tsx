@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,7 +84,7 @@ export const LoginForm = () => {
         style={{ 
           backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)',
           backgroundSize: '120%',
-          backgroundPosition: 'center 20%'
+          backgroundPosition: 'center 40%'
         }}
       />
       
