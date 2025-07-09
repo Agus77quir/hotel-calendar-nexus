@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -49,7 +48,6 @@ const ReservationsPage = () => {
     if (dateFilters.dateFrom && dateFilters.dateTo) {
       const checkIn = reservation.check_in;
       const checkOut = reservation.check_out;
-      // Check if reservation overlaps with filter date range
       matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
     }
 
@@ -190,7 +188,7 @@ const ReservationsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4">
       <ReservationsHeader
         reservations={reservations}
         guests={guests}
@@ -204,14 +202,14 @@ const ReservationsPage = () => {
       />
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 md:pb-6">
           <ReservationsSearch
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             resultCount={filteredReservations.length}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 md:p-6">
           <ReservationsTable
             reservations={filteredReservations}
             guests={guests}
