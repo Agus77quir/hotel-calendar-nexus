@@ -78,11 +78,11 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
-      {/* Enhanced Background Image with better coverage */}
+      {/* Updated Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ 
-          backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)',
+          backgroundImage: 'url(/lovable-uploads/c543c767-4129-44e8-8ce4-26d758f772bb.png)',
           backgroundSize: 'cover'
         }}
       />
