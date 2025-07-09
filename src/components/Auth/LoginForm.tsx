@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,13 +78,14 @@ export const LoginForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
-      {/* Enhanced Background Image with full coverage */}
+      {/* Enhanced Background Image with full coverage and zoomed out */}
       <div 
         className="absolute inset-0 bg-cover bg-no-repeat"
         style={{ 
           backgroundImage: 'url(/lovable-uploads/df278197-6f7a-404b-ba89-ccbfc43e0d34.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center'
+          backgroundSize: '100%',
+          backgroundPosition: 'center center',
+          transform: 'scale(1.1)'
         }}
       />
       
