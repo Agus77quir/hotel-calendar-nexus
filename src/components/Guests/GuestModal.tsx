@@ -74,55 +74,63 @@ export const GuestModal = ({
 
   const validateForm = () => {
     if (!formData.first_name.trim()) {
-      alert('El nombre es requerido');
+      console.error('Validation error: Nombre requerido');
       return false;
     }
     if (!formData.last_name.trim()) {
-      alert('El apellido es requerido');
+      console.error('Validation error: Apellido requerido');
       return false;
     }
     if (!formData.email.trim()) {
-      alert('El email es requerido');
+      console.error('Validation error: Email requerido');
       return false;
     }
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor ingrese un email válido');
+      console.error('Validation error: Email inválido');
       return false;
     }
     if (!formData.phone.trim()) {
-      alert('El teléfono es requerido');
+      console.error('Validation error: Teléfono requerido');
       return false;
     }
     if (!formData.document.trim()) {
-      alert('El documento es requerido');
+      console.error('Validation error: Documento requerido');
       return false;
     }
     if (!formData.nationality.trim()) {
-      alert('La nacionalidad es requerida');
+      console.error('Validation error: Nacionalidad requerida');
       return false;
     }
+    console.log('Form validation passed');
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Starting guest creation/update process');
     
     if (!validateForm()) {
+      console.error('Form validation failed');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      await onSave({
+      const guestPayload = {
         ...formData,
         is_associated: false,
         discount_percentage: 0
-      });
+      };
+      
+      console.log('Attempting to save guest with data:', guestPayload);
+      await onSave(guestPayload);
+      console.log('Guest saved successfully');
       onClose();
     } catch (error) {
       console.error('Error saving guest:', error);
-      alert('Error al guardar el huésped. Por favor intente de nuevo.');
+      // Let the parent component handle the error display
     } finally {
       setIsSubmitting(false);
     }

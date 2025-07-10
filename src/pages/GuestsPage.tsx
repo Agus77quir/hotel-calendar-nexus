@@ -16,9 +16,11 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { GuestModal } from '@/components/Guests/GuestModal';
 import { Plus, Search, Edit, Trash2, Users, UserCheck, UserX, Percent } from 'lucide-react';
 import { Guest } from '@/types/hotel';
+import { useToast } from '@/hooks/use-toast';
 
 const GuestsPage = () => {
   const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{
     isOpen: boolean;
@@ -46,19 +48,43 @@ const GuestsPage = () => {
 
   const handleSaveGuest = async (guestData: any) => {
     try {
+      console.log('GuestsPage: Starting guest save operation', { mode: guestModal.mode, data: guestData });
+      
       if (guestModal.mode === 'create') {
-        await addGuest(guestData);
+        console.log('GuestsPage: Creating new guest');
+        const newGuest = await addGuest(guestData);
+        console.log('GuestsPage: Guest created successfully', newGuest);
+        
+        toast({
+          title: "Huésped creado",
+          description: `${guestData.first_name} ${guestData.last_name} ha sido creado exitosamente.`,
+        });
       } else if (guestModal.guest) {
-        await updateGuest({ id: guestModal.guest.id, ...guestData });
+        console.log('GuestsPage: Updating existing guest', guestModal.guest.id);
+        const updatedGuest = await updateGuest({ id: guestModal.guest.id, ...guestData });
+        console.log('GuestsPage: Guest updated successfully', updatedGuest);
+        
+        toast({
+          title: "Huésped actualizado",
+          description: `${guestData.first_name} ${guestData.last_name} ha sido actualizado exitosamente.`,
+        });
       }
+      
       setGuestModal({ isOpen: false, mode: 'create' });
     } catch (error) {
-      console.error('Error saving guest:', error);
+      console.error('GuestsPage: Error in guest save operation:', error);
+      
+      toast({
+        title: "Error",
+        description: `No se pudo ${guestModal.mode === 'create' ? 'crear' : 'actualizar'} el huésped. Por favor intenta nuevamente.`,
+        variant: "destructive",
+      });
     }
   };
 
   const handleDeleteGuest = (id: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
+      console.log('GuestsPage: Deleting guest', id);
       deleteGuest(id);
     }
   };
