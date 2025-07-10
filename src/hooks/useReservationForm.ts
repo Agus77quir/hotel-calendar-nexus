@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -207,7 +206,7 @@ export const useReservationForm = ({
       [field]: value
     }));
 
-    // Auto-update discount when association status changes
+    // Auto-update discount when association status changes - reset to 0 when unchecked
     if (field === 'is_associated' && value === false) {
       setFormData(prev => ({
         ...prev,

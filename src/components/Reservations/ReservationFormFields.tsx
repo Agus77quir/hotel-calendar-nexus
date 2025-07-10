@@ -68,16 +68,17 @@ export const ReservationFormFields = ({
   const handleGuestChange = (guestId: string) => {
     onFormChange('guest_id', guestId);
     
-    // Auto-update association info when guest changes
+    // Auto-update association status when guest changes (but not discount percentage)
     const guest = guests.find(g => g.id === guestId);
     if (guest) {
-      console.log('Updating guest association data:', {
+      console.log('Guest selected:', {
+        name: `${guest.first_name} ${guest.last_name}`,
         is_associated: guest.is_associated || false,
-        discount_percentage: guest.discount_percentage || 0
+        default_discount: guest.discount_percentage || 0
       });
       
+      // Only update the association status, let staff choose discount manually
       onFormChange('is_associated', guest.is_associated || false);
-      onFormChange('discount_percentage', guest.discount_percentage || 0);
     }
   };
 
@@ -100,7 +101,7 @@ export const ReservationFormFields = ({
                   <div className="flex items-center gap-2 ml-4">
                     {guest.is_associated && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        Asociado {guest.discount_percentage || 0}%
+                        Asociado
                       </span>
                     )}
                   </div>
@@ -115,7 +116,7 @@ export const ReservationFormFields = ({
         <div className="bg-blue-50 p-4 rounded-lg space-y-3">
           <h4 className="font-medium text-blue-900 flex items-center gap-2">
             <Percent className="h-4 w-4" />
-            Estado de Huésped Asociado
+            Configuración de Descuento
           </h4>
           
           <div className="flex items-center space-x-2">
@@ -123,8 +124,9 @@ export const ReservationFormFields = ({
               id="is_associated"
               checked={formData.is_associated}
               onCheckedChange={(checked) => {
-                console.log('Checkbox changed:', checked);
+                console.log('Association status changed:', checked);
                 onFormChange('is_associated', !!checked);
+                // Reset discount when unchecking association
                 if (!checked) {
                   onFormChange('discount_percentage', 0);
                 }
@@ -133,7 +135,7 @@ export const ReservationFormFields = ({
             <Label htmlFor="is_associated" className="text-sm">
               Huésped Asociado
               {selectedGuest?.is_associated && (
-                <span className="ml-2 text-green-600 text-xs">(Detectado automáticamente)</span>
+                <span className="ml-2 text-green-600 text-xs">(Huésped registrado como asociado)</span>
               )}
             </Label>
           </div>
@@ -144,14 +146,14 @@ export const ReservationFormFields = ({
                 Porcentaje de Descuento
                 {selectedGuest?.discount_percentage && (
                   <span className="ml-2 text-blue-600 text-xs">
-                    (Valor del huésped: {selectedGuest.discount_percentage}%)
+                    (Descuento sugerido del huésped: {selectedGuest.discount_percentage}%)
                   </span>
                 )}
               </Label>
               <Select 
                 value={formData.discount_percentage.toString()}
                 onValueChange={(value) => {
-                  console.log('Discount percentage changed:', value);
+                  console.log('Discount percentage manually selected:', value);
                   onFormChange('discount_percentage', parseInt(value));
                 }}
               >
@@ -159,7 +161,7 @@ export const ReservationFormFields = ({
                   <SelectValue placeholder="Seleccionar descuento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">0%</SelectItem>
+                  <SelectItem value="0">0% - Sin descuento</SelectItem>
                   <SelectItem value="5">5%</SelectItem>
                   <SelectItem value="10">10%</SelectItem>
                   <SelectItem value="15">15%</SelectItem>
