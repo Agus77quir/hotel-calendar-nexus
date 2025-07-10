@@ -126,7 +126,7 @@ export const ReservationFormFields = ({
               onCheckedChange={(checked) => {
                 console.log('Association status changed:', checked);
                 onFormChange('is_associated', !!checked);
-                // Reset discount when unchecking association
+                // Only reset discount when unchecking association
                 if (!checked) {
                   onFormChange('discount_percentage', 0);
                 }
