@@ -20,7 +20,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     phone: '',
     document: '',
     nationality: '',
-    address: '',
   });
 
   const [emailError, setEmailError] = useState('');
@@ -186,16 +185,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               value={formData.nationality}
               onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
               required
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="address">Dirección</Label>
-            <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               disabled={isSubmitting}
             />
           </div>
