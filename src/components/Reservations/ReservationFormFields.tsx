@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,20 +64,46 @@ export const ReservationFormFields = ({
   validateDates,
   calculateTotal
 }: ReservationFormFieldsProps) => {
+  
+  const handleGuestChange = (guestId: string) => {
+    onFormChange('guest_id', guestId);
+    
+    // Auto-update association info when guest changes
+    const guest = guests.find(g => g.id === guestId);
+    if (guest) {
+      console.log('Updating guest association data:', {
+        is_associated: guest.is_associated || false,
+        discount_percentage: guest.discount_percentage || 0
+      });
+      
+      onFormChange('is_associated', guest.is_associated || false);
+      onFormChange('discount_percentage', guest.discount_percentage || 0);
+    }
+  };
+
   return (
     <>
       <div className="space-y-2">
         <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
-        <Select value={formData.guest_id} onValueChange={(value) => onFormChange('guest_id', value)}>
+        <Select value={formData.guest_id} onValueChange={handleGuestChange}>
           <SelectTrigger className="h-10">
             <SelectValue placeholder="Seleccionar huésped" />
           </SelectTrigger>
           <SelectContent>
             {guests.map((guest) => (
               <SelectItem key={guest.id} value={guest.id}>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {guest.first_name} {guest.last_name}
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span>{guest.first_name} {guest.last_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {guest.is_associated && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Asociado {guest.discount_percentage || 0}%
+                      </span>
+                    )}
+                  </div>
                 </div>
               </SelectItem>
             ))}
@@ -87,42 +112,71 @@ export const ReservationFormFields = ({
       </div>
 
       <div className="space-y-4 border-t pt-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="is_associated"
-            checked={formData.is_associated}
-            onCheckedChange={(checked) => onFormChange('is_associated', !!checked)}
-          />
-          <Label htmlFor="is_associated">Huésped Asociado</Label>
-        </div>
-
-        {formData.is_associated && (
-          <div>
-            <Label htmlFor="discount_percentage">Porcentaje de Descuento</Label>
-            <Select 
-              value={formData.discount_percentage.toString()}
-              onValueChange={(value) => onFormChange('discount_percentage', parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar descuento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5%</SelectItem>
-                <SelectItem value="10">10%</SelectItem>
-                <SelectItem value="15">15%</SelectItem>
-                <SelectItem value="20">20%</SelectItem>
-                <SelectItem value="25">25%</SelectItem>
-                <SelectItem value="30">30%</SelectItem>
-                <SelectItem value="35">35%</SelectItem>
-                <SelectItem value="40">40%</SelectItem>
-                <SelectItem value="45">45%</SelectItem>
-                <SelectItem value="50">50%</SelectItem>
-                <SelectItem value="55">55%</SelectItem>
-                <SelectItem value="60">60%</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+          <h4 className="font-medium text-blue-900 flex items-center gap-2">
+            <Percent className="h-4 w-4" />
+            Estado de Huésped Asociado
+          </h4>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_associated"
+              checked={formData.is_associated}
+              onCheckedChange={(checked) => {
+                console.log('Checkbox changed:', checked);
+                onFormChange('is_associated', !!checked);
+                if (!checked) {
+                  onFormChange('discount_percentage', 0);
+                }
+              }}
+            />
+            <Label htmlFor="is_associated" className="text-sm">
+              Huésped Asociado
+              {selectedGuest?.is_associated && (
+                <span className="ml-2 text-green-600 text-xs">(Detectado automáticamente)</span>
+              )}
+            </Label>
           </div>
-        )}
+
+          {formData.is_associated && (
+            <div className="space-y-2">
+              <Label htmlFor="discount_percentage" className="text-sm">
+                Porcentaje de Descuento
+                {selectedGuest?.discount_percentage && (
+                  <span className="ml-2 text-blue-600 text-xs">
+                    (Valor del huésped: {selectedGuest.discount_percentage}%)
+                  </span>
+                )}
+              </Label>
+              <Select 
+                value={formData.discount_percentage.toString()}
+                onValueChange={(value) => {
+                  console.log('Discount percentage changed:', value);
+                  onFormChange('discount_percentage', parseInt(value));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar descuento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0%</SelectItem>
+                  <SelectItem value="5">5%</SelectItem>
+                  <SelectItem value="10">10%</SelectItem>
+                  <SelectItem value="15">15%</SelectItem>
+                  <SelectItem value="20">20%</SelectItem>
+                  <SelectItem value="25">25%</SelectItem>
+                  <SelectItem value="30">30%</SelectItem>
+                  <SelectItem value="35">35%</SelectItem>
+                  <SelectItem value="40">40%</SelectItem>
+                  <SelectItem value="45">45%</SelectItem>
+                  <SelectItem value="50">50%</SelectItem>
+                  <SelectItem value="55">55%</SelectItem>
+                  <SelectItem value="60">60%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
