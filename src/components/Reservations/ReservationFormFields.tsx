@@ -1,3 +1,4 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -68,7 +69,7 @@ export const ReservationFormFields = ({
   const handleGuestChange = (guestId: string) => {
     onFormChange('guest_id', guestId);
     
-    // Auto-update association status when guest changes (but not discount percentage)
+    // Auto-update association status when guest changes
     const guest = guests.find(g => g.id === guestId);
     if (guest) {
       console.log('Guest selected:', {
@@ -77,8 +78,23 @@ export const ReservationFormFields = ({
         default_discount: guest.discount_percentage || 0
       });
       
-      // Only update the association status, let staff choose discount manually
+      // Update the association status based on guest data
       onFormChange('is_associated', guest.is_associated || false);
+      
+      // If guest is not associated, reset discount to 0
+      if (!guest.is_associated) {
+        onFormChange('discount_percentage', 0);
+      }
+    }
+  };
+
+  const handleAssociationChange = (checked: boolean) => {
+    console.log('Association status manually changed:', checked);
+    onFormChange('is_associated', checked);
+    
+    // Only reset discount when unchecking association
+    if (!checked) {
+      onFormChange('discount_percentage', 0);
     }
   };
 
@@ -123,14 +139,7 @@ export const ReservationFormFields = ({
             <Checkbox
               id="is_associated"
               checked={formData.is_associated}
-              onCheckedChange={(checked) => {
-                console.log('Association status changed:', checked);
-                onFormChange('is_associated', !!checked);
-                // Only reset discount when unchecking association
-                if (!checked) {
-                  onFormChange('discount_percentage', 0);
-                }
-              }}
+              onCheckedChange={handleAssociationChange}
             />
             <Label htmlFor="is_associated" className="text-sm">
               Huésped Asociado

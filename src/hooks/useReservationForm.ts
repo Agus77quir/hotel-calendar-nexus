@@ -202,6 +202,7 @@ export const useReservationForm = ({
   };
 
   const handleFormChange = (field: string, value: any) => {
+    console.log('Form field changed:', field, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
