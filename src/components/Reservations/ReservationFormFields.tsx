@@ -67,6 +67,7 @@ export const ReservationFormFields = ({
 }: ReservationFormFieldsProps) => {
   
   const handleGuestChange = (guestId: string) => {
+    console.log('Handling guest change:', guestId);
     onFormChange('guest_id', guestId);
     
     // Auto-update association status when guest changes
@@ -79,23 +80,38 @@ export const ReservationFormFields = ({
       });
       
       // Update the association status based on guest data
-      onFormChange('is_associated', guest.is_associated || false);
+      const isAssociated = guest.is_associated || false;
+      console.log('Setting is_associated to:', isAssociated);
+      onFormChange('is_associated', isAssociated);
       
       // If guest is not associated, reset discount to 0
-      if (!guest.is_associated) {
+      if (!isAssociated) {
+        console.log('Guest not associated, resetting discount to 0');
         onFormChange('discount_percentage', 0);
       }
+    } else {
+      console.log('No guest found, resetting association and discount');
+      onFormChange('is_associated', false);
+      onFormChange('discount_percentage', 0);
     }
   };
 
-  const handleAssociationChange = (checked: boolean) => {
-    console.log('Association status manually changed:', checked);
-    onFormChange('is_associated', checked);
+  const handleAssociationChange = (checked: boolean | 'indeterminate') => {
+    const isChecked = checked === true;
+    console.log('Association status manually changed:', isChecked);
+    onFormChange('is_associated', isChecked);
     
-    // Only reset discount when unchecking association
-    if (!checked) {
+    // Reset discount when unchecking association
+    if (!isChecked) {
+      console.log('Unchecking association, resetting discount to 0');
       onFormChange('discount_percentage', 0);
     }
+  };
+
+  const handleDiscountChange = (value: string) => {
+    const discountValue = parseInt(value) || 0;
+    console.log('Discount percentage manually selected:', discountValue);
+    onFormChange('discount_percentage', discountValue);
   };
 
   return (
@@ -161,10 +177,7 @@ export const ReservationFormFields = ({
               </Label>
               <Select 
                 value={formData.discount_percentage.toString()}
-                onValueChange={(value) => {
-                  console.log('Discount percentage manually selected:', value);
-                  onFormChange('discount_percentage', parseInt(value));
-                }}
+                onValueChange={handleDiscountChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar descuento" />

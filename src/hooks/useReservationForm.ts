@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -203,10 +202,15 @@ export const useReservationForm = ({
 
   const handleFormChange = (field: string, value: any) => {
     console.log('Form field changed:', field, value);
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [field]: value
+      };
+      
+      console.log('Updated form data:', newFormData);
+      return newFormData;
+    });
   };
 
   const calculateTotal = () => {
