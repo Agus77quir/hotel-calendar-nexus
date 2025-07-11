@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,60 +64,12 @@ export const ReservationFormFields = ({
   validateDates,
   calculateTotal
 }: ReservationFormFieldsProps) => {
-  
-  const handleGuestChange = (guestId: string) => {
-    console.log('Handling guest change:', guestId);
-    onFormChange('guest_id', guestId);
-    
-    // Auto-update association status when guest changes
-    const guest = guests.find(g => g.id === guestId);
-    if (guest) {
-      console.log('Guest selected:', {
-        name: `${guest.first_name} ${guest.last_name}`,
-        is_associated: guest.is_associated || false,
-        default_discount: guest.discount_percentage || 0
-      });
-      
-      // Update the association status based on guest data
-      const isAssociated = guest.is_associated || false;
-      console.log('Setting is_associated to:', isAssociated);
-      onFormChange('is_associated', isAssociated);
-      
-      // If guest is not associated, reset discount to 0
-      if (!isAssociated) {
-        console.log('Guest not associated, resetting discount to 0');
-        onFormChange('discount_percentage', 0);
-      }
-    } else {
-      console.log('No guest found, resetting association and discount');
-      onFormChange('is_associated', false);
-      onFormChange('discount_percentage', 0);
-    }
-  };
-
-  const handleAssociationChange = (checked: boolean | 'indeterminate') => {
-    const isChecked = checked === true;
-    console.log('Association status manually changed:', isChecked);
-    onFormChange('is_associated', isChecked);
-    
-    // Reset discount when unchecking association
-    if (!isChecked) {
-      console.log('Unchecking association, resetting discount to 0');
-      onFormChange('discount_percentage', 0);
-    }
-  };
-
-  const handleDiscountChange = (value: string) => {
-    const discountValue = parseInt(value) || 0;
-    console.log('Discount percentage manually selected:', discountValue);
-    onFormChange('discount_percentage', discountValue);
-  };
 
   return (
     <>
       <div className="space-y-2">
         <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
-        <Select value={formData.guest_id} onValueChange={handleGuestChange}>
+        <Select value={formData.guest_id} onValueChange={(value) => onFormChange('guest_id', value)}>
           <SelectTrigger className="h-10">
             <SelectValue placeholder="Seleccionar huésped" />
           </SelectTrigger>
@@ -155,7 +106,7 @@ export const ReservationFormFields = ({
             <Checkbox
               id="is_associated"
               checked={formData.is_associated}
-              onCheckedChange={handleAssociationChange}
+              onCheckedChange={(checked) => onFormChange('is_associated', checked === true)}
             />
             <Label htmlFor="is_associated" className="text-sm">
               Huésped Asociado
@@ -177,7 +128,7 @@ export const ReservationFormFields = ({
               </Label>
               <Select 
                 value={formData.discount_percentage.toString()}
-                onValueChange={handleDiscountChange}
+                onValueChange={(value) => onFormChange('discount_percentage', parseInt(value) || 0)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar descuento" />
