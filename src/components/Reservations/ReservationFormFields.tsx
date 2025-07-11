@@ -3,9 +3,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Users, DollarSign, Percent } from 'lucide-react';
+import { Users, DollarSign } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
+import { AssociatedDiscountSection } from './AssociatedDiscountSection';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -68,13 +68,10 @@ export const ReservationFormFields = ({
 
   const handleAssociationChange = (checked: boolean) => {
     onFormChange('is_associated', checked);
-    if (!checked) {
-      onFormChange('discount_percentage', 0);
-    }
   };
 
-  const handleDiscountChange = (value: string) => {
-    onFormChange('discount_percentage', parseInt(value) || 0);
+  const handleDiscountChange = (value: number) => {
+    onFormChange('discount_percentage', value);
   };
 
   return (
@@ -107,64 +104,13 @@ export const ReservationFormFields = ({
         </Select>
       </div>
 
-      <div className="space-y-4 border-t pt-4">
-        <div className="bg-blue-50 p-4 rounded-lg space-y-3">
-          <h4 className="font-medium text-blue-900 flex items-center gap-2">
-            <Percent className="h-4 w-4" />
-            Configuración de Descuento
-          </h4>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_associated"
-              checked={formData.is_associated}
-              onCheckedChange={handleAssociationChange}
-            />
-            <Label htmlFor="is_associated" className="text-sm">
-              Aplicar descuento de huésped asociado
-              {selectedGuest?.is_associated && (
-                <span className="ml-2 text-green-600 text-xs">(Huésped registrado como asociado)</span>
-              )}
-            </Label>
-          </div>
-
-          {formData.is_associated && (
-            <div className="space-y-2">
-              <Label htmlFor="discount_percentage" className="text-sm">
-                Porcentaje de Descuento
-                {selectedGuest?.discount_percentage && (
-                  <span className="ml-2 text-blue-600 text-xs">
-                    (Descuento sugerido: {selectedGuest.discount_percentage}%)
-                  </span>
-                )}
-              </Label>
-              <Select 
-                value={formData.discount_percentage.toString()}
-                onValueChange={handleDiscountChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar descuento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">0% - Sin descuento</SelectItem>
-                  <SelectItem value="5">5%</SelectItem>
-                  <SelectItem value="10">10%</SelectItem>
-                  <SelectItem value="15">15%</SelectItem>
-                  <SelectItem value="20">20%</SelectItem>
-                  <SelectItem value="25">25%</SelectItem>
-                  <SelectItem value="30">30%</SelectItem>
-                  <SelectItem value="35">35%</SelectItem>
-                  <SelectItem value="40">40%</SelectItem>
-                  <SelectItem value="45">45%</SelectItem>
-                  <SelectItem value="50">50%</SelectItem>
-                  <SelectItem value="55">55%</SelectItem>
-                  <SelectItem value="60">60%</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      </div>
+      <AssociatedDiscountSection
+        isAssociated={formData.is_associated}
+        discountPercentage={formData.discount_percentage}
+        selectedGuest={selectedGuest}
+        onAssociationChange={handleAssociationChange}
+        onDiscountChange={handleDiscountChange}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
