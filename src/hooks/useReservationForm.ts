@@ -34,7 +34,6 @@ export const useReservationForm = ({
 
   const [availabilityError, setAvailabilityError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasManuallyChangedAssociation, setHasManuallyChangedAssociation] = useState(false);
 
   // Get today's date for validation
   const today = new Date().toISOString().split('T')[0];
@@ -62,7 +61,6 @@ export const useReservationForm = ({
         is_associated: guest?.is_associated || false,
         discount_percentage: guest?.discount_percentage || 0,
       });
-      setHasManuallyChangedAssociation(false);
     } else {
       // For new reservations, set smart defaults
       const tomorrow = new Date();
@@ -74,13 +72,12 @@ export const useReservationForm = ({
         room_id: '',
         check_in: defaultCheckIn,
         check_out: getDefaultCheckOut(defaultCheckIn),
-        guests_count: 2, // Default to 2 guests for better UX
+        guests_count: 2,
         status: 'confirmed',
         special_requests: '',
         is_associated: false,
         discount_percentage: 0,
       });
-      setHasManuallyChangedAssociation(false);
     }
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
@@ -204,59 +201,12 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle guest change - this will suggest association but not force it
-  const handleGuestChange = (guestId: string) => {
-    console.log('Handling guest change:', guestId);
-    const guest = guests.find(g => g.id === guestId);
-    
-    setFormData(prev => ({
-      ...prev,
-      guest_id: guestId,
-      // Only auto-set association if user hasn't manually changed it
-      is_associated: hasManuallyChangedAssociation ? prev.is_associated : (guest?.is_associated || false),
-      // Reset discount if guest changes or is not associated
-      discount_percentage: (hasManuallyChangedAssociation ? prev.is_associated : (guest?.is_associated || false)) ? prev.discount_percentage : 0,
-    }));
-    
-    // Reset manual change flag when guest changes
-    setHasManuallyChangedAssociation(false);
-  };
-
-  // Handle association change - this is for manual changes only
-  const handleAssociationChange = (checked: boolean) => {
-    console.log('Association manually changed to:', checked);
-    setHasManuallyChangedAssociation(true);
-    setFormData(prev => ({
-      ...prev,
-      is_associated: checked,
-      discount_percentage: checked ? prev.discount_percentage : 0,
-    }));
-  };
-
+  // Simple form change handler
   const handleFormChange = (field: string, value: any) => {
-    console.log('Form field changed:', field, value);
-    
-    // Special handling for association changes
-    if (field === 'is_associated') {
-      handleAssociationChange(value);
-      return;
-    }
-    
-    // Special handling for guest changes
-    if (field === 'guest_id') {
-      handleGuestChange(value);
-      return;
-    }
-    
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [field]: value
-      };
-      
-      console.log('Updated form data:', newFormData);
-      return newFormData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const calculateTotal = () => {

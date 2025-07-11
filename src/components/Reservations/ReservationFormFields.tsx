@@ -1,3 +1,4 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,17 @@ export const ReservationFormFields = ({
   calculateTotal
 }: ReservationFormFieldsProps) => {
 
+  const handleAssociationChange = (checked: boolean) => {
+    onFormChange('is_associated', checked);
+    if (!checked) {
+      onFormChange('discount_percentage', 0);
+    }
+  };
+
+  const handleDiscountChange = (value: string) => {
+    onFormChange('discount_percentage', parseInt(value) || 0);
+  };
+
   return (
     <>
       <div className="space-y-2">
@@ -106,10 +118,10 @@ export const ReservationFormFields = ({
             <Checkbox
               id="is_associated"
               checked={formData.is_associated}
-              onCheckedChange={(checked) => onFormChange('is_associated', checked === true)}
+              onCheckedChange={handleAssociationChange}
             />
             <Label htmlFor="is_associated" className="text-sm">
-              Huésped Asociado
+              Aplicar descuento de huésped asociado
               {selectedGuest?.is_associated && (
                 <span className="ml-2 text-green-600 text-xs">(Huésped registrado como asociado)</span>
               )}
@@ -122,13 +134,13 @@ export const ReservationFormFields = ({
                 Porcentaje de Descuento
                 {selectedGuest?.discount_percentage && (
                   <span className="ml-2 text-blue-600 text-xs">
-                    (Descuento sugerido del huésped: {selectedGuest.discount_percentage}%)
+                    (Descuento sugerido: {selectedGuest.discount_percentage}%)
                   </span>
                 )}
               </Label>
               <Select 
                 value={formData.discount_percentage.toString()}
-                onValueChange={(value) => onFormChange('discount_percentage', parseInt(value) || 0)}
+                onValueChange={handleDiscountChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar descuento" />
