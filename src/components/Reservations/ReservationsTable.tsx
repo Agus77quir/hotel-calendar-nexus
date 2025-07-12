@@ -10,11 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Edit, Trash2, Calendar, User, MapPin, DollarSign } from 'lucide-react';
+import { Edit, Trash2, Calendar, User, MapPin, DollarSign, Eye } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ReservationQuickActions } from './ReservationQuickActions';
+import { ReservationViewModal } from './ReservationViewModal';
+import { useState } from 'react';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -35,6 +37,13 @@ export const ReservationsTable = ({
   onNewReservationForGuest,
   onStatusChange
 }: ReservationsTableProps) => {
+  const [viewModal, setViewModal] = useState<{
+    isOpen: boolean;
+    reservation?: Reservation;
+    guest?: Guest;
+    room?: Room;
+  }>({ isOpen: false });
+
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
@@ -59,6 +68,20 @@ export const ReservationsTable = ({
   const handleNewReservation = (guestId: string) => {
     if (onNewReservationForGuest) {
       onNewReservationForGuest(guestId);
+    }
+  };
+
+  const handleViewReservation = (reservation: Reservation) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    
+    if (guest && room) {
+      setViewModal({
+        isOpen: true,
+        reservation,
+        guest,
+        room
+      });
     }
   };
 
@@ -104,7 +127,7 @@ export const ReservationsTable = ({
                       </div>
                       {guest.is_associated && (
                         <Badge variant="outline" className="text-xs mt-1">
-                          Asociado {guest.discount_percentage}%
+                          Asociado
                         </Badge>
                       )}
                     </div>
@@ -155,6 +178,15 @@ export const ReservationsTable = ({
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => handleViewReservation(reservation)}
+                      className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => onEdit(reservation)}
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     >
@@ -191,7 +223,7 @@ export const ReservationsTable = ({
               <TableHead className="min-w-[80px]">Total</TableHead>
               <TableHead className="min-w-[100px]">Estado</TableHead>
               <TableHead className="min-w-[200px]">Acciones Automáticas</TableHead>
-              <TableHead className="text-right min-w-[120px]">Gestión</TableHead>
+              <TableHead className="text-right min-w-[150px]">Gestión</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -215,7 +247,7 @@ export const ReservationsTable = ({
                         {guest.email}
                         {guest.is_associated && (
                           <Badge variant="outline" className="ml-2 text-xs">
-                            Asociado {guest.discount_percentage}%
+                            Asociado
                           </Badge>
                         )}
                       </div>
@@ -255,6 +287,15 @@ export const ReservationsTable = ({
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewReservation(reservation)}
+                        title="Ver detalles de la reserva"
+                        className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(reservation)}
                         title="Editar reserva"
                       >
@@ -277,6 +318,17 @@ export const ReservationsTable = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* View Modal */}
+      {viewModal.isOpen && viewModal.reservation && viewModal.guest && viewModal.room && (
+        <ReservationViewModal
+          isOpen={viewModal.isOpen}
+          onClose={() => setViewModal({ isOpen: false })}
+          reservation={viewModal.reservation}
+          guest={viewModal.guest}
+          room={viewModal.room}
+        />
+      )}
     </>
   );
 };

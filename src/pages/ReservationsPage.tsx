@@ -8,7 +8,6 @@ import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
 import { Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
-import { handleReservationAutomation } from '@/services/reservationAutomationService';
 
 const ReservationsPage = () => {
   const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
@@ -61,36 +60,10 @@ const ReservationsPage = () => {
       if (reservationModal.mode === 'create') {
         savedReservation = await addReservation(reservationData);
         
-        // Handle automation for new reservations
-        const guest = guests.find(g => g.id === reservationData.guest_id);
-        const room = rooms.find(r => r.id === reservationData.room_id);
-        
-        if (guest && room) {
-          const automationResults = await handleReservationAutomation(
-            savedReservation, 
-            guest, 
-            room,
-            {
-              sendEmail: true,
-              sendWhatsApp: false, // User can manually send WhatsApp if needed
-              updateGuestStatus: true
-            }
-          );
-          
-          // Show automation results
-          if (automationResults.emailSent) {
-            toast({
-              title: "Reserva creada exitosamente",
-              description: `Email de confirmación enviado automáticamente a ${guest.email}`,
-            });
-          } else if (automationResults.errors.length > 0) {
-            toast({
-              title: "Reserva creada",
-              description: `Reserva guardada, pero: ${automationResults.errors.join(', ')}`,
-              variant: "destructive",
-            });
-          }
-        }
+        toast({
+          title: "Reserva creada exitosamente",
+          description: "La reserva ha sido guardada correctamente",
+        });
         
         setReservationModal({ isOpen: false, mode: 'create' });
       } else if (reservationModal.reservation) {

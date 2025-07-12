@@ -1,8 +1,11 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, DollarSign } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, Users, MapPin, User, DollarSign, AlertCircle } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 import { AssociatedDiscountSection } from './AssociatedDiscountSection';
 
@@ -13,283 +16,290 @@ interface ReservationFormFieldsProps {
     check_in: string;
     check_out: string;
     guests_count: number;
-    status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
+    status: string;
     special_requests: string;
     is_associated: boolean;
     discount_percentage: number;
   };
-  guests: Guest[];
-  rooms: Room[];
   availableRooms: Room[];
+  guests: Guest[];
   selectedRoom: Room | undefined;
   selectedGuest: Guest | undefined;
   maxCapacity: number;
+  availabilityError: string;
   today: string;
+  total: number;
   onFormChange: (field: string, value: any) => void;
-  onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
   onRoomChange: (roomId: string) => void;
-  validateDates: () => boolean;
-  calculateTotal: () => number;
+  onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
 }
-
-const getRoomTypeDisplayName = (type: Room['type']) => {
-  switch (type) {
-    case 'matrimonial':
-      return 'Matrimonial';
-    case 'triple-individual':
-      return 'Triple Individual';
-    case 'triple-matrimonial':
-      return 'Triple Matrimonial';
-    case 'doble-individual':
-      return 'Doble Individual';
-    case 'suite-presidencial-doble':
-      return 'Suite Presidencial Doble';
-    default:
-      return type;
-  }
-};
 
 export const ReservationFormFields = ({
   formData,
-  guests,
-  rooms,
   availableRooms,
+  guests,
   selectedRoom,
   selectedGuest,
   maxCapacity,
+  availabilityError,
   today,
+  total,
   onFormChange,
-  onDateChange,
   onRoomChange,
-  validateDates,
-  calculateTotal
+  onDateChange
 }: ReservationFormFieldsProps) => {
 
-  const handleAssociationChange = (checked: boolean) => {
-    onFormChange('is_associated', checked);
-    // Reset discount when unchecking
-    if (!checked) {
-      onFormChange('discount_percentage', 0);
+  const calculateDiscountedTotal = () => {
+    if (!formData.is_associated || formData.discount_percentage === 0) {
+      return total;
     }
+    const discountAmount = (total * formData.discount_percentage) / 100;
+    return total - discountAmount;
+  };
+
+  const getDiscountAmount = () => {
+    if (!formData.is_associated || formData.discount_percentage === 0) {
+      return 0;
+    }
+    return (total * formData.discount_percentage) / 100;
   };
 
   return (
-    <>
-      <div className="space-y-2">
-        <Label htmlFor="guest_id" className="text-sm font-medium">Huésped</Label>
-        <Select value={formData.guest_id} onValueChange={(value) => onFormChange('guest_id', value)}>
-          <SelectTrigger className="h-10">
-            <SelectValue placeholder="Seleccionar huésped" />
-          </SelectTrigger>
-          <SelectContent>
-            {guests.map((guest) => (
-              <SelectItem key={guest.id} value={guest.id}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>{guest.first_name} {guest.last_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {guest.is_associated && (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        Asociado
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="space-y-6">
+      {/* Guest Selection */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <User className="h-5 w-5 text-purple-600" />
+            Información del Huésped
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="guest_id">Huésped *</Label>
+            <Select
+              value={formData.guest_id}
+              onValueChange={(value) => onFormChange('guest_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar huésped" />
+              </SelectTrigger>
+              <SelectContent>
+                {guests.map((guest) => (
+                  <SelectItem key={guest.id} value={guest.id}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{guest.first_name} {guest.last_name}</span>
+                      {guest.is_associated && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Asociado
+                        </Badge>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
+          {selectedGuest && (
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Email:</span> {selectedGuest.email}
+                </div>
+                <div>
+                  <span className="font-medium">Teléfono:</span> {selectedGuest.phone}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Room Selection */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MapPin className="h-5 w-5 text-green-600" />
+            Habitación y Fechas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {availabilityError && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{availabilityError}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="check_in">Fecha de entrada *</Label>
+              <Input
+                id="check_in"
+                type="date"
+                value={formData.check_in}
+                min={today}
+                onChange={(e) => onDateChange('check_in', e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label htmlFor="check_out">Fecha de salida *</Label>
+              <Input
+                id="check_out"
+                type="date"
+                value={formData.check_out}
+                min={formData.check_in || today}
+                onChange={(e) => onDateChange('check_out', e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="room_id">Habitación *</Label>
+            <Select
+              value={formData.room_id}
+              onValueChange={onRoomChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar habitación disponible" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    #{room.number} - {room.type.replace('-', ' ')} (Cap: {room.capacity}, ${room.price}/noche)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedRoom && (
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Tipo:</span> {selectedRoom.type.replace('-', ' ')}
+                </div>
+                <div>
+                  <span className="font-medium">Capacidad:</span> {selectedRoom.capacity} personas
+                </div>
+                <div>
+                  <span className="font-medium">Precio:</span> ${selectedRoom.price}/noche
+                </div>
+                <div>
+                  <span className="font-medium">Amenidades:</span> {selectedRoom.amenities?.join(', ') || 'N/A'}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Guest Details */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5 text-blue-600" />
+            Detalles de la Reserva
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="guests_count">Número de huéspedes *</Label>
+              <Select
+                value={formData.guests_count.toString()}
+                onValueChange={(value) => onFormChange('guests_count', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} huésped{num > 1 ? 'es' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="status">Estado</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => onFormChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="confirmed">Confirmada</SelectItem>
+                  <SelectItem value="checked-in">Registrado</SelectItem>
+                  <SelectItem value="checked-out">Check-out</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="special_requests">Solicitudes especiales</Label>
+            <Textarea
+              id="special_requests"
+              value={formData.special_requests}
+              onChange={(e) => onFormChange('special_requests', e.target.value)}
+              placeholder="Solicitudes especiales del huésped..."
+              className="min-h-[80px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Associated Discount Section */}
       <AssociatedDiscountSection
         isAssociated={formData.is_associated}
         selectedGuest={selectedGuest}
-        onAssociationChange={handleAssociationChange}
+        discountPercentage={formData.discount_percentage}
+        onAssociationChange={(checked) => onFormChange('is_associated', checked)}
+        onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="check_in" className="text-sm font-medium">Check-in</Label>
-          <Input
-            type="date"
-            value={formData.check_in}
-            onChange={(e) => onDateChange('check_in', e.target.value)}
-            className="h-10"
-            required
-            min={today}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="check_out" className="text-sm font-medium">Check-out</Label>
-          <Input
-            type="date"
-            value={formData.check_out}
-            onChange={(e) => onDateChange('check_out', e.target.value)}
-            className="h-10"
-            required
-            min={formData.check_in || today}
-          />
-        </div>
-      </div>
-
-      {(formData.check_in < today || formData.check_out < today) && (
-        <div className="bg-red-50 border border-red-200 p-3 rounded-md">
-          <p className="text-red-700 text-sm">
-            No se pueden hacer reservas para fechas anteriores a hoy ({today})
-          </p>
-        </div>
-      )}
-
-      {!validateDates() && formData.check_in && formData.check_out && formData.check_in >= today && (
-        <div className="bg-red-50 border border-red-200 p-3 rounded-md">
-          <p className="text-red-700 text-sm">
-            La fecha de check-out debe ser posterior a la fecha de check-in
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="room_id" className="text-sm font-medium">
-          Habitación
-          {formData.check_in && formData.check_out && availableRooms.length === 0 && (
-            <span className="text-red-500 text-xs ml-2">
-              (No hay habitaciones disponibles para estas fechas)
-            </span>
-          )}
-          {(!formData.check_in || !formData.check_out) && (
-            <span className="text-amber-500 text-xs ml-2">
-              (Seleccione fechas primero)
-            </span>
-          )}
-        </Label>
-        <Select 
-          value={formData.room_id} 
-          onValueChange={onRoomChange}
-          disabled={!formData.check_in || !formData.check_out || availableRooms.length === 0}
-        >
-          <SelectTrigger className="h-10">
-            <SelectValue placeholder="Seleccionar habitación" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableRooms.map((room) => (
-              <SelectItem key={room.id} value={room.id}>
-                <div className="flex items-center justify-between w-full">
-                  <span>{room.number} - {getRoomTypeDisplayName(room.type)}</span>
-                  <div className="flex items-center gap-2 ml-2">
-                    <span className="text-xs text-muted-foreground">Max: {room.capacity}</span>
-                    <span className="text-primary font-medium">${room.price}/noche</span>
-                  </div>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {formData.check_in && formData.check_out && validateDates() && availableRooms.length === 0 && (
-        <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
-          <p className="text-amber-700 text-sm">
-            No hay habitaciones disponibles para las fechas seleccionadas. Por favor, elija otras fechas.
-          </p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="guests_count" className="text-sm font-medium">
-            Número de huéspedes
-            {selectedRoom && (
-              <span className="text-xs text-muted-foreground ml-2">
-                (Máximo: {maxCapacity})
-              </span>
-            )}
-          </Label>
-          <Input
-            type="number"
-            min="1"
-            max={maxCapacity}
-            value={formData.guests_count || ''}
-            onChange={(e) => {
-              const value = parseInt(e.target.value) || 1;
-              const clampedValue = Math.min(Math.max(value, 1), maxCapacity);
-              onFormChange('guests_count', clampedValue);
-            }}
-            className="h-10"
-            required
-            disabled={!formData.room_id}
-          />
-          {!formData.room_id && (
-            <p className="text-xs text-muted-foreground">
-              Selecciona una habitación primero
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status" className="text-sm font-medium">Estado</Label>
-          <Select value={formData.status} onValueChange={(value: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled') => onFormChange('status', value)}>
-            <SelectTrigger className="h-10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="confirmed">Confirmada</SelectItem>
-              <SelectItem value="checked-in">Registrado</SelectItem>
-              <SelectItem value="checked-out">Check-out</SelectItem>
-              <SelectItem value="cancelled">Cancelada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="special_requests" className="text-sm font-medium">Solicitudes especiales</Label>
-        <Textarea
-          value={formData.special_requests}
-          onChange={(e) => onFormChange('special_requests', e.target.value)}
-          placeholder="Solicitudes especiales del huésped..."
-          className="min-h-[80px]"
-        />
-      </div>
-
-      {formData.room_id && formData.check_in && formData.check_out && validateDates() && (
-        <div className="bg-primary/5 p-4 rounded-lg border">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" />
-                <span className="font-medium">Resumen de Costos</span>
-              </div>
+      {/* Total Calculation */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <DollarSign className="h-5 w-5 text-green-600" />
+            Resumen de Costos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span>Subtotal:</span>
+              <span>${total.toFixed(2)}</span>
             </div>
             
-            {selectedRoom && (
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span>Habitación {selectedRoom.number} - {formData.guests_count} huésped{formData.guests_count > 1 ? 'es' : ''}</span>
+            {formData.is_associated && formData.discount_percentage > 0 && (
+              <>
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Descuento ({formData.discount_percentage}%):</span>
+                  <span>-${getDiscountAmount().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Precio por noche:</span>
-                  <span>${selectedRoom.price}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Noches:</span>
-                  <span>{Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>${(selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))).toFixed(2)}</span>
-                </div>
-              </div>
+                <hr />
+              </>
             )}
             
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-lg font-bold">TOTAL:</span>
-              <span className="text-xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+            <div className="flex justify-between text-lg font-semibold">
+              <span>Total:</span>
+              <span className={formData.is_associated && formData.discount_percentage > 0 ? 'text-green-600' : ''}>
+                ${calculateDiscountedTotal().toFixed(2)}
+              </span>
             </div>
           </div>
-        </div>
-      )}
-    </>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
