@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -28,18 +29,26 @@ const ReservationsPage = () => {
     mode: 'create',
   });
 
+  // Add debugging
+  console.log('ReservationsPage - Data loaded:', {
+    reservationsCount: reservations.length,
+    guestsCount: guests.length,
+    roomsCount: rooms.length,
+    isLoading
+  });
+
   const filteredReservations = reservations.filter(reservation => {
     const guest = guests.find(g => g.id === reservation.guest_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
     // Text search filter
-    const matchesSearch = (
-      guest?.first_name.toLowerCase().includes(searchLower) ||
-      guest?.last_name.toLowerCase().includes(searchLower) ||
-      guest?.email.toLowerCase().includes(searchLower) ||
-      room?.number.includes(searchLower) ||
-      reservation.id.includes(searchLower)
+    const matchesSearch = !searchTerm || (
+      guest?.first_name?.toLowerCase().includes(searchLower) ||
+      guest?.last_name?.toLowerCase().includes(searchLower) ||
+      guest?.email?.toLowerCase().includes(searchLower) ||
+      room?.number?.includes(searchLower) ||
+      reservation.id?.includes(searchLower)
     );
 
     // Date filter
@@ -52,6 +61,8 @@ const ReservationsPage = () => {
 
     return matchesSearch && matchesDate;
   });
+
+  console.log('Filtered reservations count:', filteredReservations.length);
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
@@ -183,19 +194,29 @@ const ReservationsPage = () => {
           />
         </CardHeader>
         <CardContent className="p-2 md:p-6">
-          <ReservationsTable
-            reservations={filteredReservations}
-            guests={guests}
-            rooms={rooms}
-            onEdit={(reservation) => setReservationModal({
-              isOpen: true,
-              mode: 'edit',
-              reservation
-            })}
-            onDelete={handleDeleteReservation}
-            onNewReservationForGuest={handleNewReservationForGuest}
-            onStatusChange={handleStatusChange}
-          />
+          {reservations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No hay reservas registradas en el sistema
+            </div>
+          ) : filteredReservations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No se encontraron reservas que coincidan con los filtros aplicados
+            </div>
+          ) : (
+            <ReservationsTable
+              reservations={filteredReservations}
+              guests={guests}
+              rooms={rooms}
+              onEdit={(reservation) => setReservationModal({
+                isOpen: true,
+                mode: 'edit',
+                reservation
+              })}
+              onDelete={handleDeleteReservation}
+              onNewReservationForGuest={handleNewReservationForGuest}
+              onStatusChange={handleStatusChange}
+            />
+          )}
         </CardContent>
       </Card>
 
