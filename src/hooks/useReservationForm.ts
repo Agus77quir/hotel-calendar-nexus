@@ -204,6 +204,28 @@ export const useReservationForm = ({
   // Simple form change handler
   const handleFormChange = (field: string, value: any) => {
     console.log(`Form field changed: ${field} = ${value}`);
+    
+    // Handle special cases for association and discount
+    if (field === 'is_associated') {
+      console.log('Updating is_associated to:', value);
+      setFormData(prev => ({
+        ...prev,
+        is_associated: Boolean(value),
+        // Reset discount if unchecking association
+        discount_percentage: value ? prev.discount_percentage : 0
+      }));
+      return;
+    }
+    
+    if (field === 'discount_percentage') {
+      console.log('Updating discount_percentage to:', value);
+      setFormData(prev => ({
+        ...prev,
+        discount_percentage: Number(value) || 0
+      }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -225,6 +247,7 @@ export const useReservationForm = ({
     if (formData.is_associated && formData.discount_percentage > 0) {
       const discountAmount = (baseTotal * formData.discount_percentage) / 100;
       baseTotal = baseTotal - discountAmount;
+      console.log('Applying discount:', formData.discount_percentage + '%', 'Amount:', discountAmount, 'New total:', baseTotal);
     }
     
     return baseTotal;

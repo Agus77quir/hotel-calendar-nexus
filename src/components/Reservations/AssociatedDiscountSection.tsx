@@ -23,9 +23,10 @@ export const AssociatedDiscountSection = ({
   
   const handleAssociationChange = (checked: boolean | string) => {
     const isChecked = checked === true;
-    console.log('Association checkbox changed:', isChecked);
+    console.log('Association checkbox changed:', isChecked, 'original value:', checked);
     onAssociationChange(isChecked);
     if (!isChecked) {
+      console.log('Unchecked - resetting discount to 0');
       onDiscountChange(0);
     }
   };
@@ -45,6 +46,8 @@ export const AssociatedDiscountSection = ({
     { value: '25', label: '25% de descuento' },
     { value: '30', label: '30% de descuento' },
   ];
+
+  console.log('AssociatedDiscountSection render:', { isAssociated, discountPercentage, selectedGuest: selectedGuest?.id });
 
   return (
     <div className="space-y-4 border-t pt-4">
