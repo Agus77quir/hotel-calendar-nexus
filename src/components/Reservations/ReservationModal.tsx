@@ -9,7 +9,6 @@ import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { NewGuestForm } from './NewGuestForm';
 import { hasDateOverlap } from '@/utils/reservationValidation';
-import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -178,34 +177,13 @@ export const ReservationModal = ({
 
       await onSave(reservationData);
 
-      // Auto-send confirmation email for new reservations
-      if (mode === 'create' && selectedGuest && selectedRoom) {
-        try {
-          const emailSent = await sendReservationConfirmationAutomatically(
-            selectedGuest,
-            { ...reservationData, id: 'temp-id', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Reservation,
-            selectedRoom
-          );
-          
-          if (emailSent) {
-            toast({
-              title: "Reserva creada",
-              description: `Reserva confirmada y email de confirmación enviado automáticamente a ${selectedGuest.email}`,
-            });
-          } else {
-            toast({
-              title: "Reserva creada",
-              description: "Reserva confirmada. No se pudo enviar el email de confirmación automáticamente.",
-            });
-          }
-        } catch (emailError) {
-          console.error('Error sending automatic email:', emailError);
-          toast({
-            title: "Reserva creada",
-            description: "Reserva confirmada, pero hubo un problema enviando el email automático.",
-          });
-        }
-      }
+      // Show success message without automatic email
+      toast({
+        title: mode === 'create' ? "Reserva creada" : "Reserva actualizada",
+        description: mode === 'create' 
+          ? "Reserva confirmada exitosamente" 
+          : "La reserva ha sido actualizada correctamente",
+      });
 
       onClose();
     } catch (error: any) {
@@ -240,7 +218,7 @@ export const ReservationModal = ({
                 {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
               </DialogTitle>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {mode === 'create' ? 'Sistema automático de confirmación activado' : 'Complete los detalles de la reserva'}
+                {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
               </p>
             </div>
           </div>
@@ -285,17 +263,16 @@ export const ReservationModal = ({
               <ReservationFormFields
                 formData={formData}
                 guests={guests}
-                rooms={rooms}
                 availableRooms={availableRooms}
                 selectedRoom={selectedRoom}
                 selectedGuest={selectedGuest}
                 maxCapacity={maxCapacity}
+                availabilityError={availabilityError}
                 today={today}
+                total={calculateTotal()}
                 onFormChange={handleFormChange}
                 onDateChange={handleDateChange}
                 onRoomChange={handleRoomChange}
-                validateDates={validateDates}
-                calculateTotal={calculateTotal}
               />
             </div>
           )}
@@ -313,7 +290,7 @@ export const ReservationModal = ({
             >
               {isSubmitting 
                 ? 'Procesando...' 
-                : mode === 'create' ? 'Crear y Confirmar Automáticamente' : 'Actualizar Reserva'
+                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
               }
             </Button>
           </div>

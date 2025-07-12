@@ -43,7 +43,7 @@ export const ReservationFormFields = ({
   maxCapacity,
   availabilityError,
   today,
-  total,
+  total = 0, // Default to 0 if undefined
   onFormChange,
   onRoomChange,
   onDateChange
@@ -63,6 +63,11 @@ export const ReservationFormFields = ({
     }
     return (total * formData.discount_percentage) / 100;
   };
+
+  // Ensure we have a valid total before rendering
+  const safeTotal = total || 0;
+  const safeDiscountedTotal = calculateDiscountedTotal() || 0;
+  const safeDiscountAmount = getDiscountAmount() || 0;
 
   return (
     <div className="space-y-6">
@@ -278,14 +283,14 @@ export const ReservationFormFields = ({
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span>Subtotal:</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${safeTotal.toFixed(2)}</span>
             </div>
             
             {formData.is_associated && formData.discount_percentage > 0 && (
               <>
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Descuento ({formData.discount_percentage}%):</span>
-                  <span>-${getDiscountAmount().toFixed(2)}</span>
+                  <span>-${safeDiscountAmount.toFixed(2)}</span>
                 </div>
                 <hr />
               </>
@@ -294,7 +299,7 @@ export const ReservationFormFields = ({
             <div className="flex justify-between text-lg font-semibold">
               <span>Total:</span>
               <span className={formData.is_associated && formData.discount_percentage > 0 ? 'text-green-600' : ''}>
-                ${calculateDiscountedTotal().toFixed(2)}
+                ${safeDiscountedTotal.toFixed(2)}
               </span>
             </div>
           </div>
