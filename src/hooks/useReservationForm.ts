@@ -59,7 +59,7 @@ export const useReservationForm = ({
         status: reservation.status,
         special_requests: reservation.special_requests || '',
         is_associated: guest?.is_associated || false,
-        discount_percentage: guest?.discount_percentage || 0,
+        discount_percentage: 0,
       });
     } else {
       // For new reservations, set smart defaults
@@ -203,7 +203,6 @@ export const useReservationForm = ({
 
   // Simple form change handler
   const handleFormChange = (field: string, value: any) => {
-    console.log(`Form field changed: ${field} = ${value}`);
     setFormData(prev => ({
       ...prev,
       [field]: value
