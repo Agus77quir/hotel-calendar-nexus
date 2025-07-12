@@ -21,15 +21,19 @@ export const AssociatedDiscountSection = ({
   onDiscountChange
 }: AssociatedDiscountSectionProps) => {
   
-  const handleAssociationChange = (checked: boolean) => {
-    onAssociationChange(checked);
-    if (!checked) {
+  const handleAssociationChange = (checked: boolean | string) => {
+    const isChecked = checked === true;
+    console.log('Association checkbox changed:', isChecked);
+    onAssociationChange(isChecked);
+    if (!isChecked) {
       onDiscountChange(0);
     }
   };
 
   const handleDiscountPercentageChange = (value: string) => {
-    onDiscountChange(parseInt(value));
+    const percentage = parseInt(value) || 0;
+    console.log('Discount percentage changed:', percentage);
+    onDiscountChange(percentage);
   };
 
   const discountOptions = [
