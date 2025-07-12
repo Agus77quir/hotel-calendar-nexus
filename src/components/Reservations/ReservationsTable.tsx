@@ -44,12 +44,6 @@ export const ReservationsTable = ({
     room?: Room;
   }>({ isOpen: false });
 
-  console.log('ReservationsTable received:', {
-    reservationsCount: reservations.length,
-    guestsCount: guests.length,
-    roomsCount: rooms.length
-  });
-
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
@@ -81,22 +75,12 @@ export const ReservationsTable = ({
     const guest = guests.find(g => g.id === reservation.guest_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     
-    console.log('Opening view modal for reservation:', reservation.id, { guest: guest?.first_name, room: room?.number });
-    
     if (guest && room) {
       setViewModal({
         isOpen: true,
         reservation,
         guest,
         room
-      });
-    } else {
-      console.error('Could not find guest or room for reservation:', {
-        reservationId: reservation.id,
-        guestId: reservation.guest_id,
-        roomId: reservation.room_id,
-        guestFound: !!guest,
-        roomFound: !!room
       });
     }
   };
@@ -117,10 +101,7 @@ export const ReservationsTable = ({
           const guest = guests.find(g => g.id === reservation.guest_id);
           const room = rooms.find(r => r.id === reservation.room_id);
           
-          if (!guest || !room) {
-            console.warn('Missing guest or room for reservation:', reservation.id);
-            return null;
-          }
+          if (!guest || !room) return null;
           
           return (
             <Card key={reservation.id} className="w-full">
@@ -129,7 +110,7 @@ export const ReservationsTable = ({
                   {/* Header with status and ID */}
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground font-mono">
-                      #{reservation.id}
+                      #{reservation.id.slice(0, 8)}
                     </div>
                     {getStatusBadge(reservation.status)}
                   </div>
@@ -177,7 +158,7 @@ export const ReservationsTable = ({
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-green-600" />
                     <div className="font-medium text-sm">
-                      ${(Number(reservation.total_amount) || 0).toFixed(2)}
+                      ${Number(reservation.total_amount).toFixed(2)}
                     </div>
                   </div>
                   
@@ -250,15 +231,12 @@ export const ReservationsTable = ({
               const guest = guests.find(g => g.id === reservation.guest_id);
               const room = rooms.find(r => r.id === reservation.room_id);
               
-              if (!guest || !room) {
-                console.warn('Missing guest or room for reservation:', reservation.id);
-                return null;
-              }
+              if (!guest || !room) return null;
               
               return (
                 <TableRow key={reservation.id}>
                   <TableCell className="font-mono text-sm">
-                    #{reservation.id}
+                    {reservation.id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
                     <div>
@@ -290,7 +268,7 @@ export const ReservationsTable = ({
                     {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
                   </TableCell>
                   <TableCell className="font-medium">
-                    ${(Number(reservation.total_amount) || 0).toFixed(2)}
+                    ${Number(reservation.total_amount).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(reservation.status)}
