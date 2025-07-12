@@ -59,7 +59,7 @@ export const useReservationForm = ({
         status: reservation.status,
         special_requests: reservation.special_requests || '',
         is_associated: guest?.is_associated || false,
-        discount_percentage: guest?.discount_percentage || 0,
+        discount_percentage: 0, // Always 0 as we removed percentage functionality
       });
     } else {
       // For new reservations, set smart defaults
@@ -217,15 +217,9 @@ export const useReservationForm = ({
     const checkIn = new Date(formData.check_in);
     const checkOut = new Date(formData.check_out);
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    const subtotal = selectedRoom.price * nights;
     
-    // Apply discount if guest is associated
-    if (formData.is_associated && formData.discount_percentage > 0) {
-      const discountAmount = (subtotal * formData.discount_percentage) / 100;
-      return subtotal - discountAmount;
-    }
-    
-    return subtotal;
+    // Simple calculation without discount
+    return selectedRoom.price * nights;
   };
 
   const validateDates = () => {

@@ -22,56 +22,34 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     nationality: '',
   });
 
-  const [emailError, setEmailError] = useState('');
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const email = e.target.value;
-    setFormData({ ...formData, email });
-    
-    if (email && !validateEmail(email)) {
-      setEmailError('Por favor ingrese un email válido');
-    } else {
-      setEmailError('');
-    }
-  };
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
     if (!formData.first_name.trim()) {
-      console.error('Validation error: Nombre requerido');
-      return false;
+      newErrors.first_name = 'Nombre es requerido';
     }
     if (!formData.last_name.trim()) {
-      console.error('Validation error: Apellido requerido');
-      return false;
+      newErrors.last_name = 'Apellido es requerido';
     }
     if (!formData.email.trim()) {
-      console.error('Validation error: Email requerido');
-      return false;
-    }
-    if (!validateEmail(formData.email)) {
-      setEmailError('Por favor ingrese un email válido');
-      console.error('Validation error: Email inválido');
-      return false;
+      newErrors.email = 'Email es requerido';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email inválido';
     }
     if (!formData.phone.trim()) {
-      console.error('Validation error: Teléfono requerido');
-      return false;
+      newErrors.phone = 'Teléfono es requerido';
     }
     if (!formData.document.trim()) {
-      console.error('Validation error: Documento requerido');
-      return false;
+      newErrors.document = 'Documento es requerido';
     }
     if (!formData.nationality.trim()) {
-      console.error('Validation error: Nacionalidad requerida');
-      return false;
+      newErrors.nationality = 'Nacionalidad es requerida';
     }
-    console.log('Form validation passed');
-    return true;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,8 +73,15 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
       console.log('Guest created successfully from NewGuestForm');
     } catch (error) {
       console.error('Error creating guest from NewGuestForm:', error);
-      // Let the parent component handle the error display
       throw error;
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -123,20 +108,26 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               <Input
                 id="first_name"
                 value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                required
+                onChange={(e) => handleInputChange('first_name', e.target.value)}
                 disabled={isSubmitting}
+                className={errors.first_name ? 'border-red-500' : ''}
               />
+              {errors.first_name && (
+                <p className="text-red-500 text-sm mt-1">{errors.first_name}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="last_name">Apellido *</Label>
               <Input
                 id="last_name"
                 value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                required
+                onChange={(e) => handleInputChange('last_name', e.target.value)}
                 disabled={isSubmitting}
+                className={errors.last_name ? 'border-red-500' : ''}
               />
+              {errors.last_name && (
+                <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>
+              )}
             </div>
           </div>
 
@@ -146,13 +137,12 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               id="email"
               type="email"
               value={formData.email}
-              onChange={handleEmailChange}
-              required
+              onChange={(e) => handleInputChange('email', e.target.value)}
               disabled={isSubmitting}
-              className={emailError ? 'border-red-500' : ''}
+              className={errors.email ? 'border-red-500' : ''}
             />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
             )}
           </div>
 
@@ -161,10 +151,13 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             <Input
               id="phone"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              required
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               disabled={isSubmitting}
+              className={errors.phone ? 'border-red-500' : ''}
             />
+            {errors.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            )}
           </div>
 
           <div>
@@ -172,10 +165,13 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             <Input
               id="document"
               value={formData.document}
-              onChange={(e) => setFormData({ ...formData, document: e.target.value })}
-              required
+              onChange={(e) => handleInputChange('document', e.target.value)}
               disabled={isSubmitting}
+              className={errors.document ? 'border-red-500' : ''}
             />
+            {errors.document && (
+              <p className="text-red-500 text-sm mt-1">{errors.document}</p>
+            )}
           </div>
 
           <div>
@@ -183,10 +179,13 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             <Input
               id="nationality"
               value={formData.nationality}
-              onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-              required
+              onChange={(e) => handleInputChange('nationality', e.target.value)}
               disabled={isSubmitting}
+              className={errors.nationality ? 'border-red-500' : ''}
             />
+            {errors.nationality && (
+              <p className="text-red-500 text-sm mt-1">{errors.nationality}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -200,7 +199,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </Button>
             <Button 
               type="submit" 
-              disabled={!!emailError || isSubmitting}
+              disabled={isSubmitting}
             >
               {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
             </Button>

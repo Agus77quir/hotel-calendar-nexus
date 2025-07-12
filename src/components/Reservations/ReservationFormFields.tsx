@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -68,10 +67,10 @@ export const ReservationFormFields = ({
 
   const handleAssociationChange = (checked: boolean) => {
     onFormChange('is_associated', checked);
-  };
-
-  const handleDiscountChange = (value: number) => {
-    onFormChange('discount_percentage', value);
+    // Reset discount when unchecking
+    if (!checked) {
+      onFormChange('discount_percentage', 0);
+    }
   };
 
   return (
@@ -106,10 +105,8 @@ export const ReservationFormFields = ({
 
       <AssociatedDiscountSection
         isAssociated={formData.is_associated}
-        discountPercentage={formData.discount_percentage}
         selectedGuest={selectedGuest}
         onAssociationChange={handleAssociationChange}
-        onDiscountChange={handleDiscountChange}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -283,12 +280,6 @@ export const ReservationFormFields = ({
                   <span>Subtotal:</span>
                   <span>${(selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))).toFixed(2)}</span>
                 </div>
-                {formData.is_associated && formData.discount_percentage > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Descuento ({formData.discount_percentage}%):</span>
-                    <span>-${((selectedRoom.price * Math.ceil((new Date(formData.check_out).getTime() - new Date(formData.check_in).getTime()) / (1000 * 60 * 60 * 24))) * formData.discount_percentage / 100).toFixed(2)}</span>
-                  </div>
-                )}
               </div>
             )}
             
