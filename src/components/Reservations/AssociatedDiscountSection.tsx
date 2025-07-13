@@ -21,13 +21,18 @@ export const AssociatedDiscountSection = ({
   onDiscountChange
 }: AssociatedDiscountSectionProps) => {
   
-  const handleAssociationChange = (checked: boolean) => {
-    console.log('Association checkbox changed:', checked);
-    onAssociationChange(checked);
-    if (!checked) {
+  const handleAssociationChange = (checked: boolean | string) => {
+    // Convert to boolean if it's a string
+    const isChecked = checked === true || checked === 'true';
+    console.log('Association checkbox changed:', isChecked);
+    
+    onAssociationChange(isChecked);
+    
+    // Only reset discount when unchecking, not when checking
+    if (!isChecked) {
       onDiscountChange(0);
-    } else if (selectedGuest?.discount_percentage) {
-      // If enabling and guest has a default discount, suggest it
+    } else if (selectedGuest?.discount_percentage && discountPercentage === 0) {
+      // Only set default discount if current discount is 0
       onDiscountChange(selectedGuest.discount_percentage);
     }
   };

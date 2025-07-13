@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -86,15 +85,16 @@ export const useReservationForm = ({
   useEffect(() => {
     if (formData.guest_id && mode === 'create') {
       const selectedGuest = guests.find(g => g.id === formData.guest_id);
-      if (selectedGuest?.is_associated) {
+      if (selectedGuest?.is_associated && !formData.is_associated) {
         console.log('Auto-activating association for guest:', selectedGuest.first_name, selectedGuest.last_name);
         setFormData(prev => ({
           ...prev,
           is_associated: true,
           discount_percentage: selectedGuest.discount_percentage || 10 // Default to 10% if guest has no default
         }));
-      } else {
-        // Reset association if guest is not associated
+      } else if (!selectedGuest?.is_associated && formData.is_associated) {
+        // Reset association if switching to non-associated guest
+        console.log('Resetting association for non-associated guest');
         setFormData(prev => ({
           ...prev,
           is_associated: false,
@@ -223,8 +223,9 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Simple form change handler
+  // Simple form change handler - Fixed to handle boolean values properly
   const handleFormChange = (field: string, value: any) => {
+    console.log(`Form field changed: ${field} =`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
