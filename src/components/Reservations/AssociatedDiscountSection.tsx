@@ -21,18 +21,18 @@ export const AssociatedDiscountSection = ({
   onDiscountChange
 }: AssociatedDiscountSectionProps) => {
   
-  const handleAssociationChange = (checked: boolean | string) => {
-    // Convert to boolean if it's a string
-    const isChecked = checked === true || checked === 'true';
-    console.log('Association checkbox changed:', isChecked);
+  const handleAssociationChange = (checked: boolean | 'indeterminate') => {
+    // shadcn checkbox returns boolean or 'indeterminate'
+    const isChecked = checked === true;
+    console.log('Association checkbox changed to:', isChecked);
     
     onAssociationChange(isChecked);
     
-    // Only reset discount when unchecking, not when checking
     if (!isChecked) {
+      // Reset discount when unchecking
       onDiscountChange(0);
     } else if (selectedGuest?.discount_percentage && discountPercentage === 0) {
-      // Only set default discount if current discount is 0
+      // Set guest's default discount if available and current is 0
       onDiscountChange(selectedGuest.discount_percentage);
     }
   };
@@ -54,7 +54,6 @@ export const AssociatedDiscountSection = ({
   ];
 
   const isGuestAssociated = selectedGuest?.is_associated || false;
-  const wasAutoActivated = isGuestAssociated && isAssociated;
 
   return (
     <div className="space-y-4 border-t pt-4">
@@ -65,17 +64,17 @@ export const AssociatedDiscountSection = ({
         </h4>
         
         <div className="space-y-4">
-          {/* Información automática del huésped asociado */}
+          {/* Información del huésped asociado */}
           {isGuestAssociated && (
             <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <Info className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="text-green-800 font-medium">
-                  ✅ Huésped asociado detectado automáticamente
+                  ✅ Huésped asociado detectado
                 </p>
                 <p className="text-green-700 mt-1">
                   {selectedGuest?.first_name} {selectedGuest?.last_name} está registrado como asociado. 
-                  El descuento se ha activado automáticamente pero puedes ajustar el porcentaje según necesites.
+                  Puedes activar el descuento y ajustar el porcentaje según necesites.
                 </p>
               </div>
             </div>
@@ -84,15 +83,12 @@ export const AssociatedDiscountSection = ({
           {/* Checkbox para controlar descuento */}
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="is_associated"
+              id="association-discount"
               checked={isAssociated}
               onCheckedChange={handleAssociationChange}
             />
-            <Label htmlFor="is_associated" className="text-sm cursor-pointer">
+            <Label htmlFor="association-discount" className="text-sm cursor-pointer">
               Aplicar descuento de huésped asociado
-              {wasAutoActivated && (
-                <span className="ml-2 text-blue-600 text-xs font-medium">(Activado automáticamente)</span>
-              )}
             </Label>
           </div>
 
@@ -131,7 +127,7 @@ export const AssociatedDiscountSection = ({
             </div>
           )}
 
-          {/* Información adicional cuando no hay huésped seleccionado o no es asociado */}
+          {/* Información adicional */}
           {!selectedGuest && (
             <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
               ℹ️ Selecciona un huésped para ver las opciones de descuento disponibles

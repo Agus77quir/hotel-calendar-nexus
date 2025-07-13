@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -47,7 +48,6 @@ export const useReservationForm = ({
 
   useEffect(() => {
     if (reservation && mode === 'edit') {
-      // For existing reservations, get associated status from guest data
       const guest = guests.find(g => g.id === reservation.guest_id);
       setFormData({
         guest_id: reservation.guest_id,
@@ -61,7 +61,6 @@ export const useReservationForm = ({
         discount_percentage: 0,
       });
     } else {
-      // For new reservations, set smart defaults
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const defaultCheckIn = tomorrow.toISOString().split('T')[0];
@@ -81,19 +80,19 @@ export const useReservationForm = ({
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
 
-  // Auto-activate association when associated guest is selected
+  // Auto-activate association when associated guest is selected (only for new reservations)
   useEffect(() => {
     if (formData.guest_id && mode === 'create') {
       const selectedGuest = guests.find(g => g.id === formData.guest_id);
+      
       if (selectedGuest?.is_associated && !formData.is_associated) {
         console.log('Auto-activating association for guest:', selectedGuest.first_name, selectedGuest.last_name);
         setFormData(prev => ({
           ...prev,
           is_associated: true,
-          discount_percentage: selectedGuest.discount_percentage || 10 // Default to 10% if guest has no default
+          discount_percentage: selectedGuest.discount_percentage || 10
         }));
       } else if (!selectedGuest?.is_associated && formData.is_associated) {
-        // Reset association if switching to non-associated guest
         console.log('Resetting association for non-associated guest');
         setFormData(prev => ({
           ...prev,
@@ -131,7 +130,6 @@ export const useReservationForm = ({
       return !hasOverlap;
     });
 
-    // Sort by capacity (smallest first) then by price (lowest first) for smart suggestions
     return availableRooms.sort((a, b) => {
       if (a.capacity !== b.capacity) {
         return a.capacity - b.capacity;
@@ -145,7 +143,6 @@ export const useReservationForm = ({
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
     if (mode === 'create' && !formData.room_id && formData.check_in && formData.check_out && availableRooms.length > 0) {
-      // Auto-select the first available room that fits the guest count
       const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
       if (suitableRoom) {
         handleRoomChange(suitableRoom.id);
@@ -153,12 +150,11 @@ export const useReservationForm = ({
     }
   }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
-  // Handle room change - adjust guest count if it exceeds new room capacity
+  // Handle room change
   const handleRoomChange = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
     
-    // Check if selected room has overlap
     if (formData.check_in && formData.check_out) {
       const hasOverlap = hasDateOverlap(
         roomId, 
@@ -179,13 +175,11 @@ export const useReservationForm = ({
       guests_count: prev.guests_count > newMaxCapacity ? newMaxCapacity : prev.guests_count
     }));
     
-    // Clear availability error when room changes
     setAvailabilityError('');
   };
 
-  // Handle date changes - auto-suggest checkout and reset room selection
+  // Handle date changes
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    // Validate that date is not before today (except for check_out)
     if (field === 'check_in' && value < today) {
       setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
       return;
@@ -197,12 +191,10 @@ export const useReservationForm = ({
         [field]: value,
       };
       
-      // Auto-set checkout date when checkin changes (for new reservations)
       if (field === 'check_in' && mode === 'create' && !prev.check_out) {
         newFormData.check_out = getDefaultCheckOut(value);
       }
       
-      // If we have both dates and a selected room, check for overlap
       if (newFormData.check_in && newFormData.check_out && newFormData.room_id) {
         const hasOverlap = hasDateOverlap(
           newFormData.room_id, 
@@ -212,7 +204,6 @@ export const useReservationForm = ({
           reservation?.id
         );
         if (hasOverlap) {
-          // Clear room selection if it now has overlap
           newFormData.room_id = '';
         }
       }
@@ -223,7 +214,7 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Simple form change handler - Fixed to handle boolean values properly
+  // Simple form change handler
   const handleFormChange = (field: string, value: any) => {
     console.log(`Form field changed: ${field} =`, value);
     setFormData(prev => ({
@@ -243,7 +234,6 @@ export const useReservationForm = ({
     
     let baseTotal = selectedRoom.price * nights;
     
-    // Apply discount if associated guest
     if (formData.is_associated && formData.discount_percentage > 0) {
       const discountAmount = (baseTotal * formData.discount_percentage) / 100;
       baseTotal = baseTotal - discountAmount;
