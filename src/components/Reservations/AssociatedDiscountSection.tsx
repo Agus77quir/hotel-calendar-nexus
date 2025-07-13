@@ -2,7 +2,7 @@
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserCheck, Percent } from 'lucide-react';
+import { UserCheck, Percent, Info } from 'lucide-react';
 import { Guest } from '@/types/hotel';
 
 interface AssociatedDiscountSectionProps {
@@ -22,14 +22,20 @@ export const AssociatedDiscountSection = ({
 }: AssociatedDiscountSectionProps) => {
   
   const handleAssociationChange = (checked: boolean) => {
+    console.log('Association checkbox changed:', checked);
     onAssociationChange(checked);
     if (!checked) {
       onDiscountChange(0);
+    } else if (selectedGuest?.discount_percentage) {
+      // If enabling and guest has a default discount, suggest it
+      onDiscountChange(selectedGuest.discount_percentage);
     }
   };
 
   const handleDiscountPercentageChange = (value: string) => {
-    onDiscountChange(parseInt(value));
+    const percentage = parseInt(value);
+    console.log('Discount percentage changed:', percentage);
+    onDiscountChange(percentage);
   };
 
   const discountOptions = [
@@ -42,6 +48,9 @@ export const AssociatedDiscountSection = ({
     { value: '30', label: '30% de descuento' },
   ];
 
+  const isGuestAssociated = selectedGuest?.is_associated || false;
+  const wasAutoActivated = isGuestAssociated && isAssociated;
+
   return (
     <div className="space-y-4 border-t pt-4">
       <div className="bg-blue-50 p-4 rounded-lg space-y-4">
@@ -51,7 +60,23 @@ export const AssociatedDiscountSection = ({
         </h4>
         
         <div className="space-y-4">
-          {/* Checkbox para marcar como asociado */}
+          {/* Información automática del huésped asociado */}
+          {isGuestAssociated && (
+            <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <Info className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="text-green-800 font-medium">
+                  ✅ Huésped asociado detectado automáticamente
+                </p>
+                <p className="text-green-700 mt-1">
+                  {selectedGuest?.first_name} {selectedGuest?.last_name} está registrado como asociado. 
+                  El descuento se ha activado automáticamente pero puedes ajustar el porcentaje según necesites.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Checkbox para controlar descuento */}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="is_associated"
@@ -60,8 +85,8 @@ export const AssociatedDiscountSection = ({
             />
             <Label htmlFor="is_associated" className="text-sm cursor-pointer">
               Aplicar descuento de huésped asociado
-              {selectedGuest?.is_associated && (
-                <span className="ml-2 text-green-600 text-xs">(Huésped registrado como asociado)</span>
+              {wasAutoActivated && (
+                <span className="ml-2 text-blue-600 text-xs font-medium">(Activado automáticamente)</span>
               )}
             </Label>
           </div>
@@ -71,7 +96,7 @@ export const AssociatedDiscountSection = ({
             <div className="space-y-2">
               <Label className="text-sm flex items-center gap-2">
                 <Percent className="h-4 w-4" />
-                Porcentaje de descuento
+                Porcentaje de descuento para esta reserva
               </Label>
               <Select
                 value={discountPercentage.toString()}
@@ -90,17 +115,27 @@ export const AssociatedDiscountSection = ({
               </Select>
               
               {discountPercentage > 0 && (
-                <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                  Se aplicará un descuento del {discountPercentage}% al total de la reserva
+                <div className="text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                  💰 Se aplicará un descuento del {discountPercentage}% al total de esta reserva
                 </div>
               )}
+
+              <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                💡 <strong>Tip:</strong> El porcentaje de descuento puede variar entre reservas del mismo huésped asociado
+              </div>
             </div>
           )}
 
-          {/* Información del huésped */}
-          {selectedGuest?.is_associated && (
-            <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
-              💡 Este huésped está registrado como asociado y puede recibir descuentos especiales
+          {/* Información adicional cuando no hay huésped seleccionado o no es asociado */}
+          {!selectedGuest && (
+            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+              ℹ️ Selecciona un huésped para ver las opciones de descuento disponibles
+            </div>
+          )}
+
+          {selectedGuest && !isGuestAssociated && (
+            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+              ℹ️ Este huésped no está registrado como asociado. Puedes activar el descuento manualmente si aplica.
             </div>
           )}
         </div>

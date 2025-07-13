@@ -82,6 +82,28 @@ export const useReservationForm = ({
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
 
+  // Auto-activate association when associated guest is selected
+  useEffect(() => {
+    if (formData.guest_id && mode === 'create') {
+      const selectedGuest = guests.find(g => g.id === formData.guest_id);
+      if (selectedGuest?.is_associated) {
+        console.log('Auto-activating association for guest:', selectedGuest.first_name, selectedGuest.last_name);
+        setFormData(prev => ({
+          ...prev,
+          is_associated: true,
+          discount_percentage: selectedGuest.discount_percentage || 10 // Default to 10% if guest has no default
+        }));
+      } else {
+        // Reset association if guest is not associated
+        setFormData(prev => ({
+          ...prev,
+          is_associated: false,
+          discount_percentage: 0
+        }));
+      }
+    }
+  }, [formData.guest_id, guests, mode]);
+
   // Get selected room details
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
