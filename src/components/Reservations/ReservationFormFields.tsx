@@ -1,13 +1,13 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Users, MapPin, User, DollarSign, AlertCircle } from 'lucide-react';
+import { CalendarDays, Users, MapPin, User, AlertCircle } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
-import { AssociatedDiscountSection } from './AssociatedDiscountSection';
-import { NonAssociatedGuestActions } from './NonAssociatedGuestActions';
+import { DiscountSection } from './DiscountSection';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -18,7 +18,6 @@ interface ReservationFormFieldsProps {
     guests_count: number;
     status: string;
     special_requests: string;
-    is_associated: boolean;
     discount_percentage: number;
   };
   availableRooms: Room[];
@@ -28,12 +27,10 @@ interface ReservationFormFieldsProps {
   maxCapacity: number;
   availabilityError: string;
   today: string;
-  total: number;
+  totals: { subtotal: number; discount: number; total: number };
   onFormChange: (field: string, value: any) => void;
   onRoomChange: (roomId: string) => void;
   onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
-  onApplyTemporaryDiscount?: (percentage: number) => void;
-  onAssociateGuest?: (discountPercentage: number) => void;
 }
 
 export const ReservationFormFields = ({
@@ -45,33 +42,11 @@ export const ReservationFormFields = ({
   maxCapacity,
   availabilityError,
   today,
-  total = 0,
+  totals,
   onFormChange,
   onRoomChange,
-  onDateChange,
-  onApplyTemporaryDiscount,
-  onAssociateGuest
+  onDateChange
 }: ReservationFormFieldsProps) => {
-
-  const calculateDiscountedTotal = () => {
-    // Aplicar descuento si está marcado como asociado Y tiene porcentaje de descuento
-    if (formData.is_associated && formData.discount_percentage > 0) {
-      const discountAmount = (total * formData.discount_percentage) / 100;
-      return total - discountAmount;
-    }
-    return total;
-  };
-
-  const getDiscountAmount = () => {
-    if (formData.is_associated && formData.discount_percentage > 0) {
-      return (total * formData.discount_percentage) / 100;
-    }
-    return 0;
-  };
-
-  const safeTotal = total || 0;
-  const safeDiscountedTotal = calculateDiscountedTotal() || 0;
-  const safeDiscountAmount = getDiscountAmount() || 0;
 
   return (
     <div className="space-y-6">
@@ -266,60 +241,15 @@ export const ReservationFormFields = ({
         </CardContent>
       </Card>
 
-      {/* Nueva sección para huéspedes no asociados */}
-      {onApplyTemporaryDiscount && onAssociateGuest && (
-        <NonAssociatedGuestActions
-          selectedGuest={selectedGuest}
-          onApplyDiscount={onApplyTemporaryDiscount}
-          onAssociateGuest={onAssociateGuest}
-        />
-      )}
-
-      {/* Associated Discount Section - Solo para huéspedes ya asociados */}
-      {selectedGuest?.is_associated && (
-        <AssociatedDiscountSection
-          isAssociated={formData.is_associated}
-          selectedGuest={selectedGuest}
-          discountPercentage={formData.discount_percentage}
-          onAssociationChange={(checked) => onFormChange('is_associated', checked)}
-          onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
-        />
-      )}
-
-      {/* Total Calculation */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            Resumen de Costos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
-              <span>${safeTotal.toFixed(2)}</span>
-            </div>
-            
-            {formData.is_associated && formData.discount_percentage > 0 && (
-              <>
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Descuento ({formData.discount_percentage}%):</span>
-                  <span>-${safeDiscountAmount.toFixed(2)}</span>
-                </div>
-                <hr />
-              </>
-            )}
-            
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total:</span>
-              <span className={formData.is_associated && formData.discount_percentage > 0 ? 'text-green-600' : ''}>
-                ${safeDiscountedTotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Discount Section */}
+      <DiscountSection
+        selectedGuest={selectedGuest}
+        discountPercentage={formData.discount_percentage}
+        onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
+        subtotal={totals.subtotal}
+        discount={totals.discount}
+        total={totals.total}
+      />
     </div>
   );
 };

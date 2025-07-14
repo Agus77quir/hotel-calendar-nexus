@@ -52,9 +52,7 @@ export const ReservationModal = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates,
-    applyTemporaryDiscount,
-    associateGuest
+    validateDates
   } = useReservationForm({
     rooms,
     guests,
@@ -63,6 +61,9 @@ export const ReservationModal = ({
     mode,
     isOpen
   });
+
+  // Get totals
+  const totals = calculateTotal();
 
   // Auto-update guest count when room changes
   useEffect(() => {
@@ -76,7 +77,6 @@ export const ReservationModal = ({
   // Auto-update guest association info when guest changes
   useEffect(() => {
     if (selectedGuest && mode === 'create') {
-      handleFormChange('is_associated', selectedGuest.is_associated || false);
       handleFormChange('discount_percentage', selectedGuest.discount_percentage || 0);
     }
   }, [selectedGuest, mode, handleFormChange]);
@@ -95,7 +95,6 @@ export const ReservationModal = ({
       console.log('New guest created:', newGuest);
       
       handleFormChange('guest_id', newGuest.id);
-      handleFormChange('is_associated', newGuest.is_associated || false);
       handleFormChange('discount_percentage', newGuest.discount_percentage || 0);
       
       setShowNewGuestForm(false);
@@ -113,48 +112,6 @@ export const ReservationModal = ({
       });
     } finally {
       setIsCreatingGuest(false);
-    }
-  };
-
-  // Nueva función para manejar descuento temporal
-  const handleApplyTemporaryDiscount = async (percentage: number) => {
-    console.log('Applying temporary discount:', percentage);
-    applyTemporaryDiscount(percentage);
-    
-    toast({
-      title: "Descuento aplicado",
-      description: `Se aplicó un descuento temporal del ${percentage}% para esta reserva.`,
-    });
-  };
-
-  // Nueva función para asociar huésped
-  const handleAssociateGuest = async (discountPercentage: number) => {
-    if (!selectedGuest) return;
-    
-    try {
-      console.log('Associating guest permanently:', selectedGuest.id, discountPercentage);
-      
-      // Actualizar el huésped en la base de datos
-      await updateGuest({
-        id: selectedGuest.id,
-        is_associated: true,
-        discount_percentage: discountPercentage,
-      });
-      
-      // Actualizar el formulario
-      associateGuest(discountPercentage);
-      
-      toast({
-        title: "Huésped asociado",
-        description: `${selectedGuest.first_name} ${selectedGuest.last_name} ha sido asociado permanentemente con ${discountPercentage}% de descuento.`,
-      });
-    } catch (error) {
-      console.error('Error associating guest:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo asociar el huésped. Intenta nuevamente.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -191,16 +148,6 @@ export const ReservationModal = ({
     setAvailabilityError('');
 
     try {
-      // Calcular el total base
-      const baseTotal = calculateTotal();
-      
-      // Aplicar descuento si corresponde
-      let finalTotal = baseTotal;
-      if (formData.is_associated && formData.discount_percentage > 0) {
-        const discountAmount = (baseTotal * formData.discount_percentage) / 100;
-        finalTotal = baseTotal - discountAmount;
-      }
-
       const reservationData = {
         guest_id: formData.guest_id,
         room_id: formData.room_id,
@@ -209,19 +156,9 @@ export const ReservationModal = ({
         guests_count: formData.guests_count,
         status: formData.status,
         special_requests: formData.special_requests,
-        total_amount: finalTotal, // Usar el total con descuento aplicado
+        total_amount: totals.total, // Use calculated total with discount
         created_by: 'current-user-id',
       };
-
-      // Update guest with association info if changed
-      if (selectedGuest && (selectedGuest.is_associated !== formData.is_associated || 
-          selectedGuest.discount_percentage !== formData.discount_percentage)) {
-        await updateGuest({
-          id: selectedGuest.id,
-          is_associated: formData.is_associated,
-          discount_percentage: formData.discount_percentage,
-        });
-      }
 
       await onSave(reservationData);
 
@@ -316,12 +253,10 @@ export const ReservationModal = ({
                 maxCapacity={maxCapacity}
                 availabilityError={availabilityError}
                 today={today}
-                total={calculateTotal()}
+                totals={totals}
                 onFormChange={handleFormChange}
                 onDateChange={handleDateChange}
                 onRoomChange={handleRoomChange}
-                onApplyTemporaryDiscount={handleApplyTemporaryDiscount}
-                onAssociateGuest={handleAssociateGuest}
               />
             </div>
           )}

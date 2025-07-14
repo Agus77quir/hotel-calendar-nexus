@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -27,7 +28,6 @@ export const useReservationForm = ({
     guests_count: 1,
     status: 'confirmed' as 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled',
     special_requests: '',
-    is_associated: false,
     discount_percentage: 0,
   });
 
@@ -47,7 +47,6 @@ export const useReservationForm = ({
 
   useEffect(() => {
     if (reservation && mode === 'edit') {
-      const guest = guests.find(g => g.id === reservation.guest_id);
       setFormData({
         guest_id: reservation.guest_id,
         room_id: reservation.room_id,
@@ -56,8 +55,7 @@ export const useReservationForm = ({
         guests_count: reservation.guests_count,
         status: reservation.status,
         special_requests: reservation.special_requests || '',
-        is_associated: guest?.is_associated || false,
-        discount_percentage: 0,
+        discount_percentage: 0, // Reset discount for edit mode
       });
     } else {
       const tomorrow = new Date();
@@ -72,30 +70,27 @@ export const useReservationForm = ({
         guests_count: 2,
         status: 'confirmed',
         special_requests: '',
-        is_associated: false,
         discount_percentage: 0,
       });
     }
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
 
-  // Auto-activate association when associated guest is selected (only for new reservations)
+  // Auto-activate discount when associated guest is selected (only for new reservations)
   useEffect(() => {
     if (formData.guest_id && mode === 'create') {
       const selectedGuest = guests.find(g => g.id === formData.guest_id);
       
-      if (selectedGuest?.is_associated && !formData.is_associated) {
-        console.log('Auto-activating association for guest:', selectedGuest.first_name, selectedGuest.last_name);
+      if (selectedGuest?.is_associated && selectedGuest.discount_percentage) {
+        console.log('Auto-applying discount for associated guest:', selectedGuest.discount_percentage);
         setFormData(prev => ({
           ...prev,
-          is_associated: true,
-          discount_percentage: selectedGuest.discount_percentage || 10
+          discount_percentage: selectedGuest.discount_percentage
         }));
-      } else if (!selectedGuest?.is_associated && formData.is_associated) {
-        console.log('Resetting association for non-associated guest');
+      } else {
+        console.log('Resetting discount for non-associated guest or guest without discount');
         setFormData(prev => ({
           ...prev,
-          is_associated: false,
           discount_percentage: 0
         }));
       }
@@ -222,39 +217,25 @@ export const useReservationForm = ({
     }));
   };
 
-  // Función para aplicar descuento temporal - ahora actualiza correctamente el estado del formulario
-  const applyTemporaryDiscount = (percentage: number) => {
-    console.log('Applying temporary discount:', percentage);
-    setFormData(prev => ({
-      ...prev,
-      is_associated: percentage > 0, // Solo marca como asociado si hay descuento
-      discount_percentage: percentage
-    }));
-  };
-
-  // Función para asociar huésped permanentemente - actualiza el estado del formulario
-  const associateGuest = (discountPercentage: number) => {
-    console.log('Associating guest permanently with discount:', discountPercentage);
-    setFormData(prev => ({
-      ...prev,
-      is_associated: true,
-      discount_percentage: discountPercentage
-    }));
-  };
-
+  // Calculate total with discount
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
     
-    if (!selectedRoom || !formData.check_in || !formData.check_out) return 0;
+    if (!selectedRoom || !formData.check_in || !formData.check_out) return { subtotal: 0, discount: 0, total: 0 };
     
     const checkIn = new Date(formData.check_in);
     const checkOut = new Date(formData.check_out);
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Calcular total base sin descuento
-    const baseTotal = selectedRoom.price * nights;
+    const subtotal = selectedRoom.price * nights;
+    const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
+    const total = subtotal - discountAmount;
     
-    return baseTotal; // Retornamos el total base, el descuento se calcula en el componente
+    return {
+      subtotal,
+      discount: discountAmount,
+      total
+    };
   };
 
   const validateDates = () => {
@@ -276,8 +257,6 @@ export const useReservationForm = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates,
-    applyTemporaryDiscount,
-    associateGuest
+    validateDates
   };
 };
