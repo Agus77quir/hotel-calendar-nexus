@@ -54,18 +54,19 @@ export const ReservationFormFields = ({
 }: ReservationFormFieldsProps) => {
 
   const calculateDiscountedTotal = () => {
-    if (!formData.is_associated || formData.discount_percentage === 0) {
-      return total;
+    // Aplicar descuento si está marcado como asociado Y tiene porcentaje de descuento
+    if (formData.is_associated && formData.discount_percentage > 0) {
+      const discountAmount = (total * formData.discount_percentage) / 100;
+      return total - discountAmount;
     }
-    const discountAmount = (total * formData.discount_percentage) / 100;
-    return total - discountAmount;
+    return total;
   };
 
   const getDiscountAmount = () => {
-    if (!formData.is_associated || formData.discount_percentage === 0) {
-      return 0;
+    if (formData.is_associated && formData.discount_percentage > 0) {
+      return (total * formData.discount_percentage) / 100;
     }
-    return (total * formData.discount_percentage) / 100;
+    return 0;
   };
 
   const safeTotal = total || 0;

@@ -37,6 +37,15 @@ export const NonAssociatedGuestActions = ({
     { value: '30', label: '30% de descuento' },
   ];
 
+  const associationDiscountOptions = [
+    { value: '5', label: '5% de descuento' },
+    { value: '10', label: '10% de descuento' },
+    { value: '15', label: '15% de descuento' },
+    { value: '20', label: '20% de descuento' },
+    { value: '25', label: '25% de descuento' },
+    { value: '30', label: '30% de descuento' },
+  ];
+
   const handleApplyTempDiscount = () => {
     console.log('Applying temporary discount:', tempDiscountPercentage);
     onApplyDiscount(tempDiscountPercentage);
@@ -98,7 +107,6 @@ export const NonAssociatedGuestActions = ({
             onClick={handleApplyTempDiscount}
             variant="outline" 
             className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
-            disabled={tempDiscountPercentage === 0}
           >
             Aplicar Descuento Temporal
           </Button>
@@ -121,7 +129,7 @@ export const NonAssociatedGuestActions = ({
                 <SelectValue placeholder="Seleccionar descuento por defecto" />
               </SelectTrigger>
               <SelectContent>
-                {discountOptions.slice(1).map((option) => (
+                {associationDiscountOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

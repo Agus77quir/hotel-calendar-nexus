@@ -191,7 +191,15 @@ export const ReservationModal = ({
     setAvailabilityError('');
 
     try {
-      const totalAmount = calculateTotal();
+      // Calcular el total base
+      const baseTotal = calculateTotal();
+      
+      // Aplicar descuento si corresponde
+      let finalTotal = baseTotal;
+      if (formData.is_associated && formData.discount_percentage > 0) {
+        const discountAmount = (baseTotal * formData.discount_percentage) / 100;
+        finalTotal = baseTotal - discountAmount;
+      }
 
       const reservationData = {
         guest_id: formData.guest_id,
@@ -201,7 +209,7 @@ export const ReservationModal = ({
         guests_count: formData.guests_count,
         status: formData.status,
         special_requests: formData.special_requests,
-        total_amount: totalAmount,
+        total_amount: finalTotal, // Usar el total con descuento aplicado
         created_by: 'current-user-id',
       };
 

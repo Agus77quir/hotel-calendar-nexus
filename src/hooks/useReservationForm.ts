@@ -222,17 +222,17 @@ export const useReservationForm = ({
     }));
   };
 
-  // Nueva función para aplicar descuento temporal
+  // Función para aplicar descuento temporal - ahora actualiza correctamente el estado del formulario
   const applyTemporaryDiscount = (percentage: number) => {
     console.log('Applying temporary discount:', percentage);
     setFormData(prev => ({
       ...prev,
-      is_associated: true,
+      is_associated: percentage > 0, // Solo marca como asociado si hay descuento
       discount_percentage: percentage
     }));
   };
 
-  // Nueva función para asociar huésped permanentemente
+  // Función para asociar huésped permanentemente - actualiza el estado del formulario
   const associateGuest = (discountPercentage: number) => {
     console.log('Associating guest permanently with discount:', discountPercentage);
     setFormData(prev => ({
@@ -251,14 +251,10 @@ export const useReservationForm = ({
     const checkOut = new Date(formData.check_out);
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
     
-    let baseTotal = selectedRoom.price * nights;
+    // Calcular total base sin descuento
+    const baseTotal = selectedRoom.price * nights;
     
-    if (formData.is_associated && formData.discount_percentage > 0) {
-      const discountAmount = (baseTotal * formData.discount_percentage) / 100;
-      baseTotal = baseTotal - discountAmount;
-    }
-    
-    return baseTotal;
+    return baseTotal; // Retornamos el total base, el descuento se calcula en el componente
   };
 
   const validateDates = () => {
