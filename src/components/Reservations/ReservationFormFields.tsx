@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Users, MapPin, User, DollarSign, AlertCircle } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 import { AssociatedDiscountSection } from './AssociatedDiscountSection';
+import { NonAssociatedGuestActions } from './NonAssociatedGuestActions';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -32,6 +32,8 @@ interface ReservationFormFieldsProps {
   onFormChange: (field: string, value: any) => void;
   onRoomChange: (roomId: string) => void;
   onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
+  onApplyTemporaryDiscount?: (percentage: number) => void;
+  onAssociateGuest?: (discountPercentage: number) => void;
 }
 
 export const ReservationFormFields = ({
@@ -43,10 +45,12 @@ export const ReservationFormFields = ({
   maxCapacity,
   availabilityError,
   today,
-  total = 0, // Default to 0 if undefined
+  total = 0,
   onFormChange,
   onRoomChange,
-  onDateChange
+  onDateChange,
+  onApplyTemporaryDiscount,
+  onAssociateGuest
 }: ReservationFormFieldsProps) => {
 
   const calculateDiscountedTotal = () => {
@@ -64,7 +68,6 @@ export const ReservationFormFields = ({
     return (total * formData.discount_percentage) / 100;
   };
 
-  // Ensure we have a valid total before rendering
   const safeTotal = total || 0;
   const safeDiscountedTotal = calculateDiscountedTotal() || 0;
   const safeDiscountAmount = getDiscountAmount() || 0;
@@ -262,14 +265,25 @@ export const ReservationFormFields = ({
         </CardContent>
       </Card>
 
-      {/* Associated Discount Section */}
-      <AssociatedDiscountSection
-        isAssociated={formData.is_associated}
-        selectedGuest={selectedGuest}
-        discountPercentage={formData.discount_percentage}
-        onAssociationChange={(checked) => onFormChange('is_associated', checked)}
-        onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
-      />
+      {/* Nueva sección para huéspedes no asociados */}
+      {onApplyTemporaryDiscount && onAssociateGuest && (
+        <NonAssociatedGuestActions
+          selectedGuest={selectedGuest}
+          onApplyDiscount={onApplyTemporaryDiscount}
+          onAssociateGuest={onAssociateGuest}
+        />
+      )}
+
+      {/* Associated Discount Section - Solo para huéspedes ya asociados */}
+      {selectedGuest?.is_associated && (
+        <AssociatedDiscountSection
+          isAssociated={formData.is_associated}
+          selectedGuest={selectedGuest}
+          discountPercentage={formData.discount_percentage}
+          onAssociationChange={(checked) => onFormChange('is_associated', checked)}
+          onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
+        />
+      )}
 
       {/* Total Calculation */}
       <Card>

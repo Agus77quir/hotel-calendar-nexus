@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -223,6 +222,26 @@ export const useReservationForm = ({
     }));
   };
 
+  // Nueva función para aplicar descuento temporal
+  const applyTemporaryDiscount = (percentage: number) => {
+    console.log('Applying temporary discount:', percentage);
+    setFormData(prev => ({
+      ...prev,
+      is_associated: true,
+      discount_percentage: percentage
+    }));
+  };
+
+  // Nueva función para asociar huésped permanentemente
+  const associateGuest = (discountPercentage: number) => {
+    console.log('Associating guest permanently with discount:', discountPercentage);
+    setFormData(prev => ({
+      ...prev,
+      is_associated: true,
+      discount_percentage: discountPercentage
+    }));
+  };
+
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
     
@@ -261,6 +280,8 @@ export const useReservationForm = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates
+    validateDates,
+    applyTemporaryDiscount,
+    associateGuest
   };
 };

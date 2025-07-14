@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -53,7 +52,9 @@ export const ReservationModal = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates
+    validateDates,
+    applyTemporaryDiscount,
+    associateGuest
   } = useReservationForm({
     rooms,
     guests,
@@ -66,7 +67,6 @@ export const ReservationModal = ({
   // Auto-update guest count when room changes
   useEffect(() => {
     if (selectedRoom && mode === 'create') {
-      // Auto-set guest count to room capacity for new reservations
       if (formData.guests_count === 1 && selectedRoom.capacity > 1) {
         handleFormChange('guests_count', Math.min(selectedRoom.capacity, 2));
       }
@@ -94,7 +94,6 @@ export const ReservationModal = ({
       const newGuest = await addGuest(guestData);
       console.log('New guest created:', newGuest);
       
-      // Auto-select the new guest and apply their association status
       handleFormChange('guest_id', newGuest.id);
       handleFormChange('is_associated', newGuest.is_associated || false);
       handleFormChange('discount_percentage', newGuest.discount_percentage || 0);
@@ -117,6 +116,48 @@ export const ReservationModal = ({
     }
   };
 
+  // Nueva función para manejar descuento temporal
+  const handleApplyTemporaryDiscount = async (percentage: number) => {
+    console.log('Applying temporary discount:', percentage);
+    applyTemporaryDiscount(percentage);
+    
+    toast({
+      title: "Descuento aplicado",
+      description: `Se aplicó un descuento temporal del ${percentage}% para esta reserva.`,
+    });
+  };
+
+  // Nueva función para asociar huésped
+  const handleAssociateGuest = async (discountPercentage: number) => {
+    if (!selectedGuest) return;
+    
+    try {
+      console.log('Associating guest permanently:', selectedGuest.id, discountPercentage);
+      
+      // Actualizar el huésped en la base de datos
+      await updateGuest({
+        id: selectedGuest.id,
+        is_associated: true,
+        discount_percentage: discountPercentage,
+      });
+      
+      // Actualizar el formulario
+      associateGuest(discountPercentage);
+      
+      toast({
+        title: "Huésped asociado",
+        description: `${selectedGuest.first_name} ${selectedGuest.last_name} ha sido asociado permanentemente con ${discountPercentage}% de descuento.`,
+      });
+    } catch (error) {
+      console.error('Error associating guest:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo asociar el huésped. Intenta nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -134,7 +175,6 @@ export const ReservationModal = ({
       return;
     }
 
-    // Final validation for room availability
     const hasOverlap = hasDateOverlap(
       formData.room_id, 
       formData.check_in, 
@@ -177,7 +217,6 @@ export const ReservationModal = ({
 
       await onSave(reservationData);
 
-      // Show success message without automatic email
       toast({
         title: mode === 'create' ? "Reserva creada" : "Reserva actualizada",
         description: mode === 'create' 
@@ -273,6 +312,8 @@ export const ReservationModal = ({
                 onFormChange={handleFormChange}
                 onDateChange={handleDateChange}
                 onRoomChange={handleRoomChange}
+                onApplyTemporaryDiscount={handleApplyTemporaryDiscount}
+                onAssociateGuest={handleAssociateGuest}
               />
             </div>
           )}
