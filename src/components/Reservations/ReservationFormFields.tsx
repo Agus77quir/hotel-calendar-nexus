@@ -201,7 +201,7 @@ export const ReservationFormFields = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: maxCapacity }, (_, i) => maxCapacity - i).map((num) => (
+                  {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()}>
                       {num} huésped{num > 1 ? 'es' : ''}
                     </SelectItem>
@@ -210,7 +210,7 @@ export const ReservationFormFields = ({
               </Select>
               {selectedRoom && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Capacidad de la habitación: {selectedRoom.capacity} huésped{selectedRoom.capacity > 1 ? 'es' : ''}
+                  Capacidad máxima de la habitación: {selectedRoom.capacity} huésped{selectedRoom.capacity > 1 ? 'es' : ''}
                 </p>
               )}
             </div>
