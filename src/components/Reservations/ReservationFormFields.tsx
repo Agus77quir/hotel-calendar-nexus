@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign } from 'lucide-react';
+import { CalendarDays, Users, MapPin, User, AlertCircle } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 import { DiscountSection } from './DiscountSection';
 
@@ -47,15 +47,6 @@ export const ReservationFormFields = ({
   onRoomChange,
   onDateChange
 }: ReservationFormFieldsProps) => {
-
-  const formatRoomType = (type: string) => {
-    return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const formatRoomNumber = (number: string) => {
-    // Pad single digit room numbers with leading zero for better visual consistency
-    return number.length === 1 ? `0${number}` : number;
-  };
 
   return (
     <div className="space-y-6">
@@ -156,45 +147,13 @@ export const ReservationFormFields = ({
               value={formData.room_id}
               onValueChange={onRoomChange}
             >
-              <SelectTrigger className="h-12">
+              <SelectTrigger>
                 <SelectValue placeholder="Seleccionar habitación disponible" />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {availableRooms
-                  .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-                  .map((room) => (
-                  <SelectItem key={room.id} value={room.id} className="py-3">
-                    <div className="flex items-center justify-between w-full min-w-0">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Bed className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          <span className="font-mono text-lg font-semibold text-blue-800">
-                            #{formatRoomNumber(room.number)}
-                          </span>
-                        </div>
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-medium text-gray-900 truncate">
-                            {formatRoomType(room.type)}
-                          </span>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              ${room.price}/noche
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className="ml-2 bg-green-100 text-green-800 border-green-200 flex-shrink-0"
-                      >
-                        Disponible
-                      </Badge>
-                    </div>
+              <SelectContent>
+                {availableRooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    #{room.number} - {room.type.replace('-', ' ')} (Cap: {room.capacity}, ${room.price}/noche)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -202,50 +161,20 @@ export const ReservationFormFields = ({
           </div>
 
           {selectedRoom && (
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-900">Habitación:</span>
-                    <span className="font-mono text-lg font-bold text-blue-800">
-                      #{formatRoomNumber(selectedRoom.number)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-900">Tipo:</span>
-                    <span className="text-sm text-blue-800">{formatRoomType(selectedRoom.type)}</span>
-                  </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Tipo:</span> {selectedRoom.type.replace('-', ' ')}
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Capacidad:</span>
-                    <span className="text-sm text-blue-800">
-                      {selectedRoom.capacity} {selectedRoom.capacity === 1 ? 'persona' : 'personas'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Precio:</span>
-                    <span className="text-sm font-semibold text-blue-800">${selectedRoom.price}/noche</span>
-                  </div>
+                <div>
+                  <span className="font-medium">Capacidad:</span> {selectedRoom.capacity} personas
                 </div>
-                {selectedRoom.amenities && selectedRoom.amenities.length > 0 && (
-                  <div className="md:col-span-2 pt-2 border-t border-blue-200">
-                    <span className="text-sm font-medium text-blue-900">Amenidades:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedRoom.amenities.map((amenity, index) => (
-                        <Badge 
-                          key={index} 
-                          variant="outline" 
-                          className="text-xs bg-white text-blue-700 border-blue-300"
-                        >
-                          {amenity}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <span className="font-medium">Precio:</span> ${selectedRoom.price}/noche
+                </div>
+                <div>
+                  <span className="font-medium">Amenidades:</span> {selectedRoom.amenities?.join(', ') || 'N/A'}
+                </div>
               </div>
             </div>
           )}
