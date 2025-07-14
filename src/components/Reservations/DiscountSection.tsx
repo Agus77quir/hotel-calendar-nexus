@@ -35,7 +35,7 @@ export const DiscountSection = ({
 
   const handleDiscountChange = (value: string) => {
     const percentage = parseInt(value);
-    console.log('Discount changed to:', percentage);
+    console.log('DiscountSection - Discount changed to:', percentage);
     onDiscountChange(percentage);
   };
 

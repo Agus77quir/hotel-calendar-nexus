@@ -67,7 +67,7 @@ export const useReservationForm = ({
         room_id: '',
         check_in: defaultCheckIn,
         check_out: getDefaultCheckOut(defaultCheckIn),
-        guests_count: 2,
+        guests_count: 1,
         status: 'confirmed',
         special_requests: '',
         discount_percentage: 0,
@@ -144,7 +144,7 @@ export const useReservationForm = ({
     }
   }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
-  // Handle room change
+  // Handle room change and adjust guest count if necessary
   const handleRoomChange = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
@@ -166,6 +166,7 @@ export const useReservationForm = ({
     setFormData(prev => ({
       ...prev,
       room_id: roomId,
+      // Only adjust guest count if it exceeds the new room capacity
       guests_count: prev.guests_count > newMaxCapacity ? newMaxCapacity : prev.guests_count
     }));
     
@@ -208,13 +209,24 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Simple form change handler
+  // Simple form change handler - fix discount handling
   const handleFormChange = (field: string, value: any) => {
     console.log(`Form field changed: ${field} =`, value);
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Special handling for discount_percentage to ensure it's applied correctly
+      if (field === 'discount_percentage') {
+        console.log('Discount percentage being set to:', value);
+        newFormData.discount_percentage = Number(value);
+      }
+      
+      return newFormData;
+    });
   };
 
   // Calculate total with discount
@@ -230,6 +242,8 @@ export const useReservationForm = ({
     const subtotal = selectedRoom.price * nights;
     const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
     const total = subtotal - discountAmount;
+    
+    console.log('Calculate total - subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
     
     return {
       subtotal,

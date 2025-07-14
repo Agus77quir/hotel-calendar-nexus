@@ -208,6 +208,11 @@ export const ReservationFormFields = ({
                   ))}
                 </SelectContent>
               </Select>
+              {selectedRoom && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Capacidad de la habitación: {selectedRoom.capacity} huésped{selectedRoom.capacity > 1 ? 'es' : ''}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="status">Estado</Label>
