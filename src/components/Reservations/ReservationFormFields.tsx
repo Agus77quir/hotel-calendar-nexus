@@ -68,13 +68,13 @@ export const ReservationFormFields = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="guest_id">Huésped *</Label>
+          <div className="w-full max-w-md mx-auto">
+            <Label htmlFor="guest_id" className="block text-center mb-2">Huésped *</Label>
             <Select
               value={formData.guest_id}
               onValueChange={(value) => onFormChange('guest_id', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar huésped" />
               </SelectTrigger>
               <SelectContent>
@@ -95,8 +95,8 @@ export const ReservationFormFields = ({
           </div>
 
           {selectedGuest && (
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="p-3 bg-muted rounded-lg max-w-md mx-auto">
+              <div className="grid grid-cols-1 gap-2 text-sm text-center">
                 <div>
                   <span className="font-medium">Email:</span> {selectedGuest.email}
                 </div>

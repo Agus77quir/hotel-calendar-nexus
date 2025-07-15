@@ -1,9 +1,10 @@
 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Percent, Info } from 'lucide-react';
+import { Percent, Info, UserCheck } from 'lucide-react';
 import { Guest } from '@/types/hotel';
 
 interface DiscountSectionProps {
@@ -50,27 +51,54 @@ export const DiscountSection = ({
       <CardContent className="space-y-4">
         {/* Guest info */}
         {selectedGuest && (
-          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="text-blue-800 font-medium">
-                {selectedGuest.first_name} {selectedGuest.last_name}
-                {selectedGuest.is_associated && (
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    Asociado
-                  </Badge>
-                )}
-              </p>
-              {selectedGuest.is_associated && selectedGuest.discount_percentage > 0 && (
-                <p className="text-blue-700 mt-1">
-                  Descuento por defecto: {selectedGuest.discount_percentage}%
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="text-blue-800 font-medium">
+                  {selectedGuest.first_name} {selectedGuest.last_name}
+                  {selectedGuest.is_associated && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      Asociado
+                    </Badge>
+                  )}
                 </p>
-              )}
+                {selectedGuest.is_associated && selectedGuest.discount_percentage > 0 && (
+                  <p className="text-blue-700 mt-1">
+                    Descuento por defecto: {selectedGuest.discount_percentage}%
+                  </p>
+                )}
+              </div>
             </div>
+
+            {/* Checkbox for associated guest */}
+            {selectedGuest.is_associated && (
+              <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Checkbox
+                  id="apply-associated-discount"
+                  checked={discountPercentage > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      // Apply guest's default discount or 10% if no default
+                      const defaultDiscount = selectedGuest.discount_percentage || 10;
+                      onDiscountChange(defaultDiscount);
+                    } else {
+                      onDiscountChange(0);
+                    }
+                  }}
+                />
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-green-600" />
+                  <Label htmlFor="apply-associated-discount" className="text-sm cursor-pointer text-green-800 font-medium">
+                    Aplicar descuento de huésped asociado
+                  </Label>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Discount selector */}
+        {/* Discount selector - always visible */}
         <div className="space-y-2">
           <Label className="text-sm">Descuento para esta reserva</Label>
           <Select
@@ -92,11 +120,16 @@ export const DiscountSection = ({
           {discountPercentage > 0 && (
             <div className="text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200">
               💰 Descuento del {discountPercentage}% aplicado
+              {selectedGuest?.is_associated && (
+                <span className="block mt-1 text-xs">
+                  ✓ Huésped asociado - descuento personalizable
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Total calculation */}
+        {/* Total calculation with detailed breakdown */}
         <div className="space-y-3 border-t pt-4">
           <div className="flex justify-between text-sm">
             <span>Subtotal:</span>
@@ -116,6 +149,13 @@ export const DiscountSection = ({
               ${total.toFixed(2)}
             </span>
           </div>
+
+          {/* Additional info for associated guests */}
+          {selectedGuest?.is_associated && (
+            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border">
+              💡 <strong>Huésped Asociado:</strong> Puedes aplicar o modificar el descuento según las políticas del hotel
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
