@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +87,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
   };
 
   const handleAssociatedChange = (checked: boolean) => {
+    console.log('Checkbox checked:', checked);
     setFormData(prev => ({
       ...prev,
       is_associated: checked,
@@ -199,25 +199,28 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
           </div>
 
           {/* Guest Association Section */}
-          <div className="border-t pt-4">
-            <div className="flex items-center space-x-3">
+          <div className="border-t pt-4 mt-6">
+            <div className="flex items-center space-x-3 mb-3">
               <Checkbox
                 id="is_associated"
                 checked={formData.is_associated}
-                onCheckedChange={handleAssociatedChange}
+                onCheckedChange={(checked) => handleAssociatedChange(checked === true)}
                 disabled={isSubmitting}
+                className="h-5 w-5"
               />
               <div className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4 text-green-600" />
-                <Label htmlFor="is_associated" className="text-sm font-medium">
+                <Label htmlFor="is_associated" className="text-sm font-medium cursor-pointer">
                   Huésped Asociado
                 </Label>
               </div>
             </div>
             
             {formData.is_associated && (
-              <div className="mt-3 ml-6">
-                <Label htmlFor="discount_percentage">Porcentaje de Descuento (%)</Label>
+              <div className="ml-8 mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Label htmlFor="discount_percentage" className="text-sm font-medium">
+                  Porcentaje de Descuento (%)
+                </Label>
                 <Input
                   id="discount_percentage"
                   type="number"
@@ -226,9 +229,9 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                   value={formData.discount_percentage}
                   onChange={(e) => handleInputChange('discount_percentage', Number(e.target.value))}
                   disabled={isSubmitting}
-                  className="w-24"
+                  className="w-24 mt-1"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-green-600 mt-1">
                   Los huéspedes asociados reciben descuentos especiales
                 </p>
               </div>
