@@ -76,27 +76,6 @@ export const useReservationForm = ({
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
 
-  // Auto-activate discount when associated guest is selected (only for new reservations)
-  useEffect(() => {
-    if (formData.guest_id && mode === 'create') {
-      const selectedGuest = guests.find(g => g.id === formData.guest_id);
-      
-      if (selectedGuest?.is_associated && selectedGuest.discount_percentage) {
-        console.log('Auto-applying discount for associated guest:', selectedGuest.discount_percentage);
-        setFormData(prev => ({
-          ...prev,
-          discount_percentage: selectedGuest.discount_percentage
-        }));
-      } else {
-        console.log('Resetting discount for non-associated guest or guest without discount');
-        setFormData(prev => ({
-          ...prev,
-          discount_percentage: 0
-        }));
-      }
-    }
-  }, [formData.guest_id, guests, mode]);
-
   // Get selected room details
   const selectedRoom = rooms.find(r => r.id === formData.room_id);
   const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
@@ -209,24 +188,14 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Simple form change handler - fix discount handling
+  // Simple form change handler - NO MORE AUTOMATIC CHANGES
   const handleFormChange = (field: string, value: any) => {
     console.log(`Form field changed: ${field} =`, value);
     
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [field]: value
-      };
-      
-      // Special handling for discount_percentage to ensure it's applied correctly
-      if (field === 'discount_percentage') {
-        console.log('Discount percentage being set to:', value);
-        newFormData.discount_percentage = Number(value);
-      }
-      
-      return newFormData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Calculate total with discount

@@ -40,6 +40,16 @@ export const DiscountSection = ({
     onDiscountChange(percentage);
   };
 
+  const handleAssociatedDiscountToggle = (checked: boolean) => {
+    if (checked && selectedGuest?.is_associated) {
+      // Apply guest's default discount or 10% if no default
+      const defaultDiscount = selectedGuest.discount_percentage || 10;
+      onDiscountChange(defaultDiscount);
+    } else {
+      onDiscountChange(0);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -77,15 +87,7 @@ export const DiscountSection = ({
                 <Checkbox
                   id="apply-associated-discount"
                   checked={discountPercentage > 0}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      // Apply guest's default discount or 10% if no default
-                      const defaultDiscount = selectedGuest.discount_percentage || 10;
-                      onDiscountChange(defaultDiscount);
-                    } else {
-                      onDiscountChange(0);
-                    }
-                  }}
+                  onCheckedChange={handleAssociatedDiscountToggle}
                 />
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-green-600" />

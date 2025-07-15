@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -65,22 +66,6 @@ export const ReservationModal = ({
   // Get totals
   const totals = calculateTotal();
 
-  // Auto-update guest count when room changes
-  useEffect(() => {
-    if (selectedRoom && mode === 'create') {
-      if (formData.guests_count === 1 && selectedRoom.capacity > 1) {
-        handleFormChange('guests_count', Math.min(selectedRoom.capacity, 2));
-      }
-    }
-  }, [selectedRoom, mode, formData.guests_count, handleFormChange]);
-
-  // Auto-update guest association info when guest changes
-  useEffect(() => {
-    if (selectedGuest && mode === 'create') {
-      handleFormChange('discount_percentage', selectedGuest.discount_percentage || 0);
-    }
-  }, [selectedGuest, mode, handleFormChange]);
-
   // Set preselected guest when modal opens
   useEffect(() => {
     if (preselectedGuestId && mode === 'create' && isOpen) {
@@ -95,7 +80,6 @@ export const ReservationModal = ({
       console.log('New guest created:', newGuest);
       
       handleFormChange('guest_id', newGuest.id);
-      handleFormChange('discount_percentage', newGuest.discount_percentage || 0);
       
       setShowNewGuestForm(false);
       
