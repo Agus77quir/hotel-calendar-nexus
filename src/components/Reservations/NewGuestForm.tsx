@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { User, X, UserCheck } from 'lucide-react';
 
 interface NewGuestFormProps {
   onSave: (guestData: any) => Promise<void>;
@@ -20,6 +21,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     phone: '',
     document: '',
     nationality: '',
+    is_associated: false,
+    discount_percentage: 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,8 +67,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
-        is_associated: false,
-        discount_percentage: 0
+        discount_percentage: formData.is_associated ? formData.discount_percentage : 0
       };
       
       console.log('Attempting to create guest with data:', guestPayload);
@@ -77,12 +79,20 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleAssociatedChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      is_associated: checked,
+      discount_percentage: checked ? 10 : 0 // Default 10% discount for associated guests
+    }));
   };
 
   return (
@@ -185,6 +195,43 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             />
             {errors.nationality && (
               <p className="text-red-500 text-sm mt-1">{errors.nationality}</p>
+            )}
+          </div>
+
+          {/* Guest Association Section */}
+          <div className="border-t pt-4">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="is_associated"
+                checked={formData.is_associated}
+                onCheckedChange={handleAssociatedChange}
+                disabled={isSubmitting}
+              />
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-green-600" />
+                <Label htmlFor="is_associated" className="text-sm font-medium">
+                  Huésped Asociado
+                </Label>
+              </div>
+            </div>
+            
+            {formData.is_associated && (
+              <div className="mt-3 ml-6">
+                <Label htmlFor="discount_percentage">Porcentaje de Descuento (%)</Label>
+                <Input
+                  id="discount_percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.discount_percentage}
+                  onChange={(e) => handleInputChange('discount_percentage', Number(e.target.value))}
+                  disabled={isSubmitting}
+                  className="w-24"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Los huéspedes asociados reciben descuentos especiales
+                </p>
+              </div>
             )}
           </div>
 
