@@ -10,10 +10,14 @@ interface RoomStatusChartProps {
 }
 
 export const RoomStatusChart = ({ rooms }: RoomStatusChartProps) => {
+  console.log('RoomStatusChart - All rooms:', rooms);
+  
   const statusCounts = rooms.reduce((acc, room) => {
     acc[room.status] = (acc[room.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  console.log('Room status counts:', statusCounts);
 
   const statusLabels = {
     available: 'Disponibles',
@@ -28,9 +32,11 @@ export const RoomStatusChart = ({ rooms }: RoomStatusChartProps) => {
     status: status
   }));
 
+  console.log('Chart data:', data);
+
   const COLORS = {
     available: '#10b981',
-    occupied: '#3b82f6',
+    occupied: '#ef4444',
     maintenance: '#f59e0b',
     cleaning: '#8b5cf6'
   };
@@ -63,7 +69,27 @@ export const RoomStatusChart = ({ rooms }: RoomStatusChartProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px]">
+        {/* Resumen numérico visible */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+          <div className="text-center p-2 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-lg font-bold text-green-700">{statusCounts.available || 0}</div>
+            <div className="text-xs text-green-600">Disponibles</div>
+          </div>
+          <div className="text-center p-2 bg-red-50 rounded-lg border border-red-200">
+            <div className="text-lg font-bold text-red-700">{statusCounts.occupied || 0}</div>
+            <div className="text-xs text-red-600">Ocupadas</div>
+          </div>
+          <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="text-lg font-bold text-yellow-700">{statusCounts.maintenance || 0}</div>
+            <div className="text-xs text-yellow-600">Mantenimiento</div>
+          </div>
+          <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="text-lg font-bold text-purple-700">{statusCounts.cleaning || 0}</div>
+            <div className="text-xs text-purple-600">Limpieza</div>
+          </div>
+        </div>
+
+        <ChartContainer config={chartConfig} className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

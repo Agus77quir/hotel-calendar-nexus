@@ -7,6 +7,7 @@ import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStats
 import { OccupancyChart } from '@/components/Dashboard/OccupancyChart';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { RoomStatusChart } from '@/components/Dashboard/RoomStatusChart';
+import { RoomStatusIndicator } from '@/components/Dashboard/RoomStatusIndicator';
 import { DailyReservations } from '@/components/Dashboard/DailyReservations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -19,6 +20,12 @@ const Dashboard = () => {
   const [selectedDate] = useState(new Date());
 
   const isReceptionist = user?.role === 'receptionist';
+
+  // Log current room states for debugging
+  useEffect(() => {
+    console.log('Dashboard - Current rooms state:', rooms);
+    console.log('Dashboard - Room statuses:', rooms.map(r => ({ number: r.number, status: r.status })));
+  }, [rooms]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,26 +110,33 @@ const Dashboard = () => {
           </Card>
           
           <Card className="md:col-span-2 xl:col-span-1">
-            <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
-                Estado de Habitaciones
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-2 sm:px-6">
-              <RoomStatusChart rooms={rooms} />
-            </CardContent>
+            <RoomStatusChart rooms={rooms} />
           </Card>
         </div>
       )}
       
-      <div className="space-y-2 sm:space-y-4">
-        <DailyReservations 
-          reservations={reservations} 
-          rooms={rooms} 
-          guests={guests} 
-          selectedDate={selectedDate} 
-        />
+      {/* Nueva sección para mostrar el estado detallado de habitaciones */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bed className="h-5 w-5" />
+              Estado Detallado de Habitaciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RoomStatusIndicator rooms={rooms} />
+          </CardContent>
+        </Card>
+        
+        <div className="space-y-2 sm:space-y-4">
+          <DailyReservations 
+            reservations={reservations} 
+            rooms={rooms} 
+            guests={guests} 
+            selectedDate={selectedDate} 
+          />
+        </div>
       </div>
     </div>
   );
