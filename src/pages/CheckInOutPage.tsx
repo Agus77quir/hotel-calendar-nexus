@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,10 +45,15 @@ const CheckInOutPage = () => {
 
   const handleCheckIn = async (reservationId: string) => {
     try {
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = guests.find(g => g.id === reservation?.guest_id);
+      const room = rooms.find(r => r.id === reservation?.room_id);
+      
       await updateReservation({ id: reservationId, status: 'checked-in' });
+      
       toast({
         title: "Check-in exitoso",
-        description: "El huésped ha sido registrado correctamente",
+        description: `${guest?.first_name} ${guest?.last_name} ha sido registrado en la habitación ${room?.number}. La habitación ahora está ocupada.`,
       });
     } catch (error) {
       toast({
@@ -60,10 +66,15 @@ const CheckInOutPage = () => {
 
   const handleCheckOut = async (reservationId: string) => {
     try {
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = guests.find(g => g.id === reservation?.guest_id);
+      const room = rooms.find(r => r.id === reservation?.room_id);
+      
       await updateReservation({ id: reservationId, status: 'checked-out' });
+      
       toast({
         title: "Check-out exitoso",
-        description: "El huésped ha finalizado su estadía",
+        description: `${guest?.first_name} ${guest?.last_name} ha finalizado su estadía. La habitación ${room?.number} ahora está disponible.`,
       });
     } catch (error) {
       toast({
@@ -109,10 +120,10 @@ const CheckInOutPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
             Gestiona las llegadas y salidas del hotel
           </p>
@@ -154,7 +165,7 @@ const CheckInOutPage = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -170,7 +181,87 @@ const CheckInOutPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
+          {/* Mobile Cards View */}
+          <div className="block md:hidden space-y-4">
+            {filteredReservations.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                No se encontraron reservas para hoy
+              </div>
+            ) : (
+              filteredReservations.map((reservation) => {
+                const guest = guests.find(g => g.id === reservation.guest_id);
+                const room = rooms.find(r => r.id === reservation.room_id);
+
+                return (
+                  <Card key={reservation.id} className="w-full">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-muted-foreground font-mono">
+                            #{reservation.id.slice(0, 8)}
+                          </div>
+                          <Badge className={getStatusColor(reservation.status)}>
+                            {getStatusText(reservation.status)}
+                          </Badge>
+                        </div>
+                        
+                        {/* Guest Info */}
+                        <div>
+                          <div className="font-medium">
+                            {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {guest?.email}
+                          </div>
+                        </div>
+                        
+                        {/* Room and Dates */}
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="font-medium">Habitación:</span> {room?.number || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Entrada:</span> {format(new Date(reservation.check_in), 'dd/MM', { locale: es })}
+                          </div>
+                          <div>
+                            <span className="font-medium">Salida:</span> {format(new Date(reservation.check_out), 'dd/MM', { locale: es })}
+                          </div>
+                        </div>
+                        
+                        {/* Action Button */}
+                        <div className="pt-2 border-t">
+                          {reservation.status === 'confirmed' && reservation.check_in === today && (
+                            <Button 
+                              size="sm"
+                              onClick={() => handleCheckIn(reservation.id)}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white touch-manipulation"
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              Realizar Check-in
+                            </Button>
+                          )}
+                          {reservation.status === 'checked-in' && reservation.check_out === today && (
+                            <Button 
+                              size="sm"
+                              onClick={() => handleCheckOut(reservation.id)}
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white touch-manipulation"
+                            >
+                              <UserX className="h-4 w-4 mr-2" />
+                              Realizar Check-out
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted border-b">
@@ -226,7 +317,7 @@ const CheckInOutPage = () => {
                               <Button 
                                 size="sm"
                                 onClick={() => handleCheckIn(reservation.id)}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
                               >
                                 <UserCheck className="h-4 w-4 mr-1" />
                                 Check-in
@@ -235,9 +326,8 @@ const CheckInOutPage = () => {
                             {reservation.status === 'checked-in' && reservation.check_out === today && (
                               <Button 
                                 size="sm"
-                                variant="outline"
                                 onClick={() => handleCheckOut(reservation.id)}
-                                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
                               >
                                 <UserX className="h-4 w-4 mr-1" />
                                 Check-out
