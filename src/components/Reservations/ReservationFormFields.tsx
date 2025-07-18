@@ -5,9 +5,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign, CalendarIcon } from 'lucide-react';
 import { Room, Guest } from '@/types/hotel';
 import { DiscountSection } from './DiscountSection';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -55,6 +61,13 @@ export const ReservationFormFields = ({
   const formatRoomNumber = (number: string) => {
     // Pad single digit room numbers with leading zero for better visual consistency
     return number.length === 1 ? `0${number}` : number;
+  };
+
+  const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
+    if (date) {
+      const dateString = date.toISOString().split('T')[0];
+      onDateChange(field, dateString);
+    }
   };
 
   return (
@@ -127,26 +140,63 @@ export const ReservationFormFields = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="check_in">Fecha de entrada *</Label>
-              <Input
-                id="check_in"
-                type="date"
-                value={formData.check_in}
-                min={today}
-                onChange={(e) => onDateChange('check_in', e.target.value)}
-                className="w-full"
-              />
+              <Label>Fecha de entrada *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.check_in && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.check_in ? format(new Date(formData.check_in), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.check_in ? new Date(formData.check_in) : undefined}
+                    onSelect={(date) => handleDateSelect('check_in', date)}
+                    disabled={(date) => date < new Date(today)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    locale={es}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
-              <Label htmlFor="check_out">Fecha de salida *</Label>
-              <Input
-                id="check_out"
-                type="date"
-                value={formData.check_out}
-                min={formData.check_in || today}
-                onChange={(e) => onDateChange('check_out', e.target.value)}
-                className="w-full"
-              />
+              <Label>Fecha de salida *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.check_out && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.check_out ? format(new Date(formData.check_out), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.check_out ? new Date(formData.check_out) : undefined}
+                    onSelect={(date) => handleDateSelect('check_out', date)}
+                    disabled={(date) => {
+                      const minDate = formData.check_in ? new Date(formData.check_in) : new Date(today);
+                      return date <= minDate;
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    locale={es}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 

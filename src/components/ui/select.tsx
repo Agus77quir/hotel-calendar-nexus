@@ -104,8 +104,7 @@ const SelectContent = React.forwardRef<
             "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
         style={{
-          WebkitOverflowScrolling: 'touch',
-          overflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         {children}
