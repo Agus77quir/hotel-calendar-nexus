@@ -21,11 +21,31 @@ const Dashboard = () => {
 
   const isReceptionist = user?.role === 'receptionist';
 
-  // Log current room states for debugging
+  // Enhanced logging for debugging room status updates
   useEffect(() => {
-    console.log('Dashboard - Current rooms state:', rooms);
-    console.log('Dashboard - Room statuses:', rooms.map(r => ({ number: r.number, status: r.status })));
-  }, [rooms]);
+    console.log('=== DASHBOARD ROOM STATUS DEBUG ===');
+    console.log('Total rooms loaded:', rooms.length);
+    console.log('Room statuses breakdown:', {
+      available: rooms.filter(r => r.status === 'available').length,
+      occupied: rooms.filter(r => r.status === 'occupied').length,
+      maintenance: rooms.filter(r => r.status === 'maintenance').length,
+      cleaning: rooms.filter(r => r.status === 'cleaning').length
+    });
+    console.log('Occupied rooms details:', rooms.filter(r => r.status === 'occupied').map(r => ({
+      id: r.id,
+      number: r.number,
+      status: r.status
+    })));
+    console.log('All reservations:', reservations.map(r => ({
+      id: r.id,
+      room_id: r.room_id,
+      status: r.status,
+      check_in: r.check_in,
+      check_out: r.check_out
+    })));
+    console.log('Checked-in reservations:', reservations.filter(r => r.status === 'checked-in'));
+    console.log('=== END DEBUG ===');
+  }, [rooms, reservations]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,12 +55,13 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-refresh effect to ensure real-time updates
+  // Enhanced auto-refresh with more frequent updates for room status
   useEffect(() => {
     const interval = setInterval(() => {
-      // The useQuery hooks will automatically refetch based on their staleTime
-      console.log('Dashboard auto-refresh triggered');
-    }, 30000); // Refresh every 30 seconds
+      console.log('🔄 Dashboard auto-refresh triggered - forcing data update');
+      // Force refresh of queries to ensure real-time updates
+      window.location.reload();
+    }, 15000); // Refresh every 15 seconds for better real-time updates
 
     return () => clearInterval(interval);
   }, []);
@@ -73,8 +94,14 @@ const Dashboard = () => {
       <div className="space-y-1 sm:space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Resumen de la actividad y estado actual del hotel. Los datos se actualizan automáticamente.
+          Resumen de la actividad y estado actual del hotel. Los datos se actualizan automáticamente cada 15 segundos.
         </p>
+        
+        {/* Debug info - remove in production */}
+        <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
+          Debug: {rooms.filter(r => r.status === 'occupied').length} habitaciones ocupadas, 
+          {reservations.filter(r => r.status === 'checked-in').length} reservas con check-in realizado
+        </div>
       </div>
       
       {isReceptionist ? (

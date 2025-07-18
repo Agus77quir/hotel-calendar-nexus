@@ -45,17 +45,31 @@ const CheckInOutPage = () => {
 
   const handleCheckIn = async (reservationId: string) => {
     try {
+      console.log('🔄 Starting check-in process for reservation:', reservationId);
+      
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = guests.find(g => g.id === reservation?.guest_id);
       const room = rooms.find(r => r.id === reservation?.room_id);
       
+      console.log('Check-in details:', {
+        reservationId,
+        guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
+        roomNumber: room?.number || 'N/A',
+        currentRoomStatus: room?.status
+      });
+      
+      // Update reservation status to checked-in
       await updateReservation({ id: reservationId, status: 'checked-in' });
+      
+      console.log('✅ Check-in completed successfully');
       
       toast({
         title: "Check-in exitoso",
         description: `${guest?.first_name} ${guest?.last_name} ha sido registrado en la habitación ${room?.number}. La habitación ahora está ocupada.`,
       });
+      
     } catch (error) {
+      console.error('❌ Error during check-in:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-in",
@@ -66,17 +80,31 @@ const CheckInOutPage = () => {
 
   const handleCheckOut = async (reservationId: string) => {
     try {
+      console.log('🔄 Starting check-out process for reservation:', reservationId);
+      
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = guests.find(g => g.id === reservation?.guest_id);
       const room = rooms.find(r => r.id === reservation?.room_id);
       
+      console.log('Check-out details:', {
+        reservationId,
+        guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
+        roomNumber: room?.number || 'N/A',
+        currentRoomStatus: room?.status
+      });
+      
+      // Update reservation status to checked-out
       await updateReservation({ id: reservationId, status: 'checked-out' });
+      
+      console.log('✅ Check-out completed successfully');
       
       toast({
         title: "Check-out exitoso",
         description: `${guest?.first_name} ${guest?.last_name} ha finalizado su estadía. La habitación ${room?.number} ahora está disponible.`,
       });
+      
     } catch (error) {
+      console.error('❌ Error during check-out:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-out",
@@ -251,6 +279,16 @@ const CheckInOutPage = () => {
                               Realizar Check-out
                             </Button>
                           )}
+                          {reservation.status === 'checked-in' && reservation.check_out !== today && (
+                            <Button 
+                              size="sm"
+                              onClick={() => handleCheckOut(reservation.id)}
+                              className="w-full bg-gray-600 hover:bg-gray-700 text-white touch-manipulation"
+                            >
+                              <UserX className="h-4 w-4 mr-2" />
+                              Check-out Anticipado
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -323,7 +361,7 @@ const CheckInOutPage = () => {
                                 Check-in
                               </Button>
                             )}
-                            {reservation.status === 'checked-in' && reservation.check_out === today && (
+                            {reservation.status === 'checked-in' && (
                               <Button 
                                 size="sm"
                                 onClick={() => handleCheckOut(reservation.id)}
