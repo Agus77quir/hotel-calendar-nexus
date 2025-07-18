@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Bed, CalendarDays, TrendingUp, CheckCircle } from 'lucide-react';
+import { Users, Bed, CalendarDays, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
 import { OccupancyChart } from '@/components/Dashboard/OccupancyChart';
@@ -15,36 +15,64 @@ import { motion } from 'framer-motion';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { rooms, guests, reservations, stats, isLoading } = useHotelData();
+  const { rooms, guests, reservations, stats, isLoading, forceRefresh } = useHotelData();
   const [showWelcome, setShowWelcome] = useState(true);
   const [selectedDate] = useState(new Date());
 
   const isReceptionist = user?.role === 'receptionist';
 
-  // Enhanced logging for debugging room status updates
+  // Detailed logging and verification
   useEffect(() => {
-    console.log('=== DASHBOARD ROOM STATUS DEBUG ===');
+    console.log('=== DASHBOARD REAL-TIME STATUS ===');
+    console.log('Current timestamp:', new Date().toISOString());
     console.log('Total rooms loaded:', rooms.length);
-    console.log('Room statuses breakdown:', {
+    
+    const roomStatusBreakdown = {
       available: rooms.filter(r => r.status === 'available').length,
       occupied: rooms.filter(r => r.status === 'occupied').length,
       maintenance: rooms.filter(r => r.status === 'maintenance').length,
       cleaning: rooms.filter(r => r.status === 'cleaning').length
-    });
-    console.log('Occupied rooms details:', rooms.filter(r => r.status === 'occupied').map(r => ({
-      id: r.id,
-      number: r.number,
-      status: r.status
-    })));
-    console.log('All reservations:', reservations.map(r => ({
+    };
+    
+    console.log('Room statuses breakdown:', roomStatusBreakdown);
+    
+    const reservationStatusBreakdown = {
+      confirmed: reservations.filter(r => r.status === 'confirmed').length,
+      'checked-in': reservations.filter(r => r.status === 'checked-in').length,
+      'checked-out': reservations.filter(r => r.status === 'checked-out').length,
+      cancelled: reservations.filter(r => r.status === 'cancelled').length
+    };
+    
+    console.log('Reservation statuses breakdown:', reservationStatusBreakdown);
+    
+    // Detailed room analysis
+    console.log('Occupied rooms details:', rooms
+      .filter(r => r.status === 'occupied')
+      .map(r => ({
+        id: r.id,
+        number: r.number,
+        status: r.status
+      }))
+    );
+    
+    // Check-in reservations analysis
+    const checkedInReservations = reservations.filter(r => r.status === 'checked-in');
+    console.log('Checked-in reservations:', checkedInReservations.map(r => ({
       id: r.id,
       room_id: r.room_id,
       status: r.status,
       check_in: r.check_in,
       check_out: r.check_out
     })));
-    console.log('Checked-in reservations:', reservations.filter(r => r.status === 'checked-in'));
-    console.log('=== END DEBUG ===');
+    
+    // Cross-reference check
+    console.log('Room/Reservation Cross-Reference:');
+    checkedInReservations.forEach(reservation => {
+      const room = rooms.find(r => r.id === reservation.room_id);
+      console.log(`Reservation ${reservation.id} -> Room ${room?.number} (${room?.id}) = ${room?.status}`);
+    });
+    
+    console.log('=== END DASHBOARD STATUS ===');
   }, [rooms, reservations]);
 
   useEffect(() => {
@@ -55,16 +83,15 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Enhanced auto-refresh with more frequent updates for room status
+  // Auto-refresh with more aggressive timing
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('🔄 Dashboard auto-refresh triggered - forcing data update');
-      // Force refresh of queries to ensure real-time updates
-      window.location.reload();
-    }, 15000); // Refresh every 15 seconds for better real-time updates
+    const interval = setInterval(async () => {
+      console.log('🔄 Dashboard auto-refresh triggered');
+      await forceRefresh();
+    }, 10000); // Every 10 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [forceRefresh]);
 
   if (isLoading) {
     return (
@@ -76,6 +103,16 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Real-time status indicators
+  const occupiedRooms = rooms.filter(r => r.status === 'occupied');
+  const checkedInReservations = reservations.filter(r => r.status === 'checked-in');
+  const todayCheckIns = reservations.filter(r => 
+    r.check_in === new Date().toISOString().split('T')[0] && r.status === 'confirmed'
+  );
+  const todayCheckOuts = reservations.filter(r => 
+    r.check_out === new Date().toISOString().split('T')[0] && r.status === 'checked-in'
+  );
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
@@ -94,15 +131,78 @@ const Dashboard = () => {
       <div className="space-y-1 sm:space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Resumen de la actividad y estado actual del hotel. Los datos se actualizan automáticamente cada 15 segundos.
+          Resumen de la actividad y estado actual del hotel. Actualización automática cada 10 segundos.
         </p>
-        
-        {/* Debug info - remove in production */}
-        <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
-          Debug: {rooms.filter(r => r.status === 'occupied').length} habitaciones ocupadas, 
-          {reservations.filter(r => r.status === 'checked-in').length} reservas con check-in realizado
-        </div>
       </div>
+
+      {/* Real-time Status Alert */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-blue-800">Habitaciones Ocupadas</p>
+                <p className="text-2xl font-bold text-blue-900">{occupiedRooms.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-sm font-medium text-green-800">Huéspedes Actuales</p>
+                <p className="text-2xl font-bold text-green-900">{checkedInReservations.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-orange-800">Check-ins Hoy</p>
+                <p className="text-2xl font-bold text-orange-900">{todayCheckIns.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="text-sm font-medium text-purple-800">Check-outs Hoy</p>
+                <p className="text-2xl font-bold text-purple-900">{todayCheckOuts.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Debug Status Card - for verification (temporary) */}
+      <Card className="border-gray-200 bg-gray-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <AlertCircle className="h-4 w-4" />
+            Estado del Sistema (Debug)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs space-y-1">
+          <p>🏠 Total habitaciones: {rooms.length}</p>
+          <p>🔴 Habitaciones ocupadas: {occupiedRooms.length} (habitaciones: {occupiedRooms.map(r => r.number).join(', ') || 'ninguna'})</p>
+          <p>👥 Reservas con check-in: {checkedInReservations.length}</p>
+          <p>📅 Check-ins pendientes hoy: {todayCheckIns.length}</p>
+          <p>🚪 Check-outs programados hoy: {todayCheckOuts.length}</p>
+          <p>🕒 Última actualización: {new Date().toLocaleTimeString()}</p>
+        </CardContent>
+      </Card>
       
       {isReceptionist ? (
         <ReceptionistStatsCards stats={stats} rooms={rooms} />
@@ -142,7 +242,7 @@ const Dashboard = () => {
         </div>
       )}
       
-      {/* Nueva sección para mostrar el estado detallado de habitaciones */}
+      {/* Detailed Room Status Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader>

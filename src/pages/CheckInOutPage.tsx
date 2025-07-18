@@ -11,13 +11,14 @@ import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
 const CheckInOutPage = () => {
-  const { reservations, guests, rooms, updateReservation, isLoading } = useHotelData();
+  const { reservations, guests, rooms, updateReservation, isLoading, forceRefresh } = useHotelData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Filtrar reservas para hoy
+  // Filtrar reservas para hoy y huéspedes actuales
   const todayCheckIns = reservations.filter(reservation => 
     reservation.check_in === today && reservation.status === 'confirmed'
   );
@@ -44,24 +45,32 @@ const CheckInOutPage = () => {
   });
 
   const handleCheckIn = async (reservationId: string) => {
+    if (processingReservations.has(reservationId)) return;
+    
+    setProcessingReservations(prev => new Set(prev).add(reservationId));
+    
     try {
-      console.log('🔄 Starting check-in process for reservation:', reservationId);
+      console.log('🔄 STARTING CHECK-IN PROCESS for reservation:', reservationId);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = guests.find(g => g.id === reservation?.guest_id);
       const room = rooms.find(r => r.id === reservation?.room_id);
       
-      console.log('Check-in details:', {
+      console.log('📋 Check-in details:', {
         reservationId,
         guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
         roomNumber: room?.number || 'N/A',
-        currentRoomStatus: room?.status
+        currentRoomStatus: room?.status,
+        currentReservationStatus: reservation?.status
       });
       
       // Update reservation status to checked-in
       await updateReservation({ id: reservationId, status: 'checked-in' });
       
-      console.log('✅ Check-in completed successfully');
+      // Force refresh to ensure UI updates immediately
+      await forceRefresh();
+      
+      console.log('✅ CHECK-IN COMPLETED SUCCESSFULLY');
       
       toast({
         title: "Check-in exitoso",
@@ -69,34 +78,48 @@ const CheckInOutPage = () => {
       });
       
     } catch (error) {
-      console.error('❌ Error during check-in:', error);
+      console.error('❌ ERROR DURING CHECK-IN:', error);
       toast({
         title: "Error",
-        description: "No se pudo realizar el check-in",
+        description: "No se pudo realizar el check-in. Intenta nuevamente.",
         variant: "destructive",
+      });
+    } finally {
+      setProcessingReservations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reservationId);
+        return newSet;
       });
     }
   };
 
   const handleCheckOut = async (reservationId: string) => {
+    if (processingReservations.has(reservationId)) return;
+    
+    setProcessingReservations(prev => new Set(prev).add(reservationId));
+    
     try {
-      console.log('🔄 Starting check-out process for reservation:', reservationId);
+      console.log('🔄 STARTING CHECK-OUT PROCESS for reservation:', reservationId);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = guests.find(g => g.id === reservation?.guest_id);
       const room = rooms.find(r => r.id === reservation?.room_id);
       
-      console.log('Check-out details:', {
+      console.log('📋 Check-out details:', {
         reservationId,
         guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
         roomNumber: room?.number || 'N/A',
-        currentRoomStatus: room?.status
+        currentRoomStatus: room?.status,
+        currentReservationStatus: reservation?.status
       });
       
       // Update reservation status to checked-out
       await updateReservation({ id: reservationId, status: 'checked-out' });
       
-      console.log('✅ Check-out completed successfully');
+      // Force refresh to ensure UI updates immediately
+      await forceRefresh();
+      
+      console.log('✅ CHECK-OUT COMPLETED SUCCESSFULLY');
       
       toast({
         title: "Check-out exitoso",
@@ -104,11 +127,17 @@ const CheckInOutPage = () => {
       });
       
     } catch (error) {
-      console.error('❌ Error during check-out:', error);
+      console.error('❌ ERROR DURING CHECK-OUT:', error);
       toast({
         title: "Error",
-        description: "No se pudo realizar el check-out",
+        description: "No se pudo realizar el check-out. Intenta nuevamente.",
         variant: "destructive",
+      });
+    } finally {
+      setProcessingReservations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reservationId);
+        return newSet;
       });
     }
   };
@@ -213,12 +242,13 @@ const CheckInOutPage = () => {
           <div className="block md:hidden space-y-4">
             {filteredReservations.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
-                No se encontraron reservas para hoy
+                No se encontraron reservas
               </div>
             ) : (
               filteredReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
+                const isProcessing = processingReservations.has(reservation.id);
 
                 return (
                   <Card key={reservation.id} className="w-full">
@@ -259,34 +289,26 @@ const CheckInOutPage = () => {
                         
                         {/* Action Button */}
                         <div className="pt-2 border-t">
-                          {reservation.status === 'confirmed' && reservation.check_in === today && (
+                          {reservation.status === 'confirmed' && (
                             <Button 
                               size="sm"
                               onClick={() => handleCheckIn(reservation.id)}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white touch-manipulation"
+                              disabled={isProcessing}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white touch-manipulation disabled:opacity-50"
                             >
                               <UserCheck className="h-4 w-4 mr-2" />
-                              Realizar Check-in
+                              {isProcessing ? 'Procesando...' : 'Realizar Check-in'}
                             </Button>
                           )}
-                          {reservation.status === 'checked-in' && reservation.check_out === today && (
+                          {reservation.status === 'checked-in' && (
                             <Button 
                               size="sm"
                               onClick={() => handleCheckOut(reservation.id)}
-                              className="w-full bg-orange-600 hover:bg-orange-700 text-white touch-manipulation"
+                              disabled={isProcessing}
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white touch-manipulation disabled:opacity-50"
                             >
                               <UserX className="h-4 w-4 mr-2" />
-                              Realizar Check-out
-                            </Button>
-                          )}
-                          {reservation.status === 'checked-in' && reservation.check_out !== today && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleCheckOut(reservation.id)}
-                              className="w-full bg-gray-600 hover:bg-gray-700 text-white touch-manipulation"
-                            >
-                              <UserX className="h-4 w-4 mr-2" />
-                              Check-out Anticipado
+                              {isProcessing ? 'Procesando...' : 'Realizar Check-out'}
                             </Button>
                           )}
                         </div>
@@ -315,13 +337,14 @@ const CheckInOutPage = () => {
                 {filteredReservations.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                      No se encontraron reservas para hoy
+                      No se encontraron reservas
                     </td>
                   </tr>
                 ) : (
                   filteredReservations.map((reservation) => {
                     const guest = guests.find(g => g.id === reservation.guest_id);
                     const room = rooms.find(r => r.id === reservation.room_id);
+                    const isProcessing = processingReservations.has(reservation.id);
 
                     return (
                       <tr key={reservation.id} className="border-b hover:bg-muted/50">
@@ -351,24 +374,26 @@ const CheckInOutPage = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex justify-end gap-2">
-                            {reservation.status === 'confirmed' && reservation.check_in === today && (
+                            {reservation.status === 'confirmed' && (
                               <Button 
                                 size="sm"
                                 onClick={() => handleCheckIn(reservation.id)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                disabled={isProcessing}
+                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                               >
                                 <UserCheck className="h-4 w-4 mr-1" />
-                                Check-in
+                                {isProcessing ? 'Procesando...' : 'Check-in'}
                               </Button>
                             )}
                             {reservation.status === 'checked-in' && (
                               <Button 
                                 size="sm"
                                 onClick={() => handleCheckOut(reservation.id)}
-                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                                disabled={isProcessing}
+                                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
                               >
                                 <UserX className="h-4 w-4 mr-1" />
-                                Check-out
+                                {isProcessing ? 'Procesando...' : 'Check-out'}
                               </Button>
                             )}
                           </div>

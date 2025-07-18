@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
 import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
+import { useHotelData } from '@/hooks/useHotelData';
+import { useState } from 'react';
 
 interface ReservationQuickActionsProps {
   reservation: Reservation;
@@ -33,36 +35,66 @@ export const ReservationQuickActions = ({
   onNewReservation
 }: ReservationQuickActionsProps) => {
   const { toast } = useToast();
+  const { forceRefresh } = useHotelData();
+  const [processing, setProcessing] = useState(false);
 
   const handleQuickCheckIn = async () => {
+    if (processing) return;
+    
+    setProcessing(true);
     try {
+      console.log('🔄 QUICK CHECK-IN: Starting for reservation:', reservation.id);
+      
       await onStatusChange(reservation.id, 'checked-in');
+      
+      // Force refresh to ensure immediate UI updates
+      await forceRefresh();
+      
+      console.log('✅ QUICK CHECK-IN: Completed successfully');
+      
       toast({
         title: "Check-in realizado",
         description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. La habitación ahora está ocupada.`,
       });
     } catch (error) {
+      console.error('❌ QUICK CHECK-IN: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-in",
         variant: "destructive",
       });
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handleQuickCheckOut = async () => {
+    if (processing) return;
+    
+    setProcessing(true);
     try {
+      console.log('🔄 QUICK CHECK-OUT: Starting for reservation:', reservation.id);
+      
       await onStatusChange(reservation.id, 'checked-out');
+      
+      // Force refresh to ensure immediate UI updates
+      await forceRefresh();
+      
+      console.log('✅ QUICK CHECK-OUT: Completed successfully');
+      
       toast({
         title: "Check-out realizado",
         description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible.`,
       });
     } catch (error) {
+      console.error('❌ QUICK CHECK-OUT: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-out",
         variant: "destructive",
       });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -136,10 +168,11 @@ export const ReservationQuickActions = ({
           key="checkin"
           size="sm"
           onClick={handleQuickCheckIn}
-          className="bg-green-600 hover:bg-green-700 text-white touch-manipulation"
+          disabled={processing}
+          className="bg-green-600 hover:bg-green-700 text-white touch-manipulation disabled:opacity-50"
         >
           <CheckCircle className="h-3 w-3 mr-1" />
-          Check-in
+          {processing ? 'Procesando...' : 'Check-in'}
         </Button>
       );
     }
@@ -151,10 +184,27 @@ export const ReservationQuickActions = ({
           key="checkout"
           size="sm"
           onClick={handleQuickCheckOut}
-          className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation"
+          disabled={processing}
+          className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation disabled:opacity-50"
         >
           <Clock className="h-3 w-3 mr-1" />
-          Check-out
+          {processing ? 'Procesando...' : 'Check-out'}
+        </Button>
+      );
+    }
+
+    // Check-out anticipado para huéspedes registrados
+    if (reservation.status === 'checked-in' && !isToday(reservation.check_out)) {
+      actions.push(
+        <Button
+          key="early-checkout"
+          size="sm"
+          onClick={handleQuickCheckOut}
+          disabled={processing}
+          className="bg-orange-600 hover:bg-orange-700 text-white touch-manipulation disabled:opacity-50"
+        >
+          <Clock className="h-3 w-3 mr-1" />
+          {processing ? 'Procesando...' : 'Check-out Anticipado'}
         </Button>
       );
     }
@@ -181,6 +231,16 @@ export const ReservationQuickActions = ({
         <Badge key="checkout-today" variant="outline" className="text-blue-600 border-blue-600">
           <Clock className="h-3 w-3 mr-1" />
           Sale hoy
+        </Badge>
+      );
+    }
+
+    // Badge para huéspedes actualmente registrados
+    if (reservation.status === 'checked-in') {
+      badges.push(
+        <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Huésped Actual
         </Badge>
       );
     }
