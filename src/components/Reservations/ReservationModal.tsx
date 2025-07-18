@@ -175,8 +175,8 @@ export const ReservationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-4xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0 m-2 fixed inset-2 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0">
+      <DialogContent className="w-[95vw] max-w-4xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0 fixed inset-0 sm:inset-2 left-0 top-0 sm:left-1/2 sm:top-1/2 transform-none sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 m-0 sm:m-2 touch-manipulation">
+        <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0 bg-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -192,7 +192,7 @@ export const ReservationModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white">
           {availabilityError && (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
@@ -220,7 +220,7 @@ export const ReservationModal = ({
                     type="button"
                     variant="outline"
                     onClick={() => setShowNewGuestForm(true)}
-                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100 touch-manipulation"
                   >
                     <Plus className="h-4 w-4" />
                     Nuevo Huésped
@@ -247,13 +247,13 @@ export const ReservationModal = ({
         </div>
 
         {!showNewGuestForm && (
-          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0 bg-gray-50">
-            <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6">
+          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0 bg-white">
+            <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
               Cancelar
             </Button>
             <Button 
               onClick={handleSubmit}
-              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation"
               disabled={!validateDates() || isSubmitting || !formData.room_id}
             >
               {isSubmitting 
