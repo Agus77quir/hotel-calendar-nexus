@@ -3,408 +3,445 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Search, UserCheck, UserX, Clock, Calendar } from 'lucide-react';
+import { CheckCircle, Clock, User, MapPin, Calendar, AlertTriangle } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
+import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { Reservation } from '@/types/hotel';
 
 const CheckInOutPage = () => {
-  const { reservations, guests, rooms, updateReservation, isLoading, forceRefresh } = useHotelData();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
+  const { reservations, guests, rooms, updateReservation, forceRefresh, isLoading } = useHotelData();
   const { toast } = useToast();
+  const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Filtrar reservas para hoy y huéspedes actuales
-  const todayCheckIns = reservations.filter(reservation => 
-    reservation.check_in === today && reservation.status === 'confirmed'
+  // Reservas que llegan hoy (para check-in)
+  const todayCheckIns = reservations.filter(r => 
+    r.check_in === today && r.status === 'confirmed'
   );
 
-  const todayCheckOuts = reservations.filter(reservation => 
-    reservation.check_out === today && reservation.status === 'checked-in'
+  // Reservas que se van hoy (para check-out)
+  const todayCheckOuts = reservations.filter(r => 
+    r.check_out === today && r.status === 'checked-in'
   );
 
-  const currentGuests = reservations.filter(reservation => 
-    reservation.status === 'checked-in'
-  );
-
-  const filteredReservations = [...todayCheckIns, ...todayCheckOuts, ...currentGuests].filter(reservation => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    const searchLower = searchTerm.toLowerCase();
-    
-    return (
-      guest?.first_name.toLowerCase().includes(searchLower) ||
-      guest?.last_name.toLowerCase().includes(searchLower) ||
-      room?.number.includes(searchLower) ||
-      reservation.id.includes(searchLower)
-    );
-  });
+  // Huéspedes actualmente registrados
+  const currentGuests = reservations.filter(r => r.status === 'checked-in');
 
   const handleCheckIn = async (reservationId: string) => {
     if (processingReservations.has(reservationId)) return;
     
-    setProcessingReservations(prev => new Set(prev).add(reservationId));
-    
+    const newProcessing = new Set(processingReservations);
+    newProcessing.add(reservationId);
+    setProcessingReservations(newProcessing);
+
     try {
-      console.log('🔄 STARTING CHECK-IN PROCESS for reservation:', reservationId);
+      console.log('🔄 CHECK-IN: Starting for reservation:', reservationId);
       
-      const reservation = reservations.find(r => r.id === reservationId);
-      const guest = guests.find(g => g.id === reservation?.guest_id);
-      const room = rooms.find(r => r.id === reservation?.room_id);
-      
-      console.log('📋 Check-in details:', {
-        reservationId,
-        guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
-        roomNumber: room?.number || 'N/A',
-        currentRoomStatus: room?.status,
-        currentReservationStatus: reservation?.status
+      await updateReservation({ 
+        id: reservationId, 
+        status: 'checked-in' as Reservation['status']
       });
       
-      // Update reservation status to checked-in
-      await updateReservation({ id: reservationId, status: 'checked-in' });
-      
-      // Force refresh to ensure UI updates immediately
+      // Force refresh to ensure immediate UI updates
       await forceRefresh();
       
-      console.log('✅ CHECK-IN COMPLETED SUCCESSFULLY');
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
+      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      
+      console.log('✅ CHECK-IN: Completed successfully');
       
       toast({
-        title: "Check-in exitoso",
-        description: `${guest?.first_name} ${guest?.last_name} ha sido registrado en la habitación ${room?.number}. La habitación ahora está ocupada.`,
+        title: "Check-in realizado exitosamente",
+        description: guest && room 
+          ? `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}`
+          : "Check-in completado",
       });
-      
     } catch (error) {
-      console.error('❌ ERROR DURING CHECK-IN:', error);
+      console.error('❌ CHECK-IN: Error:', error);
       toast({
-        title: "Error",
+        title: "Error en check-in",
         description: "No se pudo realizar el check-in. Intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
-      setProcessingReservations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(reservationId);
-        return newSet;
-      });
+      const newProcessing = new Set(processingReservations);
+      newProcessing.delete(reservationId);
+      setProcessingReservations(newProcessing);
     }
   };
 
   const handleCheckOut = async (reservationId: string) => {
     if (processingReservations.has(reservationId)) return;
     
-    setProcessingReservations(prev => new Set(prev).add(reservationId));
-    
+    const newProcessing = new Set(processingReservations);
+    newProcessing.add(reservationId);
+    setProcessingReservations(newProcessing);
+
     try {
-      console.log('🔄 STARTING CHECK-OUT PROCESS for reservation:', reservationId);
+      console.log('🔄 CHECK-OUT: Starting for reservation:', reservationId);
       
-      const reservation = reservations.find(r => r.id === reservationId);
-      const guest = guests.find(g => g.id === reservation?.guest_id);
-      const room = rooms.find(r => r.id === reservation?.room_id);
-      
-      console.log('📋 Check-out details:', {
-        reservationId,
-        guestName: guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
-        roomNumber: room?.number || 'N/A',
-        currentRoomStatus: room?.status,
-        currentReservationStatus: reservation?.status
+      await updateReservation({ 
+        id: reservationId, 
+        status: 'checked-out' as Reservation['status']
       });
       
-      // Update reservation status to checked-out
-      await updateReservation({ id: reservationId, status: 'checked-out' });
-      
-      // Force refresh to ensure UI updates immediately
+      // Force refresh to ensure immediate UI updates
       await forceRefresh();
       
-      console.log('✅ CHECK-OUT COMPLETED SUCCESSFULLY');
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
+      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      
+      console.log('✅ CHECK-OUT: Completed successfully');
       
       toast({
-        title: "Check-out exitoso",
-        description: `${guest?.first_name} ${guest?.last_name} ha finalizado su estadía. La habitación ${room?.number} ahora está disponible.`,
+        title: "Check-out realizado exitosamente",
+        description: guest && room 
+          ? `${guest.first_name} ${guest.last_name} finalizó estadía en habitación ${room.number}`
+          : "Check-out completado",
       });
-      
     } catch (error) {
-      console.error('❌ ERROR DURING CHECK-OUT:', error);
+      console.error('❌ CHECK-OUT: Error:', error);
       toast({
-        title: "Error",
+        title: "Error en check-out",
         description: "No se pudo realizar el check-out. Intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
-      setProcessingReservations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(reservationId);
-        return newSet;
-      });
+      const newProcessing = new Set(processingReservations);
+      newProcessing.delete(reservationId);
+      setProcessingReservations(newProcessing);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'checked-in':
-        return 'bg-green-100 text-green-800';
-      case 'checked-out':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const ReservationCard = ({ 
+    reservation, 
+    type 
+  }: { 
+    reservation: any; 
+    type: 'checkin' | 'checkout' | 'current' 
+  }) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    const isProcessing = processingReservations.has(reservation.id);
+    
+    if (!guest || !room) return null;
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Pendiente Check-in';
-      case 'checked-in':
-        return 'Registrado';
-      case 'checked-out':
-        return 'Check-out realizado';
-      default:
-        return status;
-    }
+    return (
+      <Card key={reservation.id} className="w-full">
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {type === 'checkin' && <Calendar className="h-4 w-4 text-green-600" />}
+                {type === 'checkout' && <Clock className="h-4 w-4 text-blue-600" />}
+                {type === 'current' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                <span className="text-sm font-medium">
+                  {type === 'checkin' && 'Llegada Hoy'}
+                  {type === 'checkout' && 'Salida Hoy'}
+                  {type === 'current' && 'Huésped Actual'}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground font-mono">
+                #{reservation.id.slice(0, 8)}
+              </div>
+            </div>
+
+            {/* Guest Info */}
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-purple-600" />
+              <div className="flex-1">
+                <div className="font-medium">
+                  {guest.first_name} {guest.last_name}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {guest.email}
+                </div>
+              </div>
+            </div>
+
+            {/* Room Info */}
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-green-600" />
+              <div className="flex-1">
+                <div className="font-medium">Habitación #{room.number}</div>
+                <div className="text-sm text-muted-foreground capitalize">
+                  {room.type.replace('-', ' ')} • {reservation.guests_count} huésped{reservation.guests_count > 1 ? 'es' : ''}
+                </div>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="flex items-center justify-between text-sm">
+              <div>
+                <span className="text-muted-foreground">Check-in: </span>
+                <span className="font-medium">
+                  {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Check-out: </span>
+                <span className="font-medium">
+                  {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="pt-2 border-t">
+              {type === 'checkin' && (
+                <Button
+                  onClick={() => handleCheckIn(reservation.id)}
+                  disabled={isProcessing}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Procesando Check-in...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Realizar Check-in
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {type === 'checkout' && (
+                <Button
+                  onClick={() => handleCheckOut(reservation.id)}
+                  disabled={isProcessing}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Procesando Check-out...
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Realizar Check-out
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {type === 'current' && (
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="flex-1 justify-center text-green-600 border-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Registrado
+                  </Badge>
+                  <Button
+                    onClick={() => handleCheckOut(reservation.id)}
+                    disabled={isProcessing}
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Clock className="h-3 w-3 mr-1 animate-spin" />
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-3 w-3 mr-1" />
+                        Check-out
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando...</div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
+            <p className="text-muted-foreground">Cargando datos...</p>
+          </div>
+          <BackToHomeButton />
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Cargando información...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Gestiona las llegadas y salidas del hotel
+            Gestión de llegadas y salidas para hoy
           </p>
         </div>
+        <BackToHomeButton />
       </div>
 
-      {/* Estadísticas rápidas */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Check-ins Hoy</CardTitle>
-            <UserCheck className="h-4 w-4 text-blue-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-600">
+              Check-ins Hoy
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{todayCheckIns.length}</div>
+            <div className="text-2xl font-bold">{todayCheckIns.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Reservas confirmadas que llegan hoy
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-blue-600">
+              Check-outs Hoy
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{todayCheckOuts.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Huéspedes que se van hoy
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Check-outs Hoy</CardTitle>
-            <UserX className="h-4 w-4 text-orange-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-purple-600">
+              Huéspedes Actuales
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{todayCheckOuts.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Huéspedes Actuales</CardTitle>
-            <Clock className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{currentGuests.length}</div>
+            <div className="text-2xl font-bold">{currentGuests.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Registrados actualmente
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Check-ins for Today */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar reservas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredReservations.length} reservas encontradas
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-green-600" />
+            Check-ins de Hoy ({todayCheckIns.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Mobile Cards View */}
-          <div className="block md:hidden space-y-4">
-            {filteredReservations.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                No se encontraron reservas
-              </div>
-            ) : (
-              filteredReservations.map((reservation) => {
-                const guest = guests.find(g => g.id === reservation.guest_id);
-                const room = rooms.find(r => r.id === reservation.room_id);
-                const isProcessing = processingReservations.has(reservation.id);
+          {todayCheckIns.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No hay check-ins programados para hoy</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todayCheckIns.map((reservation) => (
+                <ReservationCard
+                  key={reservation.id}
+                  reservation={reservation}
+                  type="checkin"
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                return (
-                  <Card key={reservation.id} className="w-full">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-muted-foreground font-mono">
-                            #{reservation.id.slice(0, 8)}
-                          </div>
-                          <Badge className={getStatusColor(reservation.status)}>
-                            {getStatusText(reservation.status)}
-                          </Badge>
-                        </div>
-                        
-                        {/* Guest Info */}
-                        <div>
-                          <div className="font-medium">
-                            {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {guest?.email}
-                          </div>
-                        </div>
-                        
-                        {/* Room and Dates */}
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <span className="font-medium">Habitación:</span> {room?.number || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="font-medium">Entrada:</span> {format(new Date(reservation.check_in), 'dd/MM', { locale: es })}
-                          </div>
-                          <div>
-                            <span className="font-medium">Salida:</span> {format(new Date(reservation.check_out), 'dd/MM', { locale: es })}
-                          </div>
-                        </div>
-                        
-                        {/* Action Button */}
-                        <div className="pt-2 border-t">
-                          {reservation.status === 'confirmed' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleCheckIn(reservation.id)}
-                              disabled={isProcessing}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white touch-manipulation disabled:opacity-50"
-                            >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              {isProcessing ? 'Procesando...' : 'Realizar Check-in'}
-                            </Button>
-                          )}
-                          {reservation.status === 'checked-in' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleCheckOut(reservation.id)}
-                              disabled={isProcessing}
-                              className="w-full bg-orange-600 hover:bg-orange-700 text-white touch-manipulation disabled:opacity-50"
-                            >
-                              <UserX className="h-4 w-4 mr-2" />
-                              {isProcessing ? 'Procesando...' : 'Realizar Check-out'}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
+      {/* Check-outs for Today */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-600" />
+            Check-outs de Hoy ({todayCheckOuts.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {todayCheckOuts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No hay check-outs programados para hoy</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todayCheckOuts.map((reservation) => (
+                <ReservationCard
+                  key={reservation.id}
+                  reservation={reservation}
+                  type="checkout"
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Desktop Table View */}
-          <div className="hidden md:block rounded-md border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted border-b">
-                  <th className="py-3 px-4 text-left font-medium">Huésped</th>
-                  <th className="py-3 px-4 text-left font-medium">Habitación</th>
-                  <th className="py-3 px-4 text-left font-medium">Check-in</th>
-                  <th className="py-3 px-4 text-left font-medium">Check-out</th>
-                  <th className="py-3 px-4 text-left font-medium">Estado</th>
-                  <th className="py-3 px-4 text-right font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReservations.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                      No se encontraron reservas
-                    </td>
-                  </tr>
-                ) : (
-                  filteredReservations.map((reservation) => {
-                    const guest = guests.find(g => g.id === reservation.guest_id);
-                    const room = rooms.find(r => r.id === reservation.room_id);
-                    const isProcessing = processingReservations.has(reservation.id);
+      {/* Current Guests */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-purple-600" />
+            Huéspedes Actuales ({currentGuests.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {currentGuests.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No hay huéspedes registrados actualmente</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentGuests.map((reservation) => (
+                <ReservationCard
+                  key={reservation.id}
+                  reservation={reservation}
+                  type="current"
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                    return (
-                      <tr key={reservation.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">
-                          <div>
-                            <div className="font-medium">
-                              {guest ? `${guest.first_name} ${guest.last_name}` : 'N/A'}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {guest?.email}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge variant="outline">{room?.number || 'N/A'}</Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                        </td>
-                        <td className="py-3 px-4">
-                          {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge className={getStatusColor(reservation.status)}>
-                            {getStatusText(reservation.status)}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            {reservation.status === 'confirmed' && (
-                              <Button 
-                                size="sm"
-                                onClick={() => handleCheckIn(reservation.id)}
-                                disabled={isProcessing}
-                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                              >
-                                <UserCheck className="h-4 w-4 mr-1" />
-                                {isProcessing ? 'Procesando...' : 'Check-in'}
-                              </Button>
-                            )}
-                            {reservation.status === 'checked-in' && (
-                              <Button 
-                                size="sm"
-                                onClick={() => handleCheckOut(reservation.id)}
-                                disabled={isProcessing}
-                                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
-                              >
-                                <UserX className="h-4 w-4 mr-1" />
-                                {isProcessing ? 'Procesando...' : 'Check-out'}
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+      {/* Debug Info */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-yellow-800 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Debug - Estado del Sistema
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs space-y-1">
+          <div>Reservas totales: {reservations.length}</div>
+          <div>Confirmadas: {reservations.filter(r => r.status === 'confirmed').length}</div>
+          <div>Registradas: {reservations.filter(r => r.status === 'checked-in').length}</div>
+          <div>Finalizadas: {reservations.filter(r => r.status === 'checked-out').length}</div>
+          <div>Habitaciones ocupadas: {rooms.filter(r => r.status === 'occupied').length}</div>
+          <div>Habitaciones disponibles: {rooms.filter(r => r.status === 'available').length}</div>
         </CardContent>
       </Card>
     </div>

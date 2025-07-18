@@ -54,7 +54,7 @@ export const ReservationQuickActions = ({
       
       toast({
         title: "Check-in realizado",
-        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. La habitación ahora está ocupada.`,
+        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}`,
       });
     } catch (error) {
       console.error('❌ QUICK CHECK-IN: Error:', error);

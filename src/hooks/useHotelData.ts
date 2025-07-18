@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,49 +11,22 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set current user context para audit - optimizado para Safari
+  // Set current user context para audit
   useEffect(() => {
     if (user?.email) {
       const setUserContext = async () => {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 500);
-          
-          try {
-            await supabase.rpc('set_current_user', { 
-              user_name: user.email 
-            });
-            clearTimeout(timeoutId);
-            console.log('User context set for audit:', user.email);
-          } catch (error) {
-            clearTimeout(timeoutId);
-            throw error;
-          }
+          await supabase.rpc('set_current_user', { 
+            user_name: user.email 
+          });
+          console.log('✅ User context set for audit:', user.email);
         } catch (error) {
-          console.error('Error setting user context (proceeding anyway):', error);
+          console.error('❌ Error setting user context:', error);
         }
       };
       setUserContext();
     }
   }, [user?.email]);
-
-  // Safari-compatible fetch function
-  const safeFetch = async (queryFn: () => Promise<any>, timeoutMs: number) => {
-    return new Promise(async (resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Request timeout'));
-      }, timeoutMs);
-
-      try {
-        const result = await queryFn();
-        clearTimeout(timeoutId);
-        resolve(result);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
-    });
-  };
 
   // Fetch guests
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
@@ -60,119 +34,93 @@ export const useHotelData = () => {
     queryFn: async () => {
       console.log('🔄 Fetching guests...');
       
-      try {
-        const result = await safeFetch(async () => {
-          const { data, error } = await supabase
-            .from('guests')
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          if (error) {
-            console.error('❌ Error fetching guests:', error);
-            return [];
-          }
-          
-          return data || [];
-        }, 2000);
-        
-        console.log('✅ Guests fetched:', (result as any[])?.length || 0);
-        return result as Guest[];
-      } catch (error) {
-        console.error('❌ Guests fetch failed:', error);
-        return [];
+      const { data, error } = await supabase
+        .from('guests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error fetching guests:', error);
+        throw error;
       }
+      
+      console.log('✅ Guests fetched:', data?.length || 0);
+      return data || [];
     },
-    staleTime: 1000, // 1 second for immediate updates
-    gcTime: 5 * 60 * 1000,
-    retry: 1,
-    retryDelay: 300,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  // Fetch rooms with aggressive refresh
+  // Fetch rooms
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
       console.log('🔄 Fetching rooms...');
       
-      try {
-        const result = await safeFetch(async () => {
-          const { data, error } = await supabase
-            .from('rooms')
-            .select('*')
-            .order('number');
-          
-          if (error) {
-            console.error('❌ Error fetching rooms:', error);
-            return [];
-          }
-          
-          console.log('✅ Raw rooms data from DB:', data);
-          return data || [];
-        }, 2000);
-        
-        console.log('✅ Rooms fetched:', (result as any[])?.length || 0);
-        console.log('✅ Rooms status breakdown:', {
-          available: (result as Room[]).filter(r => r.status === 'available').length,
-          occupied: (result as Room[]).filter(r => r.status === 'occupied').length,
-          maintenance: (result as Room[]).filter(r => r.status === 'maintenance').length,
-          cleaning: (result as Room[]).filter(r => r.status === 'cleaning').length
-        });
-        
-        return result as Room[];
-      } catch (error) {
-        console.error('❌ Rooms fetch failed:', error);
-        return [];
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('number');
+      
+      if (error) {
+        console.error('❌ Error fetching rooms:', error);
+        throw error;
       }
+      
+      console.log('✅ Rooms fetched:', data?.length || 0);
+      console.log('✅ Room statuses:', {
+        available: data?.filter(r => r.status === 'available').length || 0,
+        occupied: data?.filter(r => r.status === 'occupied').length || 0,
+        maintenance: data?.filter(r => r.status === 'maintenance').length || 0,
+        cleaning: data?.filter(r => r.status === 'cleaning').length || 0
+      });
+      
+      return data || [];
     },
-    staleTime: 500, // 0.5 seconds for immediate updates
-    gcTime: 5 * 60 * 1000,
-    retry: 1,
-    retryDelay: 300,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  // Fetch reservations with aggressive refresh
+  // Fetch reservations
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
       console.log('🔄 Fetching reservations...');
       
-      try {
-        const result = await safeFetch(async () => {
-          const { data, error } = await supabase
-            .from('reservations')
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          if (error) {
-            console.error('❌ Error fetching reservations:', error);
-            return [];
-          }
-          
-          console.log('✅ Raw reservations data from DB:', data);
-          return data || [];
-        }, 2000);
-        
-        console.log('✅ Reservations fetched:', (result as any[])?.length || 0);
-        console.log('✅ Reservations status breakdown:', {
-          confirmed: (result as Reservation[]).filter(r => r.status === 'confirmed').length,
-          'checked-in': (result as Reservation[]).filter(r => r.status === 'checked-in').length,
-          'checked-out': (result as Reservation[]).filter(r => r.status === 'checked-out').length,
-          cancelled: (result as Reservation[]).filter(r => r.status === 'cancelled').length
-        });
-        
-        return result as Reservation[];
-      } catch (error) {
-        console.error('❌ Reservations fetch failed:', error);
-        return [];
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error fetching reservations:', error);
+        throw error;
       }
+      
+      console.log('✅ Reservations fetched:', data?.length || 0);
+      console.log('✅ Reservation statuses:', {
+        confirmed: data?.filter(r => r.status === 'confirmed').length || 0,
+        'checked-in': data?.filter(r => r.status === 'checked-in').length || 0,
+        'checked-out': data?.filter(r => r.status === 'checked-out').length || 0,
+        cancelled: data?.filter(r => r.status === 'cancelled').length || 0
+      });
+      
+      return data || [];
     },
-    staleTime: 500, // 0.5 seconds for immediate updates
-    gcTime: 5 * 60 * 1000,
-    retry: 1,
-    retryDelay: 300,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  // Calculate stats efficiently
+  // Calculate stats
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -184,22 +132,141 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Force refresh all queries
+  // FORCE REFRESH ALL DATA
   const forceRefreshAllData = async () => {
-    console.log('🔄 FORCE REFRESH: Invalidating and refetching all queries...');
+    console.log('🔄 FORCE REFRESH: Starting complete data refresh...');
     
-    // Invalidate all queries
-    await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-    await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-    await queryClient.invalidateQueries({ queryKey: ['guests'] });
-    
-    // Force immediate refetch
-    await queryClient.refetchQueries({ queryKey: ['rooms'] });
-    await queryClient.refetchQueries({ queryKey: ['reservations'] });
-    await queryClient.refetchQueries({ queryKey: ['guests'] });
-    
-    console.log('✅ FORCE REFRESH: All queries refreshed');
+    try {
+      // Invalidate all queries first
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['guests'] });
+      
+      // Force immediate refetch
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] })
+      ]);
+      
+      console.log('✅ FORCE REFRESH: Complete data refresh finished');
+    } catch (error) {
+      console.error('❌ FORCE REFRESH: Error during refresh:', error);
+    }
   };
+
+  // Update reservation WITH GUARANTEED room status sync
+  const updateReservationMutation = useMutation({
+    mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
+      console.log('🔄 CRITICAL UPDATE: Starting reservation update for:', id, reservationData);
+      
+      // Get current reservation to know which room to update
+      const { data: currentReservation, error: getCurrentError } = await supabase
+        .from('reservations')
+        .select('room_id, status')
+        .eq('id', id)
+        .single();
+      
+      if (getCurrentError) {
+        console.error('❌ Error getting current reservation:', getCurrentError);
+        throw getCurrentError;
+      }
+
+      console.log('📋 Current reservation state:', currentReservation);
+
+      // Update the reservation
+      const { data: updatedReservation, error: reservationError } = await supabase
+        .from('reservations')
+        .update({
+          ...reservationData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (reservationError) {
+        console.error('❌ Error updating reservation:', reservationError);
+        throw reservationError;
+      }
+
+      console.log('✅ Reservation updated successfully:', updatedReservation);
+
+      // CRITICAL: Update room status if reservation status changed
+      if (reservationData.status && currentReservation.room_id) {
+        let newRoomStatus: Room['status'];
+        
+        console.log('🏠 ROOM STATUS UPDATE: Processing status change:', {
+          reservationId: id,
+          roomId: currentReservation.room_id,
+          oldReservationStatus: currentReservation.status,
+          newReservationStatus: reservationData.status
+        });
+        
+        switch (reservationData.status) {
+          case 'checked-in':
+            newRoomStatus = 'occupied';
+            console.log('🔴 Setting room to OCCUPIED due to check-in');
+            break;
+          case 'checked-out':
+            newRoomStatus = 'available';
+            console.log('🟢 Setting room to AVAILABLE due to check-out');
+            break;
+          case 'cancelled':
+            newRoomStatus = 'available';
+            console.log('🟢 Setting room to AVAILABLE due to cancellation');
+            break;
+          default:
+            newRoomStatus = 'available';
+            console.log('🟢 Setting room to AVAILABLE for status:', reservationData.status);
+        }
+
+        // Update room status
+        console.log(`🔄 Updating room ${currentReservation.room_id} to status: ${newRoomStatus}`);
+        
+        const { data: updatedRoom, error: roomError } = await supabase
+          .from('rooms')
+          .update({ status: newRoomStatus })
+          .eq('id', currentReservation.room_id)
+          .select()
+          .single();
+
+        if (roomError) {
+          console.error('❌ CRITICAL ERROR: Failed to update room status:', roomError);
+          throw new Error(`Failed to update room status: ${roomError.message}`);
+        } else {
+          console.log('✅ ROOM STATUS UPDATED SUCCESSFULLY:', {
+            roomId: currentReservation.room_id,
+            newStatus: newRoomStatus,
+            updatedRoom: updatedRoom
+          });
+        }
+      }
+      
+      return updatedReservation;
+    },
+    onSuccess: async () => {
+      console.log('🎉 UPDATE SUCCESS: Starting complete data refresh...');
+      
+      // Force complete refresh
+      await forceRefreshAllData();
+      
+      // Additional refresh after delay to ensure UI updates
+      setTimeout(async () => {
+        await forceRefreshAllData();
+      }, 1000);
+      
+      console.log('✅ All data refreshed after reservation update');
+    },
+    onError: (error) => {
+      console.error('❌ MUTATION ERROR:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la reserva",
+        variant: "destructive",
+      });
+    }
+  });
 
   // Add guest
   const addGuestMutation = useMutation({
@@ -339,7 +406,7 @@ export const useHotelData = () => {
     },
   });
 
-  // Add reservation with automatic email confirmation
+  // Add reservation
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('Adding reservation:', reservationData);
@@ -361,128 +428,9 @@ export const useHotelData = () => {
       console.log('Reservation added successfully:', data);
       return data;
     },
-    onSuccess: async (newReservationData) => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      
-      toast({
-        title: "Reserva creada exitosamente",
-        description: "La reserva ha sido registrada. Use el botón de email para enviar confirmación.",
-      });
-
-      // Cast the data to proper Reservation type
-      const newReservation: Reservation = {
-        ...newReservationData,
-        status: newReservationData.status as Reservation['status']
-      };
-    },
-  });
-
-  // Update reservation with GUARANTEED room status synchronization
-  const updateReservationMutation = useMutation({
-    mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🔄 CRITICAL UPDATE: Starting reservation update for:', id, reservationData);
-      
-      // Get current reservation details
-      const { data: currentReservation, error: getCurrentError } = await supabase
-        .from('reservations')
-        .select('room_id, status')
-        .eq('id', id)
-        .single();
-      
-      if (getCurrentError) {
-        console.error('❌ Error getting current reservation:', getCurrentError);
-        throw getCurrentError;
-      }
-
-      console.log('📋 Current reservation state:', currentReservation);
-
-      // Update the reservation first
-      const { data: updatedReservation, error: reservationError } = await supabase
-        .from('reservations')
-        .update({
-          ...reservationData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (reservationError) {
-        console.error('❌ Error updating reservation:', reservationError);
-        throw reservationError;
-      }
-
-      console.log('✅ Reservation updated successfully:', updatedReservation);
-
-      // CRITICAL: Update room status based on reservation status
-      if (reservationData.status && currentReservation.room_id) {
-        let newRoomStatus: Room['status'];
-        
-        console.log('🏠 ROOM STATUS UPDATE: Processing status change:', {
-          reservationId: id,
-          roomId: currentReservation.room_id,
-          oldReservationStatus: currentReservation.status,
-          newReservationStatus: reservationData.status
-        });
-        
-        switch (reservationData.status) {
-          case 'checked-in':
-            newRoomStatus = 'occupied';
-            console.log('🔴 Setting room to OCCUPIED due to check-in');
-            break;
-          case 'checked-out':
-            newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE due to check-out');
-            break;
-          case 'cancelled':
-            newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE due to cancellation');
-            break;
-          default:
-            newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE for status:', reservationData.status);
-        }
-
-        // Update room status with error handling
-        console.log(`🔄 Updating room ${currentReservation.room_id} to status: ${newRoomStatus}`);
-        
-        const { data: updatedRoom, error: roomError } = await supabase
-          .from('rooms')
-          .update({ status: newRoomStatus })
-          .eq('id', currentReservation.room_id)
-          .select()
-          .single();
-
-        if (roomError) {
-          console.error('❌ CRITICAL ERROR: Failed to update room status:', roomError);
-          throw new Error(`Failed to update room status: ${roomError.message}`);
-        } else {
-          console.log('✅ ROOM STATUS UPDATED SUCCESSFULLY:', {
-            roomId: currentReservation.room_id,
-            newStatus: newRoomStatus,
-            updatedRoom: updatedRoom
-          });
-        }
-      }
-      
-      return updatedReservation;
-    },
     onSuccess: async () => {
-      console.log('🎉 UPDATE SUCCESS: Forcing complete data refresh...');
-      
-      // Force immediate and aggressive refresh
       await forceRefreshAllData();
-      
-      // Additional small delay to ensure UI updates
-      setTimeout(async () => {
-        await forceRefreshAllData();
-      }, 500);
-      
-      console.log('✅ All data refreshed after reservation update');
     },
-    onError: (error) => {
-      console.error('❌ MUTATION ERROR:', error);
-    }
   });
 
   // Delete reservation
@@ -517,9 +465,8 @@ export const useHotelData = () => {
       
       console.log('Reservation deleted successfully');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    onSuccess: async () => {
+      await forceRefreshAllData();
     },
   });
 
