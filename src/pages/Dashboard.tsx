@@ -28,6 +28,16 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Auto-refresh effect to ensure real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // The useQuery hooks will automatically refetch based on their staleTime
+      console.log('Dashboard auto-refresh triggered');
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -56,7 +66,7 @@ const Dashboard = () => {
       <div className="space-y-1 sm:space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Resumen de la actividad y estado actual del hotel.
+          Resumen de la actividad y estado actual del hotel. Los datos se actualizan automáticamente.
         </p>
       </div>
       

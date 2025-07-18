@@ -39,7 +39,7 @@ export const ReservationQuickActions = ({
       await onStatusChange(reservation.id, 'checked-in');
       toast({
         title: "Check-in realizado",
-        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}`,
+        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. La habitación ahora está ocupada.`,
       });
     } catch (error) {
       toast({
@@ -55,7 +55,7 @@ export const ReservationQuickActions = ({
       await onStatusChange(reservation.id, 'checked-out');
       toast({
         title: "Check-out realizado",
-        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía`,
+        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible.`,
       });
     } catch (error) {
       toast({
@@ -129,14 +129,14 @@ export const ReservationQuickActions = ({
   const getStatusActions = () => {
     const actions = [];
 
-    // Check-in automático si es hoy
+    // Check-in automático si es hoy y está confirmada
     if (reservation.status === 'confirmed' && isToday(reservation.check_in)) {
       actions.push(
         <Button
           key="checkin"
           size="sm"
           onClick={handleQuickCheckIn}
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-green-600 hover:bg-green-700 text-white touch-manipulation"
         >
           <CheckCircle className="h-3 w-3 mr-1" />
           Check-in
@@ -144,14 +144,14 @@ export const ReservationQuickActions = ({
       );
     }
 
-    // Check-out automático si es hoy
+    // Check-out automático si es hoy y está registrado
     if (reservation.status === 'checked-in' && isToday(reservation.check_out)) {
       actions.push(
         <Button
           key="checkout"
           size="sm"
           onClick={handleQuickCheckOut}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation"
         >
           <Clock className="h-3 w-3 mr-1" />
           Check-out
@@ -215,7 +215,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={handleSendEmail}
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 touch-manipulation"
         >
           <Mail className="h-3 w-3" />
         </Button>
@@ -225,7 +225,7 @@ export const ReservationQuickActions = ({
             variant="ghost"
             size="sm"
             onClick={handleSendWhatsApp}
-            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            className="text-green-600 hover:text-green-700 hover:bg-green-50 touch-manipulation"
           >
             <MessageCircle className="h-3 w-3" />
           </Button>
@@ -236,7 +236,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={() => onNewReservation(guest.id)}
-          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 touch-manipulation"
         >
           <UserPlus className="h-3 w-3" />
         </Button>
@@ -246,7 +246,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={handleDownloadPDF}
-          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 touch-manipulation"
         >
           <Download className="h-3 w-3" />
         </Button>

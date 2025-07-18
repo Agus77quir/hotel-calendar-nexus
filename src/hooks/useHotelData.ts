@@ -356,11 +356,13 @@ export const useHotelData = () => {
     },
   });
 
-  // Update reservation
+  // Update reservation with automatic room status management
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('Updating reservation:', id, reservationData);
-      const { data, error } = await supabase
+      
+      // First update the reservation
+      const { data: updatedReservation, error: reservationError } = await supabase
         .from('reservations')
         .update({
           ...reservationData,
@@ -370,16 +372,48 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('Error updating reservation:', error);
-        throw error;
+      if (reservationError) {
+        console.error('Error updating reservation:', reservationError);
+        throw reservationError;
+      }
+
+      // If status is being updated, update room status accordingly
+      if (reservationData.status) {
+        let newRoomStatus: Room['status'];
+        
+        switch (reservationData.status) {
+          case 'checked-in':
+            newRoomStatus = 'occupied';
+            break;
+          case 'checked-out':
+          case 'cancelled':
+            newRoomStatus = 'available';
+            break;
+          default:
+            newRoomStatus = 'available'; // For confirmed status, room remains available until check-in
+        }
+
+        // Update room status
+        const { error: roomError } = await supabase
+          .from('rooms')
+          .update({ status: newRoomStatus })
+          .eq('id', updatedReservation.room_id);
+
+        if (roomError) {
+          console.error('Error updating room status:', roomError);
+          // Don't throw error here, reservation update succeeded
+        } else {
+          console.log(`Room ${updatedReservation.room_id} status updated to ${newRoomStatus}`);
+        }
       }
       
-      console.log('Reservation updated successfully:', data);
-      return data;
+      console.log('Reservation updated successfully:', updatedReservation);
+      return updatedReservation;
     },
     onSuccess: () => {
+      // Invalidate both reservations and rooms to update the dashboard
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
@@ -387,6 +421,22 @@ export const useHotelData = () => {
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Deleting reservation:', id);
+      
+      // Get reservation details to free up the room
+      const { data: reservation, error: fetchError } = await supabase
+        .from('reservations')
+        .select('room_id, status')
+        .eq('id', id)
+        .single();
+
+      if (!fetchError && reservation && reservation.status === 'checked-in') {
+        // Free up the room if reservation was checked-in
+        await supabase
+          .from('rooms')
+          .update({ status: 'available' })
+          .eq('id', reservation.room_id);
+      }
+
       const { error } = await supabase
         .from('reservations')
         .delete()
@@ -401,6 +451,7 @@ export const useHotelData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
