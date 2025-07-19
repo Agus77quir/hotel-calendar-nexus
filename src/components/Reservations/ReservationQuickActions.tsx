@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -15,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
 import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
-import { useHotelData } from '@/hooks/useHotelData';
 import { useState } from 'react';
 
 interface ReservationQuickActionsProps {
@@ -34,7 +34,6 @@ export const ReservationQuickActions = ({
   onNewReservation
 }: ReservationQuickActionsProps) => {
   const { toast } = useToast();
-  const { forceRefresh } = useHotelData();
   const [processing, setProcessing] = useState(false);
 
   const handleQuickCheckIn = async () => {
@@ -46,26 +45,11 @@ export const ReservationQuickActions = ({
       
       await onStatusChange(reservation.id, 'checked-in');
       
-      // Immediate refresh guarantee
-      console.log('🔄 QUICK CHECK-IN: Forcing immediate refresh');
-      await forceRefresh();
-      
-      // Multiple refresh cycles for guarantee
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 QUICK CHECK-IN: Secondary refresh');
-      }, 100);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 QUICK CHECK-IN: Final refresh');
-      }, 300);
-      
       console.log('✅ QUICK CHECK-IN: Completed successfully');
       
       toast({
         title: "Check-in realizado",
-        description: `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}. Dashboard actualizado automáticamente.`,
+        description: `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}`,
       });
     } catch (error) {
       console.error('❌ QUICK CHECK-IN: Error:', error);
@@ -88,26 +72,11 @@ export const ReservationQuickActions = ({
       
       await onStatusChange(reservation.id, 'checked-out');
       
-      // Immediate refresh guarantee
-      console.log('🔄 QUICK CHECK-OUT: Forcing immediate refresh');
-      await forceRefresh();
-      
-      // Multiple refresh cycles for guarantee
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 QUICK CHECK-OUT: Secondary refresh');
-      }, 100);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 QUICK CHECK-OUT: Final refresh');
-      }, 300);
-      
       console.log('✅ QUICK CHECK-OUT: Completed successfully');
       
       toast({
         title: "Check-out realizado",
-        description: `${guest.first_name} ${guest.last_name} finalizó estadía. Habitación ${room.number} disponible. Dashboard actualizado automáticamente.`,
+        description: `${guest.first_name} ${guest.last_name} finalizó estadía. Habitación ${room.number} disponible`,
       });
     } catch (error) {
       console.error('❌ QUICK CHECK-OUT: Error:', error);
@@ -245,7 +214,7 @@ export const ReservationQuickActions = ({
     // Badge para huéspedes actualmente registrados
     if (reservation.status === 'checked-in') {
       badges.push(
-        <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600 animate-pulse">
+        <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
           En Hotel
         </Badge>

@@ -16,18 +16,7 @@ const CheckInOutPage = () => {
   const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Auto-refresh every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('🔄 CHECK-IN/OUT PAGE: Auto-refresh');
-      forceRefresh();
-      setLastUpdate(new Date());
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [forceRefresh]);
-
-  // Update timestamp when data changes
+  // Update timestamp when data changes - NO MORE AUTO-REFRESH
   useEffect(() => {
     setLastUpdate(new Date());
   }, [reservations, rooms]);
@@ -71,22 +60,6 @@ const CheckInOutPage = () => {
         status: 'checked-in' as Reservation['status']
       });
       
-      // Immediate refresh guarantee
-      console.log('🔄 CHECK-IN: Forcing immediate refresh');
-      await forceRefresh();
-      
-      // Additional refreshes
-      setTimeout(async () => {
-        await forceRefresh();
-        setLastUpdate(new Date());
-        console.log('🔄 CHECK-IN: Secondary refresh');
-      }, 100);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CHECK-IN: Final refresh');
-      }, 300);
-      
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
@@ -96,8 +69,8 @@ const CheckInOutPage = () => {
       toast({
         title: "Check-in realizado",
         description: guest && room 
-          ? `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}. Sistema actualizado automáticamente.`
-          : "Check-in completado. Sistema actualizado automáticamente.",
+          ? `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}`
+          : "Check-in completado exitosamente",
       });
     } catch (error) {
       console.error('❌ CHECK-IN: Error:', error);
@@ -128,22 +101,6 @@ const CheckInOutPage = () => {
         status: 'checked-out' as Reservation['status']
       });
       
-      // Immediate refresh guarantee
-      console.log('🔄 CHECK-OUT: Forcing immediate refresh');
-      await forceRefresh();
-      
-      // Additional refreshes
-      setTimeout(async () => {
-        await forceRefresh();
-        setLastUpdate(new Date());
-        console.log('🔄 CHECK-OUT: Secondary refresh');
-      }, 100);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CHECK-OUT: Final refresh');
-      }, 300);
-      
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
@@ -153,8 +110,8 @@ const CheckInOutPage = () => {
       toast({
         title: "Check-out realizado",
         description: guest && room 
-          ? `${guest.first_name} ${guest.last_name} finalizó estadía en habitación ${room.number}. Sistema actualizado automáticamente.`
-          : "Check-out completado. Sistema actualizado automáticamente.",
+          ? `${guest.first_name} ${guest.last_name} finalizó estadía en habitación ${room.number}`
+          : "Check-out completado exitosamente",
       });
     } catch (error) {
       console.error('❌ CHECK-OUT: Error:', error);
@@ -292,7 +249,7 @@ const CheckInOutPage = () => {
               
               {type === 'current' && (
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="flex-1 justify-center text-green-600 border-green-600 animate-pulse">
+                  <Badge variant="outline" className="flex-1 justify-center text-green-600 border-green-600">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     En Hotel
                   </Badge>
@@ -330,12 +287,12 @@ const CheckInOutPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
-            <p className="text-muted-foreground">Cargando datos automáticos...</p>
+            <p className="text-muted-foreground">Cargando información...</p>
           </div>
           <BackToHomeButton />
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Cargando información automática...</div>
+          <div className="text-lg">Cargando datos...</div>
         </div>
       </div>
     );
@@ -347,7 +304,7 @@ const CheckInOutPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Sistema automático • Actualización cada 2s • Última: {lastUpdate.toLocaleTimeString()}
+            Actualizaciones automáticas por acciones • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex gap-2">
@@ -575,13 +532,13 @@ const CheckInOutPage = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            SISTEMA AUTOMÁTICO ACTIVO - Check-ins/Check-outs Sin Restricción de Tiempo
+            SISTEMA OPTIMIZADO - Sin Parpadeo, Actualizaciones por Acción
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
-          <div>✅ Actualizaciones automáticas: ACTIVADAS (cada 2s)</div>
+          <div>✅ Actualizaciones automáticas: SOLO POR ACCIONES</div>
           <div>✅ Check-ins/Check-outs: SIN RESTRICCIÓN DE FECHA</div>
-          <div>✅ Refrescos múltiples: GARANTIZADOS</div>
+          <div>✅ Sin parpadeo: ELIMINADO</div>
           <div>✅ Dashboard sincronizado: AUTOMÁTICO</div>
           <div>Reservas totales: {reservations.length}</div>
           <div>Confirmadas: {reservations.filter(r => r.status === 'confirmed').length}</div>

@@ -34,11 +34,9 @@ export const useRealtimeUpdates = () => {
         async (payload) => {
           console.log('🔄 RESERVATION CHANGE:', payload);
           
-          // Immediate refresh
+          // Single, immediate refresh
           await queryClient.invalidateQueries({ queryKey: ['reservations'] });
           await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-          await queryClient.refetchQueries({ queryKey: ['reservations'] });
-          await queryClient.refetchQueries({ queryKey: ['rooms'] });
           
           console.log('✅ RESERVATION DATA REFRESHED');
         }
@@ -55,10 +53,9 @@ export const useRealtimeUpdates = () => {
         async (payload) => {
           console.log('🔄 ROOM CHANGE:', payload);
           
+          // Single, immediate refresh
           await queryClient.invalidateQueries({ queryKey: ['rooms'] });
           await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-          await queryClient.refetchQueries({ queryKey: ['rooms'] });
-          await queryClient.refetchQueries({ queryKey: ['reservations'] });
           
           console.log('✅ ROOM DATA REFRESHED');
         }

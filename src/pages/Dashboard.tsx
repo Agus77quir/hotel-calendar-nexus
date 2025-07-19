@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
@@ -15,18 +16,7 @@ const Dashboard = () => {
   const { stats, rooms, reservations, guests, isLoading, forceRefresh } = useHotelData();
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Auto-refresh every 3 seconds for critical updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('🔄 DASHBOARD: Auto-refresh triggered');
-      forceRefresh();
-      setLastUpdate(new Date());
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [forceRefresh]);
-
-  // Update timestamp when data changes
+  // Update timestamp when data changes - NO MORE AUTO-REFRESH
   useEffect(() => {
     setLastUpdate(new Date());
   }, [reservations, rooms]);
@@ -58,7 +48,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando datos en tiempo real...</div>
+        <div className="text-lg">Cargando panel de control...</div>
       </div>
     );
   }
@@ -70,7 +60,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
           <p className="text-muted-foreground">
-            Sistema automático • Actualización cada 3s • Última: {lastUpdate.toLocaleTimeString()}
+            Actualizaciones automáticas por acciones • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <Button
@@ -83,13 +73,13 @@ const Dashboard = () => {
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          Actualizar Ahora
+          Actualizar Manualmente
         </Button>
       </div>
 
       {/* Real-time status indicators */}
       <div className="flex gap-2 flex-wrap">
-        <Badge variant="outline" className="text-green-600 border-green-600 animate-pulse">
+        <Badge variant="outline" className="text-green-600 border-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
           {currentGuests.length} En Hotel
         </Badge>
@@ -104,10 +94,6 @@ const Dashboard = () => {
         <Badge variant="outline" className="text-purple-600 border-purple-600">
           <AlertTriangle className="h-3 w-3 mr-1" />
           {roomStatusCount.occupied} Habitaciones Ocupadas
-        </Badge>
-        <Badge variant="outline" className="text-emerald-600 border-emerald-600">
-          <RefreshCw className="h-3 w-3 mr-1" />
-          AUTO: {lastUpdate.toLocaleTimeString()}
         </Badge>
       </div>
 
@@ -143,7 +129,7 @@ const Dashboard = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            SISTEMA AUTOMÁTICO ACTIVO - Actualizaciones Garantizadas
+            SISTEMA DE TIEMPO REAL ACTIVO - Sin Auto-Refresh Innecesario
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
@@ -171,8 +157,8 @@ const Dashboard = () => {
             <div>
               <strong>Sistema:</strong>
               <div>Huéspedes: {guests.length}</div>
-              <div>Auto-refresh: 3s</div>
               <div>Tiempo real: ACTIVO</div>
+              <div>Sin parpadeo: ✅</div>
               <div>Última: {lastUpdate.toLocaleTimeString()}</div>
             </div>
           </div>

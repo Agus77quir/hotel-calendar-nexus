@@ -137,29 +137,23 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // FORCE REFRESH FUNCTION
+  // SIMPLE FORCE REFRESH FUNCTION
   const forceRefreshAllData = async () => {
-    console.log('🚀 FORCE REFRESH: Starting...');
+    console.log('🚀 MANUAL REFRESH: Starting...');
     
     try {
-      // Invalidar todo el cache
-      queryClient.clear();
+      // Simple invalidation
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['guests'] });
       
-      // Refrescar todas las queries
-      const promises = [
-        queryClient.refetchQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['guests'] })
-      ];
-      
-      await Promise.all(promises);
-      console.log('✅ FORCE REFRESH: Completed');
+      console.log('✅ MANUAL REFRESH: Completed');
     } catch (error) {
-      console.error('❌ FORCE REFRESH: Error:', error);
+      console.error('❌ MANUAL REFRESH: Error:', error);
     }
   };
 
-  // CRITICAL: Enhanced update reservation with GUARANTEED synchronization
+  // OPTIMIZED: Enhanced update reservation - SINGLE REFRESH ONLY
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🎯 UPDATING RESERVATION:', id, reservationData);
@@ -230,21 +224,13 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('🎉 MUTATION SUCCESS - Starting refresh');
+      console.log('🎉 MUTATION SUCCESS - Single refresh only');
       
-      // Immediate refresh
-      await forceRefreshAllData();
+      // Single immediate refresh - NO MORE MULTIPLE REFRESHES
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
       
-      // Additional refreshes to guarantee sync
-      setTimeout(() => {
-        forceRefreshAllData();
-        console.log('✅ Secondary refresh completed');
-      }, 100);
-      
-      setTimeout(() => {
-        forceRefreshAllData();
-        console.log('✅ Final refresh completed');
-      }, 500);
+      console.log('✅ Single refresh completed');
     },
     onError: (error) => {
       console.error('❌ MUTATION ERROR:', error);
@@ -417,7 +403,8 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: async () => {
-      await forceRefreshAllData();
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
@@ -454,7 +441,8 @@ export const useHotelData = () => {
       console.log('Reservation deleted successfully');
     },
     onSuccess: async () => {
-      await forceRefreshAllData();
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
