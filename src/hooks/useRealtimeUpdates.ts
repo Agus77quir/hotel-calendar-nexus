@@ -7,65 +7,48 @@ export const useRealtimeUpdates = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    console.log('🚀 CRITICAL REALTIME: Setting up guaranteed real-time updates');
+    console.log('🚀 SETTING UP REAL-TIME UPDATES');
     
-    const channelId = `updates-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Crear un canal único con timestamp para evitar conflictos
+    const channelName = `hotel-updates-${Date.now()}`;
     
     const channel = supabase
-      .channel(`hotel-updates-${channelId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
         async (payload) => {
-          console.log('🔄 REALTIME RESERVATIONS:', payload);
+          console.log('🔄 RESERVATION CHANGE DETECTED:', payload);
           
-          // Immediate cache invalidation and refetch
+          // Invalidar y refrescar inmediatamente
           await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-          await queryClient.refetchQueries({ queryKey: ['reservations'] });
-          
-          // Also update rooms since reservation status affects room status
           await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          await queryClient.refetchQueries({ queryKey: ['reservations'] });
           await queryClient.refetchQueries({ queryKey: ['rooms'] });
           
-          // Force a complete refresh after a short delay
-          setTimeout(async () => {
-            await queryClient.invalidateQueries();
-            await queryClient.refetchQueries();
-            console.log('✅ REALTIME: Secondary refresh completed');
-          }, 500);
+          console.log('✅ RESERVATION DATA REFRESHED');
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
         async (payload) => {
-          console.log('🔄 REALTIME ROOMS:', payload);
+          console.log('🔄 ROOM CHANGE DETECTED:', payload);
           
           await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          await queryClient.invalidateQueries({ queryKey: ['reservations'] });
           await queryClient.refetchQueries({ queryKey: ['rooms'] });
+          await queryClient.refetchQueries({ queryKey: ['reservations'] });
           
-          setTimeout(async () => {
-            await queryClient.invalidateQueries();
-            await queryClient.refetchQueries();
-          }, 300);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'guests' },
-        async (payload) => {
-          console.log('🔄 REALTIME GUESTS:', payload);
-          
-          await queryClient.invalidateQueries({ queryKey: ['guests'] });
-          await queryClient.refetchQueries({ queryKey: ['guests'] });
+          console.log('✅ ROOM DATA REFRESHED');
         }
       )
       .subscribe((status) => {
-        console.log('📡 REALTIME STATUS:', status);
+        console.log('📡 REAL-TIME STATUS:', status);
       });
 
     return () => {
-      console.log('🔄 REALTIME: Cleaning up subscriptions');
+      console.log('🔄 CLEANING UP REAL-TIME SUBSCRIPTIONS');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);

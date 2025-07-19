@@ -31,7 +31,7 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests with aggressive caching
+  // Fetch guests
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -55,13 +55,13 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 0, // Always fresh
-    gcTime: 1000,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Fetch rooms with aggressive caching
+  // Fetch rooms
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
@@ -78,12 +78,6 @@ export const useHotelData = () => {
       }
       
       console.log('✅ Rooms fetched:', data?.length || 0);
-      console.log('✅ Room statuses:', {
-        available: data?.filter(r => r.status === 'available').length || 0,
-        occupied: data?.filter(r => r.status === 'occupied').length || 0,
-        maintenance: data?.filter(r => r.status === 'maintenance').length || 0,
-        cleaning: data?.filter(r => r.status === 'cleaning').length || 0
-      });
       
       return (data || []).map(room => ({
         ...room,
@@ -94,13 +88,13 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 0, // Always fresh
-    gcTime: 1000,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Fetch reservations with aggressive caching
+  // Fetch reservations
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
@@ -117,12 +111,6 @@ export const useHotelData = () => {
       }
       
       console.log('✅ Reservations fetched:', data?.length || 0);
-      console.log('✅ Reservation statuses:', {
-        confirmed: data?.filter(r => r.status === 'confirmed').length || 0,
-        'checked-in': data?.filter(r => r.status === 'checked-in').length || 0,
-        'checked-out': data?.filter(r => r.status === 'checked-out').length || 0,
-        cancelled: data?.filter(r => r.status === 'cancelled').length || 0
-      });
       
       return (data || []).map(reservation => ({
         ...reservation,
@@ -131,13 +119,13 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 0, // Always fresh
-    gcTime: 1000,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Calculate stats with memoization
+  // Calculate stats
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -149,43 +137,32 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // GUARANTEED FORCE REFRESH
+  // FORCE REFRESH FUNCTION
   const forceRefreshAllData = async () => {
-    console.log('🚀 FORCE REFRESH: Starting complete refresh cycle...');
+    console.log('🚀 FORCE REFRESH: Starting...');
     
     try {
-      // Clear all cache and force refetch
+      // Invalidar todo el cache
       queryClient.clear();
       
-      const refreshPromises = [
+      // Refrescar todas las queries
+      const promises = [
         queryClient.refetchQueries({ queryKey: ['rooms'] }),
         queryClient.refetchQueries({ queryKey: ['reservations'] }),
         queryClient.refetchQueries({ queryKey: ['guests'] })
       ];
       
-      await Promise.allSettled(refreshPromises);
-      
-      console.log('✅ FORCE REFRESH: Primary refresh completed');
-      
-      // Secondary refresh to guarantee synchronization
-      setTimeout(async () => {
-        await Promise.allSettled([
-          queryClient.refetchQueries({ queryKey: ['rooms'] }),
-          queryClient.refetchQueries({ queryKey: ['reservations'] }),
-          queryClient.refetchQueries({ queryKey: ['guests'] })
-        ]);
-        console.log('✅ FORCE REFRESH: Secondary refresh completed');
-      }, 300);
-      
+      await Promise.all(promises);
+      console.log('✅ FORCE REFRESH: Completed');
     } catch (error) {
-      console.error('❌ FORCE REFRESH: Error during refresh:', error);
+      console.error('❌ FORCE REFRESH: Error:', error);
     }
   };
 
   // CRITICAL: Enhanced update reservation with GUARANTEED synchronization
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🎯 CRITICAL UPDATE: Starting reservation update for:', id, reservationData);
+      console.log('🎯 UPDATING RESERVATION:', id, reservationData);
       
       // Get current reservation to know which room to update
       const { data: currentReservation, error: getCurrentError } = await supabase
@@ -198,8 +175,6 @@ export const useHotelData = () => {
         console.error('❌ Error getting current reservation:', getCurrentError);
         throw getCurrentError;
       }
-
-      console.log('📋 Current reservation state:', currentReservation);
 
       // Update the reservation
       const { data: updatedReservation, error: reservationError } = await supabase
@@ -217,72 +192,59 @@ export const useHotelData = () => {
         throw reservationError;
       }
 
-      console.log('✅ Reservation updated successfully:', updatedReservation);
+      console.log('✅ Reservation updated:', updatedReservation);
 
-      // CRITICAL: Update room status if reservation status changed
+      // Update room status if reservation status changed
       if (reservationData.status && currentReservation.room_id) {
         let newRoomStatus: Room['status'];
-        
-        console.log('🏠 ROOM STATUS UPDATE: Processing status change:', {
-          reservationId: id,
-          roomId: currentReservation.room_id,
-          oldReservationStatus: currentReservation.status,
-          newReservationStatus: reservationData.status
-        });
         
         switch (reservationData.status) {
           case 'checked-in':
             newRoomStatus = 'occupied';
-            console.log('🔴 Setting room to OCCUPIED due to check-in');
             break;
           case 'checked-out':
             newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE due to check-out');
             break;
           case 'cancelled':
             newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE due to cancellation');
             break;
           default:
             newRoomStatus = 'available';
-            console.log('🟢 Setting room to AVAILABLE for status:', reservationData.status);
         }
 
-        // Update room status
-        console.log(`🔄 Updating room ${currentReservation.room_id} to status: ${newRoomStatus}`);
+        console.log(`🏠 Updating room ${currentReservation.room_id} to ${newRoomStatus}`);
         
-        const { data: updatedRoom, error: roomError } = await supabase
+        const { error: roomError } = await supabase
           .from('rooms')
           .update({ status: newRoomStatus })
-          .eq('id', currentReservation.room_id)
-          .select()
-          .single();
+          .eq('id', currentReservation.room_id);
 
         if (roomError) {
-          console.error('❌ CRITICAL ERROR: Failed to update room status:', roomError);
-          throw new Error(`Failed to update room status: ${roomError.message}`);
-        } else {
-          console.log('✅ ROOM STATUS UPDATED SUCCESSFULLY:', {
-            roomId: currentReservation.room_id,
-            newStatus: newRoomStatus,
-            updatedRoom: updatedRoom
-          });
+          console.error('❌ Error updating room status:', roomError);
+          throw roomError;
         }
+        
+        console.log('✅ Room status updated successfully');
       }
       
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('🎉 UPDATE SUCCESS: Starting immediate refresh cycles...');
+      console.log('🎉 MUTATION SUCCESS - Starting refresh');
       
       // Immediate refresh
       await forceRefreshAllData();
       
-      // Additional guaranteed refresh cycles
-      setTimeout(() => forceRefreshAllData(), 500);
-      setTimeout(() => forceRefreshAllData(), 1500);
+      // Additional refreshes to guarantee sync
+      setTimeout(() => {
+        forceRefreshAllData();
+        console.log('✅ Secondary refresh completed');
+      }, 100);
       
-      console.log('✅ UPDATE SUCCESS: All refresh cycles initiated');
+      setTimeout(() => {
+        forceRefreshAllData();
+        console.log('✅ Final refresh completed');
+      }, 500);
     },
     onError: (error) => {
       console.error('❌ MUTATION ERROR:', error);

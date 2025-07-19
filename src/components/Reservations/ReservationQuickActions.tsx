@@ -42,38 +42,33 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🎯 CRITICAL QUICK CHECK-IN: Starting for reservation:', reservation.id);
+      console.log('🎯 QUICK CHECK-IN: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-in');
       
-      // CRITICAL: Guaranteed refresh cycles
-      console.log('🔄 CRITICAL QUICK CHECK-IN: Starting guaranteed refresh cycles');
+      // Immediate refresh guarantee
+      console.log('🔄 QUICK CHECK-IN: Forcing immediate refresh');
       await forceRefresh();
       
-      // Multiple guaranteed refresh cycles
+      // Multiple refresh cycles for guarantee
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-IN: Secondary refresh completed');
-      }, 200);
+        console.log('🔄 QUICK CHECK-IN: Secondary refresh');
+      }, 100);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-IN: Tertiary refresh completed');
-      }, 800);
+        console.log('🔄 QUICK CHECK-IN: Final refresh');
+      }, 300);
       
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-IN: Final refresh completed');
-      }, 2000);
-      
-      console.log('✅ CRITICAL QUICK CHECK-IN: Completed with guaranteed updates');
+      console.log('✅ QUICK CHECK-IN: Completed successfully');
       
       toast({
-        title: "Check-in realizado exitosamente",
-        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. Sistema actualizado automáticamente.`,
+        title: "Check-in realizado",
+        description: `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}. Dashboard actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ CRITICAL QUICK CHECK-IN: Error:', error);
+      console.error('❌ QUICK CHECK-IN: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-in",
@@ -89,38 +84,33 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🎯 CRITICAL QUICK CHECK-OUT: Starting for reservation:', reservation.id);
+      console.log('🎯 QUICK CHECK-OUT: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-out');
       
-      // CRITICAL: Guaranteed refresh cycles
-      console.log('🔄 CRITICAL QUICK CHECK-OUT: Starting guaranteed refresh cycles');
+      // Immediate refresh guarantee
+      console.log('🔄 QUICK CHECK-OUT: Forcing immediate refresh');
       await forceRefresh();
       
-      // Multiple guaranteed refresh cycles
+      // Multiple refresh cycles for guarantee
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-OUT: Secondary refresh completed');
-      }, 200);
+        console.log('🔄 QUICK CHECK-OUT: Secondary refresh');
+      }, 100);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-OUT: Tertiary refresh completed');
-      }, 800);
+        console.log('🔄 QUICK CHECK-OUT: Final refresh');
+      }, 300);
       
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CRITICAL QUICK CHECK-OUT: Final refresh completed');
-      }, 2000);
-      
-      console.log('✅ CRITICAL QUICK CHECK-OUT: Completed with guaranteed updates');
+      console.log('✅ QUICK CHECK-OUT: Completed successfully');
       
       toast({
-        title: "Check-out realizado exitosamente",
-        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible. Sistema actualizado automáticamente.`,
+        title: "Check-out realizado",
+        description: `${guest.first_name} ${guest.last_name} finalizó estadía. Habitación ${room.number} disponible. Dashboard actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ CRITICAL QUICK CHECK-OUT: Error:', error);
+      console.error('❌ QUICK CHECK-OUT: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-out",
@@ -202,10 +192,10 @@ export const ReservationQuickActions = ({
           size="sm"
           onClick={handleQuickCheckIn}
           disabled={processing}
-          className="bg-green-600 hover:bg-green-700 text-white touch-manipulation disabled:opacity-50"
+          className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
         >
           <CheckCircle className="h-3 w-3 mr-1" />
-          {processing ? 'Procesando...' : isToday(reservation.check_in) ? 'Check-in' : 'Check-in Anticipado'}
+          {processing ? 'Procesando...' : 'Check-in'}
         </Button>
       );
     }
@@ -218,10 +208,10 @@ export const ReservationQuickActions = ({
           size="sm"
           onClick={handleQuickCheckOut}
           disabled={processing}
-          className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
         >
           <Clock className="h-3 w-3 mr-1" />
-          {processing ? 'Procesando...' : isToday(reservation.check_out) ? 'Check-out' : 'Check-out Anticipado'}
+          {processing ? 'Procesando...' : 'Check-out'}
         </Button>
       );
     }
@@ -255,9 +245,9 @@ export const ReservationQuickActions = ({
     // Badge para huéspedes actualmente registrados
     if (reservation.status === 'checked-in') {
       badges.push(
-        <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600">
+        <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600 animate-pulse">
           <CheckCircle className="h-3 w-3 mr-1" />
-          Huésped Registrado
+          En Hotel
         </Badge>
       );
     }
@@ -292,7 +282,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={handleSendEmail}
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 touch-manipulation"
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
         >
           <Mail className="h-3 w-3" />
         </Button>
@@ -302,7 +292,7 @@ export const ReservationQuickActions = ({
             variant="ghost"
             size="sm"
             onClick={handleSendWhatsApp}
-            className="text-green-600 hover:text-green-700 hover:bg-green-50 touch-manipulation"
+            className="text-green-600 hover:text-green-700 hover:bg-green-50"
           >
             <MessageCircle className="h-3 w-3" />
           </Button>
@@ -313,7 +303,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={() => onNewReservation(guest.id)}
-          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 touch-manipulation"
+          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
         >
           <UserPlus className="h-3 w-3" />
         </Button>
@@ -323,7 +313,7 @@ export const ReservationQuickActions = ({
           variant="ghost"
           size="sm"
           onClick={handleDownloadPDF}
-          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 touch-manipulation"
+          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
         >
           <Download className="h-3 w-3" />
         </Button>

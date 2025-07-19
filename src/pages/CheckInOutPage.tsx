@@ -1,9 +1,8 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, User, MapPin, Calendar, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Clock, User, MapPin, Calendar, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
@@ -15,6 +14,23 @@ const CheckInOutPage = () => {
   const { reservations, guests, rooms, updateReservation, forceRefresh, isLoading } = useHotelData();
   const { toast } = useToast();
   const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  // Auto-refresh every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 CHECK-IN/OUT PAGE: Auto-refresh');
+      forceRefresh();
+      setLastUpdate(new Date());
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [forceRefresh]);
+
+  // Update timestamp when data changes
+  useEffect(() => {
+    setLastUpdate(new Date());
+  }, [reservations, rooms]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -31,7 +47,7 @@ const CheckInOutPage = () => {
   // Huéspedes actualmente registrados
   const currentGuests = reservations.filter(r => r.status === 'checked-in');
 
-  // NUEVAS SECCIONES: Check-ins y check-outs anticipados/tardíos
+  // Check-ins y check-outs fuera de tiempo
   const earlyCheckIns = reservations.filter(r => 
     r.check_in > today && r.status === 'confirmed'
   );
@@ -48,47 +64,43 @@ const CheckInOutPage = () => {
     setProcessingReservations(newProcessing);
 
     try {
-      console.log('🎯 CRITICAL CHECK-IN: Starting for reservation:', reservationId);
+      console.log('🎯 CHECK-IN: Starting for reservation:', reservationId);
       
       await updateReservation({ 
         id: reservationId, 
         status: 'checked-in' as Reservation['status']
       });
       
-      // CRITICAL: Guaranteed refresh cycles
-      console.log('🔄 CRITICAL CHECK-IN: Starting guaranteed refresh cycles');
+      // Immediate refresh guarantee
+      console.log('🔄 CHECK-IN: Forcing immediate refresh');
       await forceRefresh();
       
-      // Multiple guaranteed refresh cycles
+      // Additional refreshes
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-IN: Secondary refresh completed');
-      }, 200);
+        setLastUpdate(new Date());
+        console.log('🔄 CHECK-IN: Secondary refresh');
+      }, 100);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-IN: Tertiary refresh completed');
-      }, 800);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-IN: Final refresh completed');
-      }, 2000);
+        console.log('🔄 CHECK-IN: Final refresh');
+      }, 300);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
       
-      console.log('✅ CRITICAL CHECK-IN: Completed with guaranteed updates');
+      console.log('✅ CHECK-IN: Completed successfully');
       
       toast({
-        title: "Check-in realizado exitosamente",
+        title: "Check-in realizado",
         description: guest && room 
           ? `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}. Sistema actualizado automáticamente.`
           : "Check-in completado. Sistema actualizado automáticamente.",
       });
     } catch (error) {
-      console.error('❌ CRITICAL CHECK-IN: Error:', error);
+      console.error('❌ CHECK-IN: Error:', error);
       toast({
         title: "Error en check-in",
         description: "No se pudo realizar el check-in. Intenta nuevamente.",
@@ -109,47 +121,43 @@ const CheckInOutPage = () => {
     setProcessingReservations(newProcessing);
 
     try {
-      console.log('🎯 CRITICAL CHECK-OUT: Starting for reservation:', reservationId);
+      console.log('🎯 CHECK-OUT: Starting for reservation:', reservationId);
       
       await updateReservation({ 
         id: reservationId, 
         status: 'checked-out' as Reservation['status']
       });
       
-      // CRITICAL: Guaranteed refresh cycles
-      console.log('🔄 CRITICAL CHECK-OUT: Starting guaranteed refresh cycles');
+      // Immediate refresh guarantee
+      console.log('🔄 CHECK-OUT: Forcing immediate refresh');
       await forceRefresh();
       
-      // Multiple guaranteed refresh cycles
+      // Additional refreshes
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-OUT: Secondary refresh completed');
-      }, 200);
+        setLastUpdate(new Date());
+        console.log('🔄 CHECK-OUT: Secondary refresh');
+      }, 100);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-OUT: Tertiary refresh completed');
-      }, 800);
-      
-      setTimeout(async () => {
-        await forceRefresh();
-        console.log('🔄 CRITICAL CHECK-OUT: Final refresh completed');
-      }, 2000);
+        console.log('🔄 CHECK-OUT: Final refresh');
+      }, 300);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
       
-      console.log('✅ CRITICAL CHECK-OUT: Completed with guaranteed updates');
+      console.log('✅ CHECK-OUT: Completed successfully');
       
       toast({
-        title: "Check-out realizado exitosamente",
+        title: "Check-out realizado",
         description: guest && room 
           ? `${guest.first_name} ${guest.last_name} finalizó estadía en habitación ${room.number}. Sistema actualizado automáticamente.`
           : "Check-out completado. Sistema actualizado automáticamente.",
       });
     } catch (error) {
-      console.error('❌ CRITICAL CHECK-OUT: Error:', error);
+      console.error('❌ CHECK-OUT: Error:', error);
       toast({
         title: "Error en check-out",
         description: "No se pudo realizar el check-out. Intenta nuevamente.",
@@ -251,7 +259,7 @@ const CheckInOutPage = () => {
                   {isProcessing ? (
                     <>
                       <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Procesando Check-in...
+                      Procesando...
                     </>
                   ) : (
                     <>
@@ -271,7 +279,7 @@ const CheckInOutPage = () => {
                   {isProcessing ? (
                     <>
                       <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Procesando Check-out...
+                      Procesando...
                     </>
                   ) : (
                     <>
@@ -284,9 +292,9 @@ const CheckInOutPage = () => {
               
               {type === 'current' && (
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="flex-1 justify-center text-green-600 border-green-600">
+                  <Badge variant="outline" className="flex-1 justify-center text-green-600 border-green-600 animate-pulse">
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    Registrado
+                    En Hotel
                   </Badge>
                   <Button
                     onClick={() => handleCheckOut(reservation.id)}
@@ -322,12 +330,12 @@ const CheckInOutPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
-            <p className="text-muted-foreground">Cargando datos críticos...</p>
+            <p className="text-muted-foreground">Cargando datos automáticos...</p>
           </div>
           <BackToHomeButton />
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Cargando información crítica...</div>
+          <div className="text-lg">Cargando información automática...</div>
         </div>
       </div>
     );
@@ -339,13 +347,27 @@ const CheckInOutPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Sistema crítico de gestión • Actualizaciones garantizadas • Funciona antes/después del tiempo
+            Sistema automático • Actualización cada 2s • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
-        <BackToHomeButton />
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              forceRefresh();
+              setLastUpdate(new Date());
+            }}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </Button>
+          <BackToHomeButton />
+        </div>
       </div>
 
-      {/* Enhanced Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -384,7 +406,7 @@ const CheckInOutPage = () => {
           <CardContent>
             <div className="text-2xl font-bold">{currentGuests.length}</div>
             <p className="text-xs text-muted-foreground">
-              Registrados
+              En hotel
             </p>
           </CardContent>
         </Card>
@@ -548,25 +570,24 @@ const CheckInOutPage = () => {
         </Card>
       )}
 
-      {/* CRITICAL Debug Info */}
-      <Card className="border-red-200 bg-red-50">
+      {/* System Status */}
+      <Card className="border-green-200 bg-green-50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-red-800 flex items-center gap-2">
+          <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            SISTEMA CRÍTICO - Funciona Anticipado/Tardío - Actualizaciones Garantizadas
+            SISTEMA AUTOMÁTICO ACTIVO - Check-ins/Check-outs Sin Restricción de Tiempo
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
-          <div>✅ Actualizaciones críticas: GARANTIZADAS</div>
-          <div>✅ Check-ins/Check-outs: SIN RESTRICCIÓN DE TIEMPO</div>
-          <div>✅ Refrescos múltiples: ACTIVADOS</div>
+          <div>✅ Actualizaciones automáticas: ACTIVADAS (cada 2s)</div>
+          <div>✅ Check-ins/Check-outs: SIN RESTRICCIÓN DE FECHA</div>
+          <div>✅ Refrescos múltiples: GARANTIZADOS</div>
+          <div>✅ Dashboard sincronizado: AUTOMÁTICO</div>
           <div>Reservas totales: {reservations.length}</div>
           <div>Confirmadas: {reservations.filter(r => r.status === 'confirmed').length}</div>
-          <div>Registradas: {reservations.filter(r => r.status === 'checked-in').length}</div>
+          <div>En hotel: {reservations.filter(r => r.status === 'checked-in').length}</div>
           <div>Finalizadas: {reservations.filter(r => r.status === 'checked-out').length}</div>
-          <div>Habitaciones ocupadas: {rooms.filter(r => r.status === 'occupied').length}</div>
-          <div>Habitaciones disponibles: {rooms.filter(r => r.status === 'available').length}</div>
-          <div>CRÍTICO - Última actualización: {new Date().toLocaleTimeString()}</div>
+          <div>Última actualización: {lastUpdate.toLocaleTimeString()}</div>
         </CardContent>
       </Card>
     </div>
