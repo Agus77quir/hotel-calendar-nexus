@@ -27,13 +27,16 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // REAL-TIME SUBSCRIPTIONS FOR AUTOMATIC UPDATES
+  // FIXED REAL-TIME SUBSCRIPTIONS - Single subscription per hook instance
   useEffect(() => {
     console.log('🔄 REALTIME: Setting up real-time subscriptions for automatic updates');
     
+    // Create unique channel names to avoid conflicts
+    const channelId = Math.random().toString(36).substr(2, 9);
+    
     // Subscribe to reservations changes
     const reservationsChannel = supabase
-      .channel('reservations-changes')
+      .channel(`reservations-changes-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -52,7 +55,7 @@ export const useHotelData = () => {
 
     // Subscribe to rooms changes
     const roomsChannel = supabase
-      .channel('rooms-changes')
+      .channel(`rooms-changes-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -71,7 +74,7 @@ export const useHotelData = () => {
 
     // Subscribe to guests changes
     const guestsChannel = supabase
-      .channel('guests-changes')
+      .channel(`guests-changes-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -95,7 +98,7 @@ export const useHotelData = () => {
       supabase.removeChannel(roomsChannel);
       supabase.removeChannel(guestsChannel);
     };
-  }, [queryClient]);
+  }, [queryClient]); // Only depend on queryClient to avoid re-subscriptions
 
   // Fetch guests with optimized caching
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
