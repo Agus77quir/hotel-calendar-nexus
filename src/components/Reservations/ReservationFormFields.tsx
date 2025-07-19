@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign, CalendarIcon } from 'lucide-react';
-import { Room, Guest } from '@/types/hotel';
+import { Room, Guest, Reservation } from '@/types/hotel';
 import { DiscountSection } from './DiscountSection';
+import { GuestSearchInput } from './GuestSearchInput';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ interface ReservationFormFieldsProps {
   };
   availableRooms: Room[];
   guests: Guest[];
+  reservations: Reservation[];
   selectedRoom: Room | undefined;
   selectedGuest: Guest | undefined;
   maxCapacity: number;
@@ -43,6 +44,7 @@ export const ReservationFormFields = ({
   formData,
   availableRooms,
   guests,
+  reservations,
   selectedRoom,
   selectedGuest,
   maxCapacity,
@@ -70,6 +72,9 @@ export const ReservationFormFields = ({
     }
   };
 
+  // Get all rooms for search functionality
+  const allRooms = [...availableRooms];
+
   return (
     <div className="space-y-6">
       {/* Guest Selection */}
@@ -81,40 +86,64 @@ export const ReservationFormFields = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="w-full max-w-md mx-auto">
-            <Label htmlFor="guest_id" className="block text-center mb-2">Huésped *</Label>
-            <Select
-              value={formData.guest_id}
-              onValueChange={(value) => onFormChange('guest_id', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar huésped" />
-              </SelectTrigger>
-              <SelectContent>
-                {guests.map((guest) => (
-                  <SelectItem key={guest.id} value={guest.id}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{guest.first_name} {guest.last_name}</span>
-                      {guest.is_associated && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          Asociado
-                        </Badge>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="w-full">
+            <Label className="block mb-2">Buscar Huésped *</Label>
+            <GuestSearchInput
+              guests={guests}
+              rooms={allRooms}
+              reservations={reservations}
+              selectedGuestId={formData.guest_id}
+              onGuestSelect={(guestId) => onFormChange('guest_id', guestId)}
+              placeholder="Buscar huésped por nombre o habitación..."
+            />
           </div>
 
+          {!formData.guest_id && (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                O selecciona un huésped de la lista tradicional:
+              </p>
+              <div className="mt-2">
+                <Select
+                  value={formData.guest_id}
+                  onValueChange={(value) => onFormChange('guest_id', value)}
+                >
+                  <SelectTrigger className="w-full max-w-md mx-auto">
+                    <SelectValue placeholder="Seleccionar huésped" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {guests.map((guest) => (
+                      <SelectItem key={guest.id} value={guest.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{guest.first_name} {guest.last_name}</span>
+                          {guest.is_associated && (
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              Asociado
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {selectedGuest && (
-            <div className="p-3 bg-muted rounded-lg max-w-md mx-auto">
-              <div className="grid grid-cols-1 gap-2 text-sm text-center">
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="grid grid-cols-1 gap-2 text-sm">
                 <div>
                   <span className="font-medium">Email:</span> {selectedGuest.email}
                 </div>
                 <div>
                   <span className="font-medium">Teléfono:</span> {selectedGuest.phone}
+                </div>
+                <div>
+                  <span className="font-medium">Documento:</span> {selectedGuest.document}
+                </div>
+                <div>
+                  <span className="font-medium">Nacionalidad:</span> {selectedGuest.nationality}
                 </div>
               </div>
             </div>
