@@ -27,6 +27,7 @@ const Dashboard = () => {
 
   // Get current date
   const today = new Date().toISOString().split('T')[0];
+  const selectedDate = new Date(); // Add selectedDate for DailyReservations
   
   // Current guests (checked-in)
   const currentGuests = reservations.filter(r => r.status === 'checked-in');
@@ -141,6 +142,7 @@ const Dashboard = () => {
       
       {/* Receptionist specific stats */}
       <ReceptionistStatsCards 
+        stats={stats}
         rooms={rooms} 
         reservations={reservations} 
         guests={guests} 
@@ -149,12 +151,17 @@ const Dashboard = () => {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RoomStatusChart rooms={rooms} />
-        <OccupancyChart reservations={reservations} />
+        <OccupancyChart rooms={rooms} reservations={reservations} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart reservations={reservations} />
-        <DailyReservations reservations={reservations} />
+        <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
+        <DailyReservations 
+          reservations={reservations} 
+          rooms={rooms} 
+          guests={guests} 
+          selectedDate={selectedDate}
+        />
       </div>
     </div>
   );

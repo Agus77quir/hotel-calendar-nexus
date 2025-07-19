@@ -1,14 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BedDouble, Wrench, Calendar, Clock, Bed } from 'lucide-react';
-import { HotelStats, Room } from '@/types/hotel';
+import { HotelStats, Room, Reservation, Guest } from '@/types/hotel';
 
 interface ReceptionistStatsCardsProps {
   stats: HotelStats;
   rooms?: Room[];
+  reservations?: Reservation[];
+  guests?: Guest[];
 }
 
-export const ReceptionistStatsCards = ({ stats, rooms = [] }: ReceptionistStatsCardsProps) => {
+export const ReceptionistStatsCards = ({ stats, rooms = [], reservations = [], guests = [] }: ReceptionistStatsCardsProps) => {
   // Get maintenance room numbers
   const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
   const maintenanceRoomNumbers = maintenanceRooms.map(r => r.number).sort((a, b) => {

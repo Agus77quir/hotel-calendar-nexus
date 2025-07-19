@@ -11,7 +11,7 @@ interface RevenueChartProps {
   guests: Guest[];
 }
 
-export const RevenueChart = ({ reservations, rooms }: RevenueChartProps) => {
+export const RevenueChart = ({ reservations, rooms, guests }: RevenueChartProps) => {
   // Generate revenue data for the last 30 days
   const generateRevenueData = () => {
     const data = [];
