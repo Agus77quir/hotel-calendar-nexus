@@ -10,6 +10,7 @@ import { Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
 const ReservationsPage = () => {
+  // Real-time updates are handled automatically in useHotelData
   const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');

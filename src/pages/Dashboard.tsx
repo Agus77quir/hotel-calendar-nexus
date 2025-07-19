@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
@@ -16,13 +15,13 @@ const Dashboard = () => {
   const { stats, rooms, reservations, guests, isLoading, forceRefresh } = useHotelData();
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Auto-refresh every 2 seconds for critical updates
+  // Auto-refresh every 3 seconds for critical updates
   useEffect(() => {
     const interval = setInterval(() => {
       console.log('🔄 DASHBOARD: Auto-refresh triggered');
       forceRefresh();
       setLastUpdate(new Date());
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [forceRefresh]);
@@ -71,7 +70,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
           <p className="text-muted-foreground">
-            Sistema automático • Actualización cada 2s • Última: {lastUpdate.toLocaleTimeString()}
+            Sistema automático • Actualización cada 3s • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <Button
@@ -172,7 +171,7 @@ const Dashboard = () => {
             <div>
               <strong>Sistema:</strong>
               <div>Huéspedes: {guests.length}</div>
-              <div>Auto-refresh: 2s</div>
+              <div>Auto-refresh: 3s</div>
               <div>Tiempo real: ACTIVO</div>
               <div>Última: {lastUpdate.toLocaleTimeString()}</div>
             </div>

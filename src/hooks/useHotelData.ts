@@ -11,7 +11,7 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Set up real-time updates
+  // SINGLE REAL-TIME CONNECTION - Only initialize here
   useRealtimeUpdates();
 
   // Set current user context para audit
