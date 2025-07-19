@@ -45,9 +45,15 @@ export const useHotelData = () => {
       }
       
       console.log('✅ Guests fetched:', data?.length || 0);
-      return data || [];
+      
+      // Cast to proper Guest types
+      return (data || []).map(guest => ({
+        ...guest,
+        is_associated: Boolean(guest.is_associated),
+        discount_percentage: Number(guest.discount_percentage) || 0
+      })) as Guest[];
     },
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 500, // 0.5 seconds
     gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -78,9 +84,17 @@ export const useHotelData = () => {
         cleaning: data?.filter(r => r.status === 'cleaning').length || 0
       });
       
-      return data || [];
+      // Cast to proper Room types
+      return (data || []).map(room => ({
+        ...room,
+        type: room.type as Room['type'],
+        status: room.status as Room['status'],
+        price: Number(room.price),
+        capacity: Number(room.capacity),
+        amenities: room.amenities || []
+      })) as Room[];
     },
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 500, // 0.5 seconds
     gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -111,9 +125,15 @@ export const useHotelData = () => {
         cancelled: data?.filter(r => r.status === 'cancelled').length || 0
       });
       
-      return data || [];
+      // Cast to proper Reservation types
+      return (data || []).map(reservation => ({
+        ...reservation,
+        status: reservation.status as Reservation['status'],
+        guests_count: Number(reservation.guests_count),
+        total_amount: Number(reservation.total_amount)
+      })) as Reservation[];
     },
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 500, // 0.5 seconds
     gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
