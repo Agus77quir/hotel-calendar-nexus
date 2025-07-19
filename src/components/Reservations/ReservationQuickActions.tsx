@@ -42,33 +42,38 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🔄 ENHANCED QUICK CHECK-IN: Starting for reservation:', reservation.id);
+      console.log('🎯 CRITICAL QUICK CHECK-IN: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-in');
       
-      // ENHANCED: Multiple refresh cycles to guarantee UI updates
-      console.log('🔄 ENHANCED QUICK CHECK-IN: Starting multiple refresh cycles');
+      // CRITICAL: Guaranteed refresh cycles
+      console.log('🔄 CRITICAL QUICK CHECK-IN: Starting guaranteed refresh cycles');
       await forceRefresh();
       
-      // Additional refresh cycles for absolute certainty
+      // Multiple guaranteed refresh cycles
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 ENHANCED QUICK CHECK-IN: Secondary refresh completed');
-      }, 300);
+        console.log('🔄 CRITICAL QUICK CHECK-IN: Secondary refresh completed');
+      }, 200);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 ENHANCED QUICK CHECK-IN: Tertiary refresh completed');
-      }, 1000);
+        console.log('🔄 CRITICAL QUICK CHECK-IN: Tertiary refresh completed');
+      }, 800);
       
-      console.log('✅ ENHANCED QUICK CHECK-IN: Completed successfully with guaranteed updates');
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 CRITICAL QUICK CHECK-IN: Final refresh completed');
+      }, 2000);
+      
+      console.log('✅ CRITICAL QUICK CHECK-IN: Completed with guaranteed updates');
       
       toast({
         title: "Check-in realizado exitosamente",
-        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. Dashboard actualizado automáticamente.`,
+        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. Sistema actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ ENHANCED QUICK CHECK-IN: Error:', error);
+      console.error('❌ CRITICAL QUICK CHECK-IN: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-in",
@@ -84,33 +89,38 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🔄 ENHANCED QUICK CHECK-OUT: Starting for reservation:', reservation.id);
+      console.log('🎯 CRITICAL QUICK CHECK-OUT: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-out');
       
-      // ENHANCED: Multiple refresh cycles to guarantee UI updates
-      console.log('🔄 ENHANCED QUICK CHECK-OUT: Starting multiple refresh cycles');
+      // CRITICAL: Guaranteed refresh cycles
+      console.log('🔄 CRITICAL QUICK CHECK-OUT: Starting guaranteed refresh cycles');
       await forceRefresh();
       
-      // Additional refresh cycles for absolute certainty
+      // Multiple guaranteed refresh cycles
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 ENHANCED QUICK CHECK-OUT: Secondary refresh completed');
-      }, 300);
+        console.log('🔄 CRITICAL QUICK CHECK-OUT: Secondary refresh completed');
+      }, 200);
       
       setTimeout(async () => {
         await forceRefresh();
-        console.log('🔄 ENHANCED QUICK CHECK-OUT: Tertiary refresh completed');
-      }, 1000);
+        console.log('🔄 CRITICAL QUICK CHECK-OUT: Tertiary refresh completed');
+      }, 800);
       
-      console.log('✅ ENHANCED QUICK CHECK-OUT: Completed successfully with guaranteed updates');
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 CRITICAL QUICK CHECK-OUT: Final refresh completed');
+      }, 2000);
+      
+      console.log('✅ CRITICAL QUICK CHECK-OUT: Completed with guaranteed updates');
       
       toast({
         title: "Check-out realizado exitosamente",
-        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible. Dashboard actualizado automáticamente.`,
+        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible. Sistema actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ ENHANCED QUICK CHECK-OUT: Error:', error);
+      console.error('❌ CRITICAL QUICK CHECK-OUT: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-out",
@@ -184,8 +194,8 @@ export const ReservationQuickActions = ({
   const getStatusActions = () => {
     const actions = [];
 
-    // Check-in automático si es hoy y está confirmada
-    if (reservation.status === 'confirmed' && isToday(reservation.check_in)) {
+    // Check-in para cualquier reserva confirmada (sin restricción de fecha)
+    if (reservation.status === 'confirmed') {
       actions.push(
         <Button
           key="checkin"
@@ -195,13 +205,13 @@ export const ReservationQuickActions = ({
           className="bg-green-600 hover:bg-green-700 text-white touch-manipulation disabled:opacity-50"
         >
           <CheckCircle className="h-3 w-3 mr-1" />
-          {processing ? 'Procesando...' : 'Check-in'}
+          {processing ? 'Procesando...' : isToday(reservation.check_in) ? 'Check-in' : 'Check-in Anticipado'}
         </Button>
       );
     }
 
-    // Check-out automático si es hoy y está registrado
-    if (reservation.status === 'checked-in' && isToday(reservation.check_out)) {
+    // Check-out para cualquier reserva registrada (sin restricción de fecha)
+    if (reservation.status === 'checked-in') {
       actions.push(
         <Button
           key="checkout"
@@ -211,23 +221,7 @@ export const ReservationQuickActions = ({
           className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation disabled:opacity-50"
         >
           <Clock className="h-3 w-3 mr-1" />
-          {processing ? 'Procesando...' : 'Check-out'}
-        </Button>
-      );
-    }
-
-    // Check-out anticipado para huéspedes registrados
-    if (reservation.status === 'checked-in' && !isToday(reservation.check_out)) {
-      actions.push(
-        <Button
-          key="early-checkout"
-          size="sm"
-          onClick={handleQuickCheckOut}
-          disabled={processing}
-          className="bg-orange-600 hover:bg-orange-700 text-white touch-manipulation disabled:opacity-50"
-        >
-          <Clock className="h-3 w-3 mr-1" />
-          {processing ? 'Procesando...' : 'Check-out Anticipado'}
+          {processing ? 'Procesando...' : isToday(reservation.check_out) ? 'Check-out' : 'Check-out Anticipado'}
         </Button>
       );
     }
@@ -263,7 +257,7 @@ export const ReservationQuickActions = ({
       badges.push(
         <Badge key="current-guest" variant="outline" className="text-green-600 border-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
-          Huésped Actual
+          Huésped Registrado
         </Badge>
       );
     }

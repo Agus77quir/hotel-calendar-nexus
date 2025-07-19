@@ -4,11 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeUpdates } from './useRealtimeUpdates';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Set up real-time updates
+  useRealtimeUpdates();
 
   // Set current user context para audit
   useEffect(() => {
@@ -27,80 +31,7 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // FIXED REAL-TIME SUBSCRIPTIONS - Single subscription per hook instance
-  useEffect(() => {
-    console.log('🔄 REALTIME: Setting up real-time subscriptions for automatic updates');
-    
-    // Create unique channel names to avoid conflicts
-    const channelId = Math.random().toString(36).substr(2, 9);
-    
-    // Subscribe to reservations changes
-    const reservationsChannel = supabase
-      .channel(`reservations-changes-${channelId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'reservations'
-        },
-        (payload) => {
-          console.log('📡 REALTIME: Reservations change detected:', payload);
-          // Invalidate and refetch reservations immediately
-          queryClient.invalidateQueries({ queryKey: ['reservations'] });
-          queryClient.refetchQueries({ queryKey: ['reservations'] });
-        }
-      )
-      .subscribe();
-
-    // Subscribe to rooms changes
-    const roomsChannel = supabase
-      .channel(`rooms-changes-${channelId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rooms'
-        },
-        (payload) => {
-          console.log('📡 REALTIME: Rooms change detected:', payload);
-          // Invalidate and refetch rooms immediately
-          queryClient.invalidateQueries({ queryKey: ['rooms'] });
-          queryClient.refetchQueries({ queryKey: ['rooms'] });
-        }
-      )
-      .subscribe();
-
-    // Subscribe to guests changes
-    const guestsChannel = supabase
-      .channel(`guests-changes-${channelId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'guests'
-        },
-        (payload) => {
-          console.log('📡 REALTIME: Guests change detected:', payload);
-          // Invalidate and refetch guests immediately
-          queryClient.invalidateQueries({ queryKey: ['guests'] });
-          queryClient.refetchQueries({ queryKey: ['guests'] });
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      console.log('🔄 REALTIME: Cleaning up real-time subscriptions');
-      supabase.removeChannel(reservationsChannel);
-      supabase.removeChannel(roomsChannel);
-      supabase.removeChannel(guestsChannel);
-    };
-  }, [queryClient]); // Only depend on queryClient to avoid re-subscriptions
-
-  // Fetch guests with optimized caching
+  // Fetch guests with aggressive caching
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -124,14 +55,13 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 1000, // 1 second
-    gcTime: 5000, // 5 seconds
+    staleTime: 0, // Always fresh
+    gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
-  // Fetch rooms with optimized caching
+  // Fetch rooms with aggressive caching
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
@@ -164,14 +94,13 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 1000, // 1 second
-    gcTime: 5000, // 5 seconds
+    staleTime: 0, // Always fresh
+    gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
-  // Fetch reservations with optimized caching
+  // Fetch reservations with aggressive caching
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
@@ -202,11 +131,10 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 1000, // 1 second
-    gcTime: 5000, // 5 seconds
+    staleTime: 0, // Always fresh
+    gcTime: 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
   // Calculate stats with memoization
@@ -221,47 +149,43 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // ENHANCED FORCE REFRESH WITH IMMEDIATE UI UPDATES
+  // GUARANTEED FORCE REFRESH
   const forceRefreshAllData = async () => {
-    console.log('🚀 ENHANCED FORCE REFRESH: Starting immediate complete data refresh...');
+    console.log('🚀 FORCE REFRESH: Starting complete refresh cycle...');
     
     try {
-      // Clear all cache immediately
+      // Clear all cache and force refetch
       queryClient.clear();
       
-      // Force immediate background refetch of all queries
       const refreshPromises = [
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['guests'] }),
         queryClient.refetchQueries({ queryKey: ['rooms'] }),
         queryClient.refetchQueries({ queryKey: ['reservations'] }),
         queryClient.refetchQueries({ queryKey: ['guests'] })
       ];
       
-      await Promise.all(refreshPromises);
+      await Promise.allSettled(refreshPromises);
       
-      console.log('✅ ENHANCED FORCE REFRESH: All data refreshed successfully');
+      console.log('✅ FORCE REFRESH: Primary refresh completed');
       
-      // Additional refresh after a short delay to ensure UI synchronization
+      // Secondary refresh to guarantee synchronization
       setTimeout(async () => {
-        await Promise.all([
+        await Promise.allSettled([
           queryClient.refetchQueries({ queryKey: ['rooms'] }),
           queryClient.refetchQueries({ queryKey: ['reservations'] }),
           queryClient.refetchQueries({ queryKey: ['guests'] })
         ]);
-        console.log('✅ ENHANCED FORCE REFRESH: Secondary refresh completed');
-      }, 500);
+        console.log('✅ FORCE REFRESH: Secondary refresh completed');
+      }, 300);
       
     } catch (error) {
-      console.error('❌ ENHANCED FORCE REFRESH: Error during refresh:', error);
+      console.error('❌ FORCE REFRESH: Error during refresh:', error);
     }
   };
 
   // CRITICAL: Enhanced update reservation with GUARANTEED synchronization
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🎯 CRITICAL UPDATE: Starting ENHANCED reservation update for:', id, reservationData);
+      console.log('🎯 CRITICAL UPDATE: Starting reservation update for:', id, reservationData);
       
       // Get current reservation to know which room to update
       const { data: currentReservation, error: getCurrentError } = await supabase
@@ -299,7 +223,7 @@ export const useHotelData = () => {
       if (reservationData.status && currentReservation.room_id) {
         let newRoomStatus: Room['status'];
         
-        console.log('🏠 ENHANCED ROOM STATUS UPDATE: Processing status change:', {
+        console.log('🏠 ROOM STATUS UPDATE: Processing status change:', {
           reservationId: id,
           roomId: currentReservation.room_id,
           oldReservationStatus: currentReservation.status,
@@ -349,34 +273,19 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('🎉 ENHANCED UPDATE SUCCESS: Starting immediate complete data refresh...');
+      console.log('🎉 UPDATE SUCCESS: Starting immediate refresh cycles...');
       
-      // IMMEDIATE: Clear cache and refresh data
-      queryClient.clear();
+      // Immediate refresh
+      await forceRefreshAllData();
       
-      // Force immediate refresh of all data
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['guests'] }),
-        queryClient.refetchQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['guests'] })
-      ]);
+      // Additional guaranteed refresh cycles
+      setTimeout(() => forceRefreshAllData(), 500);
+      setTimeout(() => forceRefreshAllData(), 1500);
       
-      // GUARANTEE: Additional refresh cycles to ensure UI synchronization
-      setTimeout(async () => {
-        await forceRefreshAllData();
-      }, 200);
-      
-      setTimeout(async () => {
-        await forceRefreshAllData();
-      }, 1000);
-      
-      console.log('✅ ENHANCED: All data refreshed after reservation update with multiple refresh cycles');
+      console.log('✅ UPDATE SUCCESS: All refresh cycles initiated');
     },
     onError: (error) => {
-      console.error('❌ ENHANCED MUTATION ERROR:', error);
+      console.error('❌ MUTATION ERROR:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la reserva",
