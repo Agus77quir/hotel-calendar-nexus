@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +27,77 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests
+  // REAL-TIME SUBSCRIPTIONS FOR AUTOMATIC UPDATES
+  useEffect(() => {
+    console.log('🔄 REALTIME: Setting up real-time subscriptions for automatic updates');
+    
+    // Subscribe to reservations changes
+    const reservationsChannel = supabase
+      .channel('reservations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations'
+        },
+        (payload) => {
+          console.log('📡 REALTIME: Reservations change detected:', payload);
+          // Invalidate and refetch reservations immediately
+          queryClient.invalidateQueries({ queryKey: ['reservations'] });
+          queryClient.refetchQueries({ queryKey: ['reservations'] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to rooms changes
+    const roomsChannel = supabase
+      .channel('rooms-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rooms'
+        },
+        (payload) => {
+          console.log('📡 REALTIME: Rooms change detected:', payload);
+          // Invalidate and refetch rooms immediately
+          queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          queryClient.refetchQueries({ queryKey: ['rooms'] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to guests changes
+    const guestsChannel = supabase
+      .channel('guests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guests'
+        },
+        (payload) => {
+          console.log('📡 REALTIME: Guests change detected:', payload);
+          // Invalidate and refetch guests immediately
+          queryClient.invalidateQueries({ queryKey: ['guests'] });
+          queryClient.refetchQueries({ queryKey: ['guests'] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      console.log('🔄 REALTIME: Cleaning up real-time subscriptions');
+      supabase.removeChannel(reservationsChannel);
+      supabase.removeChannel(roomsChannel);
+      supabase.removeChannel(guestsChannel);
+    };
+  }, [queryClient]);
+
+  // Fetch guests with optimized caching
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -46,21 +115,20 @@ export const useHotelData = () => {
       
       console.log('✅ Guests fetched:', data?.length || 0);
       
-      // Cast to proper Guest types
       return (data || []).map(guest => ({
         ...guest,
         is_associated: Boolean(guest.is_associated),
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 500, // 0.5 seconds
-    gcTime: 1000,
+    staleTime: 1000, // 1 second
+    gcTime: 5000, // 5 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
-  // Fetch rooms
+  // Fetch rooms with optimized caching
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
@@ -84,7 +152,6 @@ export const useHotelData = () => {
         cleaning: data?.filter(r => r.status === 'cleaning').length || 0
       });
       
-      // Cast to proper Room types
       return (data || []).map(room => ({
         ...room,
         type: room.type as Room['type'],
@@ -94,14 +161,14 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 500, // 0.5 seconds
-    gcTime: 1000,
+    staleTime: 1000, // 1 second
+    gcTime: 5000, // 5 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
-  // Fetch reservations
+  // Fetch reservations with optimized caching
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
@@ -125,7 +192,6 @@ export const useHotelData = () => {
         cancelled: data?.filter(r => r.status === 'cancelled').length || 0
       });
       
-      // Cast to proper Reservation types
       return (data || []).map(reservation => ({
         ...reservation,
         status: reservation.status as Reservation['status'],
@@ -133,14 +199,14 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 500, // 0.5 seconds
-    gcTime: 1000,
+    staleTime: 1000, // 1 second
+    gcTime: 5000, // 5 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 3000, // Refetch every 3 seconds for critical data
   });
 
-  // Calculate stats
+  // Calculate stats with memoization
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -152,33 +218,47 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // FORCE REFRESH ALL DATA
+  // ENHANCED FORCE REFRESH WITH IMMEDIATE UI UPDATES
   const forceRefreshAllData = async () => {
-    console.log('🔄 FORCE REFRESH: Starting complete data refresh...');
+    console.log('🚀 ENHANCED FORCE REFRESH: Starting immediate complete data refresh...');
     
     try {
-      // Invalidate all queries first
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['guests'] });
+      // Clear all cache immediately
+      queryClient.clear();
       
-      // Force immediate refetch
-      await Promise.all([
+      // Force immediate background refetch of all queries
+      const refreshPromises = [
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['guests'] }),
         queryClient.refetchQueries({ queryKey: ['rooms'] }),
         queryClient.refetchQueries({ queryKey: ['reservations'] }),
         queryClient.refetchQueries({ queryKey: ['guests'] })
-      ]);
+      ];
       
-      console.log('✅ FORCE REFRESH: Complete data refresh finished');
+      await Promise.all(refreshPromises);
+      
+      console.log('✅ ENHANCED FORCE REFRESH: All data refreshed successfully');
+      
+      // Additional refresh after a short delay to ensure UI synchronization
+      setTimeout(async () => {
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ['rooms'] }),
+          queryClient.refetchQueries({ queryKey: ['reservations'] }),
+          queryClient.refetchQueries({ queryKey: ['guests'] })
+        ]);
+        console.log('✅ ENHANCED FORCE REFRESH: Secondary refresh completed');
+      }, 500);
+      
     } catch (error) {
-      console.error('❌ FORCE REFRESH: Error during refresh:', error);
+      console.error('❌ ENHANCED FORCE REFRESH: Error during refresh:', error);
     }
   };
 
-  // Update reservation WITH GUARANTEED room status sync
+  // CRITICAL: Enhanced update reservation with GUARANTEED synchronization
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🔄 CRITICAL UPDATE: Starting reservation update for:', id, reservationData);
+      console.log('🎯 CRITICAL UPDATE: Starting ENHANCED reservation update for:', id, reservationData);
       
       // Get current reservation to know which room to update
       const { data: currentReservation, error: getCurrentError } = await supabase
@@ -216,7 +296,7 @@ export const useHotelData = () => {
       if (reservationData.status && currentReservation.room_id) {
         let newRoomStatus: Room['status'];
         
-        console.log('🏠 ROOM STATUS UPDATE: Processing status change:', {
+        console.log('🏠 ENHANCED ROOM STATUS UPDATE: Processing status change:', {
           reservationId: id,
           roomId: currentReservation.room_id,
           oldReservationStatus: currentReservation.status,
@@ -266,20 +346,34 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('🎉 UPDATE SUCCESS: Starting complete data refresh...');
+      console.log('🎉 ENHANCED UPDATE SUCCESS: Starting immediate complete data refresh...');
       
-      // Force complete refresh
-      await forceRefreshAllData();
+      // IMMEDIATE: Clear cache and refresh data
+      queryClient.clear();
       
-      // Additional refresh after delay to ensure UI updates
+      // Force immediate refresh of all data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['guests'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] })
+      ]);
+      
+      // GUARANTEE: Additional refresh cycles to ensure UI synchronization
+      setTimeout(async () => {
+        await forceRefreshAllData();
+      }, 200);
+      
       setTimeout(async () => {
         await forceRefreshAllData();
       }, 1000);
       
-      console.log('✅ All data refreshed after reservation update');
+      console.log('✅ ENHANCED: All data refreshed after reservation update with multiple refresh cycles');
     },
     onError: (error) => {
-      console.error('❌ MUTATION ERROR:', error);
+      console.error('❌ ENHANCED MUTATION ERROR:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la reserva",

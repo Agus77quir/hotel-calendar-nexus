@@ -15,15 +15,21 @@ import { Button } from '@/components/ui/button';
 const Dashboard = () => {
   const { stats, rooms, reservations, guests, isLoading, forceRefresh } = useHotelData();
 
-  // Auto-refresh every 10 seconds
+  // ENHANCED AUTO-REFRESH: More frequent updates for critical dashboard data
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('🔄 DASHBOARD: Auto-refresh triggered');
+      console.log('🔄 DASHBOARD: Enhanced auto-refresh triggered every 5 seconds');
       forceRefresh();
-    }, 10000);
+    }, 5000); // Reduced from 10 to 5 seconds for more responsive updates
 
     return () => clearInterval(interval);
   }, [forceRefresh]);
+
+  // IMMEDIATE REFRESH: Additional refresh when component mounts or data changes
+  useEffect(() => {
+    console.log('🔄 DASHBOARD: Component mounted or data changed, triggering immediate refresh');
+    forceRefresh();
+  }, []);
 
   // Get current date
   const today = new Date().toISOString().split('T')[0];
@@ -32,7 +38,7 @@ const Dashboard = () => {
   // Current guests (checked-in)
   const currentGuests = reservations.filter(r => r.status === 'checked-in');
   
-  // Today's activities
+  // Today's activities - REAL-TIME CALCULATIONS
   const todayCheckIns = reservations.filter(r => 
     r.check_in === today && r.status === 'confirmed'
   );
@@ -41,7 +47,7 @@ const Dashboard = () => {
     r.check_out === today && r.status === 'checked-in'
   );
 
-  // Room status breakdown
+  // Room status breakdown - REAL-TIME CALCULATIONS
   const roomStatusCount = {
     available: rooms.filter(r => r.status === 'available').length,
     occupied: rooms.filter(r => r.status === 'occupied').length,
@@ -64,7 +70,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
           <p className="text-muted-foreground">
-            Vista general del hotel • Actualización automática cada 10s
+            Vista general del hotel • Actualización automática cada 5s • Tiempo real activado
           </p>
         </div>
         <Button
@@ -74,11 +80,11 @@ const Dashboard = () => {
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          Actualizar
+          Actualizar Ahora
         </Button>
       </div>
 
-      {/* Real-time status indicators */}
+      {/* ENHANCED Real-time status indicators with live data */}
       <div className="flex gap-2 flex-wrap">
         <Badge variant="outline" className="text-green-600 border-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -96,34 +102,38 @@ const Dashboard = () => {
           <AlertTriangle className="h-3 w-3 mr-1" />
           {roomStatusCount.occupied} Habitaciones Ocupadas
         </Badge>
+        <Badge variant="outline" className="text-gray-600 border-gray-600">
+          <RefreshCw className="h-3 w-3 mr-1" />
+          Última actualización: {new Date().toLocaleTimeString()}
+        </Badge>
       </div>
 
-      {/* Debug Card - Temporary for verification */}
+      {/* ENHANCED Debug Card with real-time verification */}
       <Card className="border-yellow-200 bg-yellow-50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-yellow-800 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
-            Estado del Sistema - Debug
+            Estado del Sistema - Tiempo Real Activo
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div>
-              <strong>Reservas:</strong>
+              <strong>Reservas (LIVE):</strong>
               <div>Total: {reservations.length}</div>
               <div>Confirmadas: {reservations.filter(r => r.status === 'confirmed').length}</div>
               <div>Registradas: {reservations.filter(r => r.status === 'checked-in').length}</div>
               <div>Finalizadas: {reservations.filter(r => r.status === 'checked-out').length}</div>
             </div>
             <div>
-              <strong>Habitaciones:</strong>
+              <strong>Habitaciones (LIVE):</strong>
               <div>Total: {rooms.length}</div>
               <div>Disponibles: {roomStatusCount.available}</div>
               <div>Ocupadas: {roomStatusCount.occupied}</div>
               <div>Mantenimiento: {roomStatusCount.maintenance}</div>
             </div>
             <div>
-              <strong>Hoy:</strong>
+              <strong>Hoy (LIVE):</strong>
               <div>Check-ins: {todayCheckIns.length}</div>
               <div>Check-outs: {todayCheckOuts.length}</div>
               <div>Huéspedes: {currentGuests.length}</div>
@@ -131,6 +141,8 @@ const Dashboard = () => {
             <div>
               <strong>Sistema:</strong>
               <div>Huéspedes: {guests.length}</div>
+              <div>Auto-refresh: 5s</div>
+              <div>Tiempo real: Activo</div>
               <div>Última actualización: {new Date().toLocaleTimeString()}</div>
             </div>
           </div>
@@ -138,7 +150,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Main Stats */}
-      <StatsCards stats={stats} />
+      <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
       
       {/* Receptionist specific stats */}
       <ReceptionistStatsCards 

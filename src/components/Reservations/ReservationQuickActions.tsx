@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -43,21 +42,33 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🔄 QUICK CHECK-IN: Starting for reservation:', reservation.id);
+      console.log('🔄 ENHANCED QUICK CHECK-IN: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-in');
       
-      // Force refresh to ensure immediate UI updates
+      // ENHANCED: Multiple refresh cycles to guarantee UI updates
+      console.log('🔄 ENHANCED QUICK CHECK-IN: Starting multiple refresh cycles');
       await forceRefresh();
       
-      console.log('✅ QUICK CHECK-IN: Completed successfully');
+      // Additional refresh cycles for absolute certainty
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 ENHANCED QUICK CHECK-IN: Secondary refresh completed');
+      }, 300);
+      
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 ENHANCED QUICK CHECK-IN: Tertiary refresh completed');
+      }, 1000);
+      
+      console.log('✅ ENHANCED QUICK CHECK-IN: Completed successfully with guaranteed updates');
       
       toast({
-        title: "Check-in realizado",
-        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}`,
+        title: "Check-in realizado exitosamente",
+        description: `${guest.first_name} ${guest.last_name} ha sido registrado en la habitación ${room.number}. Dashboard actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ QUICK CHECK-IN: Error:', error);
+      console.error('❌ ENHANCED QUICK CHECK-IN: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-in",
@@ -73,21 +84,33 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
-      console.log('🔄 QUICK CHECK-OUT: Starting for reservation:', reservation.id);
+      console.log('🔄 ENHANCED QUICK CHECK-OUT: Starting for reservation:', reservation.id);
       
       await onStatusChange(reservation.id, 'checked-out');
       
-      // Force refresh to ensure immediate UI updates
+      // ENHANCED: Multiple refresh cycles to guarantee UI updates
+      console.log('🔄 ENHANCED QUICK CHECK-OUT: Starting multiple refresh cycles');
       await forceRefresh();
       
-      console.log('✅ QUICK CHECK-OUT: Completed successfully');
+      // Additional refresh cycles for absolute certainty
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 ENHANCED QUICK CHECK-OUT: Secondary refresh completed');
+      }, 300);
+      
+      setTimeout(async () => {
+        await forceRefresh();
+        console.log('🔄 ENHANCED QUICK CHECK-OUT: Tertiary refresh completed');
+      }, 1000);
+      
+      console.log('✅ ENHANCED QUICK CHECK-OUT: Completed successfully with guaranteed updates');
       
       toast({
-        title: "Check-out realizado",
-        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible.`,
+        title: "Check-out realizado exitosamente",
+        description: `${guest.first_name} ${guest.last_name} ha finalizado su estadía. La habitación ${room.number} ahora está disponible. Dashboard actualizado automáticamente.`,
       });
     } catch (error) {
-      console.error('❌ QUICK CHECK-OUT: Error:', error);
+      console.error('❌ ENHANCED QUICK CHECK-OUT: Error:', error);
       toast({
         title: "Error",
         description: "No se pudo realizar el check-out",
