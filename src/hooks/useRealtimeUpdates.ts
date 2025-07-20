@@ -3,76 +3,93 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Global state para evitar múltiples suscripciones
-let isRealtimeActive = false;
-let activeChannels: any[] = [];
-
 export const useRealtimeUpdates = () => {
   const queryClient = useQueryClient();
-  const initialized = useRef(false);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    // Prevenir múltiples inicializaciones
-    if (isRealtimeActive || initialized.current) {
-      return;
-    }
+    console.log('🚀 CONFIGURANDO TIEMPO REAL');
 
-    initialized.current = true;
-    isRealtimeActive = true;
-
-    console.log('🚀 INICIANDO SISTEMA DE TIEMPO REAL');
-
-    // Canal único para todas las actualizaciones
-    const mainChannel = supabase
-      .channel(`hotel-realtime-${Date.now()}`)
+    // Crear canal único con reconexión automática
+    const channel = supabase
+      .channel('hotel-updates', {
+        config: {
+          presence: { key: 'hotel-presence' },
+          broadcast: { self: true }
+        }
+      })
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'reservations' 
+        },
         async (payload) => {
-          console.log('📝 REALTIME - RESERVA ACTUALIZADA:', payload.eventType, payload.new, payload.old);
+          console.log('📝 REALTIME - RESERVA ACTUALIZADA:', {
+            event: payload.eventType,
+            id: (payload.new as any)?.id || (payload.old as any)?.id,
+            new: payload.new,
+            old: payload.old
+          });
           
-          // Invalidar todas las consultas relacionadas
-          console.log('🔄 INVALIDANDO QUERIES DE RESERVAS Y HABITACIONES');
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-            queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-          ]);
-          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
+          // Invalidar queries inmediatamente
+          console.log('🔄 INVALIDANDO QUERIES - RESERVAS');
+          queryClient.invalidateQueries({ queryKey: ['reservations'] });
+          queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          console.log('✅ QUERIES INVALIDADAS');
         }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'rooms' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'rooms' 
+        },
         async (payload) => {
-          console.log('🏠 REALTIME - HABITACIÓN ACTUALIZADA:', payload.eventType, payload.new, payload.old);
+          console.log('🏠 REALTIME - HABITACIÓN ACTUALIZADA:', {
+            event: payload.eventType,
+            id: (payload.new as any)?.id || (payload.old as any)?.id,
+            new: payload.new,
+            old: payload.old
+          });
           
-          console.log('🔄 INVALIDANDO QUERIES DE HABITACIONES Y RESERVAS');
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-            queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-          ]);
-          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
+          // Invalidar queries inmediatamente
+          console.log('🔄 INVALIDANDO QUERIES - HABITACIONES');
+          queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          queryClient.invalidateQueries({ queryKey: ['reservations'] });
+          console.log('✅ QUERIES INVALIDADAS');
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Estado del canal:', status);
+      .subscribe((status, err) => {
+        console.log('📡 ESTADO CANAL TIEMPO REAL:', status);
+        if (err) {
+          console.error('❌ ERROR EN CANAL:', err);
+        }
+        
+        // Reconectar automáticamente si se desconecta
+        if (status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.log('🔄 RECONECTANDO CANAL...');
+          setTimeout(() => {
+            if (channelRef.current) {
+              channelRef.current.subscribe();
+            }
+          }, 1000);
+        }
       });
 
-    activeChannels = [mainChannel];
+    channelRef.current = channel;
 
-    // Cleanup function
+    // Cleanup
     return () => {
-      console.log('🔄 LIMPIANDO TIEMPO REAL');
-      
-      activeChannels.forEach(channel => {
-        if (channel) {
-          supabase.removeChannel(channel);
-        }
-      });
-      
-      activeChannels = [];
-      isRealtimeActive = false;
-      initialized.current = false;
+      console.log('🔄 DESCONECTANDO TIEMPO REAL');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [queryClient]);
+
+  return { isConnected: channelRef.current?.state === 'joined' };
 };

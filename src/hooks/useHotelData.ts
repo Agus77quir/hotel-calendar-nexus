@@ -31,36 +31,48 @@ export const useHotelData = () => {
     setUserContext();
   }, [user?.email]);
 
-  // Consultas optimizadas
+  // Consultas optimizadas con refetch más agresivo
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
+      console.log('🔍 FETCHING GUESTS');
       const { data, error } = await supabase
         .from('guests')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR FETCHING GUESTS:', error);
+        throw error;
+      }
       
+      console.log('✅ GUESTS FETCHED:', data?.length);
       return (data || []).map(guest => ({
         ...guest,
         is_associated: Boolean(guest.is_associated),
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 0, // Siempre considerar datos obsoletos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
+      console.log('🔍 FETCHING ROOMS');
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
         .order('number');
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR FETCHING ROOMS:', error);
+        throw error;
+      }
       
+      console.log('✅ ROOMS FETCHED:', data?.length);
       return (data || []).map(room => ({
         ...room,
         type: room.type as Room['type'],
@@ -70,19 +82,26 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Siempre considerar datos obsoletos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
+      console.log('🔍 FETCHING RESERVATIONS');
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR FETCHING RESERVATIONS:', error);
+        throw error;
+      }
       
+      console.log('✅ RESERVATIONS FETCHED:', data?.length);
       return (data || []).map(reservation => ({
         ...reservation,
         status: reservation.status as Reservation['status'],
@@ -90,7 +109,9 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Siempre considerar datos obsoletos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Estadísticas calculadas
