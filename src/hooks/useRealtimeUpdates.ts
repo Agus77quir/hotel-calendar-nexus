@@ -21,54 +21,58 @@ export const useRealtimeUpdates = () => {
     hasInitialized.current = true;
     globalRealtimeActive = true;
     
-    console.log('🚀 REAL-TIME: Setting up unique instance');
+    console.log('🚀 REAL-TIME: Setting up connection for automatic updates');
     
-    // Create unique channel name with timestamp and random ID
-    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Create unique channel name with timestamp
+    const uniqueId = `hotel-updates-${Date.now()}`;
     
     const reservationsChannel = supabase
-      .channel(`reservations-realtime-${uniqueId}`)
+      .channel(`reservations-${uniqueId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
         async (payload) => {
-          console.log('🔄 RESERVATION CHANGE:', payload);
+          console.log('🔄 RESERVATION UPDATE DETECTED:', payload);
           
-          // Single, immediate refresh
-          await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-          await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          // Immediate data refresh for all related queries
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+            queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+            queryClient.refetchQueries({ queryKey: ['reservations'] }),
+            queryClient.refetchQueries({ queryKey: ['rooms'] })
+          ]);
           
-          console.log('✅ RESERVATION DATA REFRESHED');
+          console.log('✅ DATA REFRESHED AUTOMATICALLY');
         }
       )
-      .subscribe((status) => {
-        console.log('📡 RESERVATIONS CHANNEL STATUS:', status);
-      });
+      .subscribe();
 
     const roomsChannel = supabase
-      .channel(`rooms-realtime-${uniqueId}`)
+      .channel(`rooms-${uniqueId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
         async (payload) => {
-          console.log('🔄 ROOM CHANGE:', payload);
+          console.log('🔄 ROOM UPDATE DETECTED:', payload);
           
-          // Single, immediate refresh
-          await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-          await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+          // Immediate data refresh
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+            queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+            queryClient.refetchQueries({ queryKey: ['rooms'] }),
+            queryClient.refetchQueries({ queryKey: ['reservations'] })
+          ]);
           
-          console.log('✅ ROOM DATA REFRESHED');
+          console.log('✅ ROOM DATA REFRESHED AUTOMATICALLY');
         }
       )
-      .subscribe((status) => {
-        console.log('📡 ROOMS CHANNEL STATUS:', status);
-      });
+      .subscribe();
 
-    // Store channels globally
+    // Store channels globally for cleanup
     globalChannels = [reservationsChannel, roomsChannel];
 
     return () => {
-      console.log('🔄 CLEANING UP REAL-TIME SUBSCRIPTIONS');
+      console.log('🔄 CLEANING UP REAL-TIME CONNECTIONS');
       
       // Cleanup channels
       globalChannels.forEach(channel => {

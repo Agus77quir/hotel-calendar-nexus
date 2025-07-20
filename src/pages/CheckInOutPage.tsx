@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,9 +17,10 @@ const CheckInOutPage = () => {
   const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Update timestamp when data changes - NO MORE AUTO-REFRESH
+  // Update timestamp when data changes - AUTOMATIC DETECTION
   useEffect(() => {
     setLastUpdate(new Date());
+    console.log('✅ CHECK-IN/OUT PAGE: Data updated automatically');
   }, [reservations, rooms]);
 
   const today = new Date().toISOString().split('T')[0];
@@ -36,7 +38,7 @@ const CheckInOutPage = () => {
   // Huéspedes actualmente registrados
   const currentGuests = reservations.filter(r => r.status === 'checked-in');
 
-  // Check-ins y check-outs fuera de tiempo
+  // Check-ins y check-outs fuera de tiempo (permitidos)
   const earlyCheckIns = reservations.filter(r => 
     r.check_in > today && r.status === 'confirmed'
   );
@@ -64,7 +66,7 @@ const CheckInOutPage = () => {
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
       
-      console.log('✅ CHECK-IN: Completed successfully');
+      console.log('✅ CHECK-IN: Completed successfully - Data will auto-update');
       
       toast({
         title: "Check-in realizado",
@@ -105,7 +107,7 @@ const CheckInOutPage = () => {
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
       const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
       
-      console.log('✅ CHECK-OUT: Completed successfully');
+      console.log('✅ CHECK-OUT: Completed successfully - Data will auto-update');
       
       toast({
         title: "Check-out realizado",
@@ -304,7 +306,7 @@ const CheckInOutPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Actualizaciones automáticas por acciones • Última: {lastUpdate.toLocaleTimeString()}
+            Actualizaciones automáticas en tiempo real • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex gap-2">
@@ -324,7 +326,7 @@ const CheckInOutPage = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - These update automatically */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -532,7 +534,7 @@ const CheckInOutPage = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            SISTEMA OPTIMIZADO - Sin Parpadeo, Actualizaciones por Acción
+            SISTEMA OPTIMIZADO - Actualizaciones Automáticas en Tiempo Real
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">

@@ -16,9 +16,10 @@ const Dashboard = () => {
   const { stats, rooms, reservations, guests, isLoading, forceRefresh } = useHotelData();
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Update timestamp when data changes - NO MORE AUTO-REFRESH
+  // Update timestamp when data changes - AUTOMATIC DETECTION
   useEffect(() => {
     setLastUpdate(new Date());
+    console.log('📊 DASHBOARD: Data updated automatically');
   }, [reservations, rooms]);
 
   // Get current date
@@ -60,7 +61,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
           <p className="text-muted-foreground">
-            Actualizaciones automáticas por acciones • Última: {lastUpdate.toLocaleTimeString()}
+            Actualizaciones automáticas en tiempo real • Última: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <Button
@@ -97,7 +98,7 @@ const Dashboard = () => {
         </Badge>
       </div>
 
-      {/* Main Stats */}
+      {/* Main Stats - These will update automatically */}
       <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
       
       {/* Receptionist specific stats */}
@@ -108,7 +109,7 @@ const Dashboard = () => {
         guests={guests} 
       />
 
-      {/* Charts Grid */}
+      {/* Charts Grid - All will update automatically */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RoomStatusChart rooms={rooms} />
         <OccupancyChart rooms={rooms} reservations={reservations} />
@@ -129,7 +130,7 @@ const Dashboard = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            SISTEMA DE TIEMPO REAL ACTIVO - Sin Auto-Refresh Innecesario
+            SISTEMA EN TIEMPO REAL ACTIVO - Actualizaciones Automáticas
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
@@ -157,8 +158,8 @@ const Dashboard = () => {
             <div>
               <strong>Sistema:</strong>
               <div>Huéspedes: {guests.length}</div>
-              <div>Tiempo real: ACTIVO</div>
-              <div>Sin parpadeo: ✅</div>
+              <div>Tiempo real: ✅ ACTIVO</div>
+              <div>Auto-actualización: ✅ ON</div>
               <div>Última: {lastUpdate.toLocaleTimeString()}</div>
             </div>
           </div>

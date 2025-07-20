@@ -11,7 +11,7 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // SINGLE REAL-TIME CONNECTION - Only initialize here
+  // Initialize real-time updates - ONLY ONCE
   useRealtimeUpdates();
 
   // Set current user context para audit
@@ -31,7 +31,7 @@ export const useHotelData = () => {
     }
   }, [user?.email]);
 
-  // Fetch guests
+  // Fetch guests with immediate refresh settings
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -56,12 +56,11 @@ export const useHotelData = () => {
       })) as Guest[];
     },
     staleTime: 0,
-    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Fetch rooms
+  // Fetch rooms with immediate refresh settings
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
@@ -89,12 +88,11 @@ export const useHotelData = () => {
       })) as Room[];
     },
     staleTime: 0,
-    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Fetch reservations
+  // Fetch reservations with immediate refresh settings
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
@@ -120,7 +118,6 @@ export const useHotelData = () => {
       })) as Reservation[];
     },
     staleTime: 0,
-    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
@@ -137,23 +134,7 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // SIMPLE FORCE REFRESH FUNCTION
-  const forceRefreshAllData = async () => {
-    console.log('🚀 MANUAL REFRESH: Starting...');
-    
-    try {
-      // Simple invalidation
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['guests'] });
-      
-      console.log('✅ MANUAL REFRESH: Completed');
-    } catch (error) {
-      console.error('❌ MANUAL REFRESH: Error:', error);
-    }
-  };
-
-  // OPTIMIZED: Enhanced update reservation - SINGLE REFRESH ONLY
+  // OPTIMIZED: Update reservation mutation with automatic refresh
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🎯 UPDATING RESERVATION:', id, reservationData);
@@ -224,13 +205,17 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('🎉 MUTATION SUCCESS - Single refresh only');
+      console.log('🎉 MUTATION SUCCESS - Triggering immediate refresh');
       
-      // Single immediate refresh - NO MORE MULTIPLE REFRESHES
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      // Force immediate refresh of all related data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] })
+      ]);
       
-      console.log('✅ Single refresh completed');
+      console.log('✅ All data refreshed immediately after mutation');
     },
     onError: (error) => {
       console.error('❌ MUTATION ERROR:', error);
@@ -241,6 +226,26 @@ export const useHotelData = () => {
       });
     }
   });
+
+  // Simple force refresh function
+  const forceRefreshAllData = async () => {
+    console.log('🚀 MANUAL REFRESH: Starting...');
+    
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.invalidateQueries({ queryKey: ['guests'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] })
+      ]);
+      
+      console.log('✅ MANUAL REFRESH: Completed');
+    } catch (error) {
+      console.error('❌ MANUAL REFRESH: Error:', error);
+    }
+  };
 
   // Add guest
   const addGuestMutation = useMutation({
