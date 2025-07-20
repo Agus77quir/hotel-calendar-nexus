@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
@@ -11,43 +11,28 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Initialize real-time updates - ONLY ONCE
+  // Activar tiempo real UNA sola vez
   useRealtimeUpdates();
 
-  // Set current user context para audit
+  // Configurar contexto de usuario para auditoría
   useEffect(() => {
     if (user?.email) {
-      const setUserContext = async () => {
-        try {
-          await supabase.rpc('set_current_user', { 
-            user_name: user.email 
-          });
-          console.log('✅ User context set for audit:', user.email);
-        } catch (error) {
-          console.error('❌ Error setting user context:', error);
-        }
-      };
-      setUserContext();
+      supabase.rpc('set_current_user', { user_name: user.email })
+        .then(() => console.log('✅ Contexto de usuario configurado'))
+        .catch(console.error);
     }
   }, [user?.email]);
 
-  // Fetch guests with immediate refresh settings
+  // Consultas optimizadas
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
-      console.log('🔄 Fetching guests...');
-      
       const { data, error } = await supabase
         .from('guests')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('❌ Error fetching guests:', error);
-        throw error;
-      }
-      
-      console.log('✅ Guests fetched:', data?.length || 0);
+      if (error) throw error;
       
       return (data || []).map(guest => ({
         ...guest,
@@ -55,28 +40,18 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  // Fetch rooms with immediate refresh settings
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
-      console.log('🔄 Fetching rooms...');
-      
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
         .order('number');
       
-      if (error) {
-        console.error('❌ Error fetching rooms:', error);
-        throw error;
-      }
-      
-      console.log('✅ Rooms fetched:', data?.length || 0);
+      if (error) throw error;
       
       return (data || []).map(room => ({
         ...room,
@@ -87,28 +62,18 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Fetch reservations with immediate refresh settings
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
-      console.log('🔄 Fetching reservations...');
-      
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('❌ Error fetching reservations:', error);
-        throw error;
-      }
-      
-      console.log('✅ Reservations fetched:', data?.length || 0);
+      if (error) throw error;
       
       return (data || []).map(reservation => ({
         ...reservation,
@@ -117,12 +82,10 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Calculate stats
+  // Estadísticas calculadas
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
@@ -134,91 +97,54 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // OPTIMIZED: Update reservation mutation with automatic refresh
+  // Mutación simplificada para actualizar reservas
   const updateReservationMutation = useMutation({
-    mutationFn: async ({ id, ...reservationData }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🎯 UPDATING RESERVATION:', id, reservationData);
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
+      console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
       
-      // Get current reservation to know which room to update
-      const { data: currentReservation, error: getCurrentError } = await supabase
+      // Obtener reserva actual
+      const { data: currentReservation } = await supabase
         .from('reservations')
         .select('room_id, status')
         .eq('id', id)
         .single();
-      
-      if (getCurrentError) {
-        console.error('❌ Error getting current reservation:', getCurrentError);
-        throw getCurrentError;
-      }
 
-      // Update the reservation
-      const { data: updatedReservation, error: reservationError } = await supabase
+      // Actualizar reserva
+      const { data: updatedReservation, error } = await supabase
         .from('reservations')
-        .update({
-          ...reservationData,
-          updated_at: new Date().toISOString()
+        .update({ 
+          ...data, 
+          updated_at: new Date().toISOString() 
         })
         .eq('id', id)
         .select()
         .single();
       
-      if (reservationError) {
-        console.error('❌ Error updating reservation:', reservationError);
-        throw reservationError;
-      }
+      if (error) throw error;
 
-      console.log('✅ Reservation updated:', updatedReservation);
-
-      // Update room status if reservation status changed
-      if (reservationData.status && currentReservation.room_id) {
-        let newRoomStatus: Room['status'];
+      // Actualizar estado de habitación si cambió el status
+      if (data.status && currentReservation?.room_id) {
+        let roomStatus: Room['status'] = 'available';
         
-        switch (reservationData.status) {
-          case 'checked-in':
-            newRoomStatus = 'occupied';
-            break;
-          case 'checked-out':
-            newRoomStatus = 'available';
-            break;
-          case 'cancelled':
-            newRoomStatus = 'available';
-            break;
-          default:
-            newRoomStatus = 'available';
+        if (data.status === 'checked-in') {
+          roomStatus = 'occupied';
+        } else if (data.status === 'checked-out' || data.status === 'cancelled') {
+          roomStatus = 'available';
         }
 
-        console.log(`🏠 Updating room ${currentReservation.room_id} to ${newRoomStatus}`);
-        
-        const { error: roomError } = await supabase
+        await supabase
           .from('rooms')
-          .update({ status: newRoomStatus })
+          .update({ status: roomStatus })
           .eq('id', currentReservation.room_id);
-
-        if (roomError) {
-          console.error('❌ Error updating room status:', roomError);
-          throw roomError;
-        }
-        
-        console.log('✅ Room status updated successfully');
       }
       
       return updatedReservation;
     },
-    onSuccess: async () => {
-      console.log('🎉 MUTATION SUCCESS - Triggering immediate refresh');
-      
-      // Force immediate refresh of all related data
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['rooms'] })
-      ]);
-      
-      console.log('✅ All data refreshed immediately after mutation');
+    onSuccess: () => {
+      console.log('✅ RESERVA ACTUALIZADA - Datos se actualizarán automáticamente');
     },
     onError: (error) => {
-      console.error('❌ MUTATION ERROR:', error);
+      console.error('❌ ERROR AL ACTUALIZAR RESERVA:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la reserva",
@@ -227,43 +153,15 @@ export const useHotelData = () => {
     }
   });
 
-  // Simple force refresh function
-  const forceRefreshAllData = async () => {
-    console.log('🚀 MANUAL REFRESH: Starting...');
-    
-    try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.invalidateQueries({ queryKey: ['guests'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['guests'] })
-      ]);
-      
-      console.log('✅ MANUAL REFRESH: Completed');
-    } catch (error) {
-      console.error('❌ MANUAL REFRESH: Error:', error);
-    }
-  };
-
-  // Add guest
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
-      console.log('Adding guest:', guestData);
-      
       const { data, error } = await supabase
         .from('guests')
         .insert([guestData])
         .select()
         .single();
       
-      if (error) {
-        console.error('Error adding guest:', error);
-        throw error;
-      }
-      
-      console.log('Guest added successfully:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -271,10 +169,8 @@ export const useHotelData = () => {
     },
   });
 
-  // Update guest
   const updateGuestMutation = useMutation({
     mutationFn: async ({ id, ...guestData }: { id: string } & Partial<Omit<Guest, 'id'>>) => {
-      console.log('Updating guest:', id, guestData);
       const { data, error } = await supabase
         .from('guests')
         .update(guestData)
@@ -282,12 +178,7 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('Error updating guest:', error);
-        throw error;
-      }
-      
-      console.log('Guest updated successfully:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -295,44 +186,29 @@ export const useHotelData = () => {
     },
   });
 
-  // Delete guest
   const deleteGuestMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting guest:', id);
       const { error } = await supabase
         .from('guests')
         .delete()
         .eq('id', id);
       
-      if (error) {
-        console.error('Error deleting guest:', error);
-        throw error;
-      }
-      
-      console.log('Guest deleted successfully');
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
   });
 
-  // Add room
   const addRoomMutation = useMutation({
     mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
-      console.log('Adding room:', roomData);
-      
       const { data, error } = await supabase
         .from('rooms')
         .insert([roomData])
         .select()
         .single();
       
-      if (error) {
-        console.error('Error adding room:', error);
-        throw error;
-      }
-      
-      console.log('Room added successfully:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -340,10 +216,8 @@ export const useHotelData = () => {
     },
   });
 
-  // Update room
   const updateRoomMutation = useMutation({
     mutationFn: async ({ id, ...roomData }: { id: string } & Partial<Omit<Room, 'id'>>) => {
-      console.log('Updating room:', id, roomData);
       const { data, error } = await supabase
         .from('rooms')
         .update(roomData)
@@ -351,12 +225,7 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('Error updating room:', error);
-        throw error;
-      }
-      
-      console.log('Room updated successfully:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -364,32 +233,22 @@ export const useHotelData = () => {
     },
   });
 
-  // Delete room
   const deleteRoomMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting room:', id);
       const { error } = await supabase
         .from('rooms')
         .delete()
         .eq('id', id);
       
-      if (error) {
-        console.error('Error deleting room:', error);
-        throw error;
-      }
-      
-      console.log('Room deleted successfully');
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
-  // Add reservation
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Adding reservation:', reservationData);
-      
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
@@ -399,34 +258,25 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('Error adding reservation:', error);
-        throw error;
-      }
-      
-      console.log('Reservation added successfully:', data);
+      if (error) throw error;
       return data;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 
-  // Delete reservation
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting reservation:', id);
-      
-      // Get reservation details to free up the room
-      const { data: reservation, error: fetchError } = await supabase
+      // Liberar habitación si es necesario
+      const { data: reservation } = await supabase
         .from('reservations')
         .select('room_id, status')
         .eq('id', id)
         .single();
 
-      if (!fetchError && reservation && reservation.status === 'checked-in') {
-        // Free up the room if reservation was checked-in
+      if (reservation && reservation.status === 'checked-in') {
         await supabase
           .from('rooms')
           .update({ status: 'available' })
@@ -438,18 +288,20 @@ export const useHotelData = () => {
         .delete()
         .eq('id', id);
       
-      if (error) {
-        console.error('Error deleting reservation:', error);
-        throw error;
-      }
-      
-      console.log('Reservation deleted successfully');
+      if (error) throw error;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
+
+  const forceRefreshAllData = () => {
+    console.log('🔄 REFRESH MANUAL');
+    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    queryClient.invalidateQueries({ queryKey: ['guests'] });
+  };
 
   const isLoading = guestsLoading || roomsLoading || reservationsLoading;
 
