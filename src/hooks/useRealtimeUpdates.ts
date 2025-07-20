@@ -29,25 +29,29 @@ export const useRealtimeUpdates = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
         async (payload) => {
-          console.log('📝 RESERVA ACTUALIZADA:', payload);
+          console.log('📝 REALTIME - RESERVA ACTUALIZADA:', payload.eventType, payload.new, payload.old);
           
           // Invalidar todas las consultas relacionadas
+          console.log('🔄 INVALIDANDO QUERIES DE RESERVAS Y HABITACIONES');
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['reservations'] }),
             queryClient.invalidateQueries({ queryKey: ['rooms'] }),
           ]);
+          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
         async (payload) => {
-          console.log('🏠 HABITACIÓN ACTUALIZADA:', payload);
+          console.log('🏠 REALTIME - HABITACIÓN ACTUALIZADA:', payload.eventType, payload.new, payload.old);
           
+          console.log('🔄 INVALIDANDO QUERIES DE HABITACIONES Y RESERVAS');
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['rooms'] }),
             queryClient.invalidateQueries({ queryKey: ['reservations'] }),
           ]);
+          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
         }
       )
       .subscribe((status) => {

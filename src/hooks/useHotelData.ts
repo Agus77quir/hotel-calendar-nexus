@@ -108,14 +108,21 @@ export const useHotelData = () => {
   // Mutación simplificada para actualizar reservas
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
+      console.log('🔄 INICIANDO ACTUALIZACIÓN RESERVA:', id, data);
       
       // Obtener reserva actual
-      const { data: currentReservation } = await supabase
+      const { data: currentReservation, error: fetchError } = await supabase
         .from('reservations')
         .select('room_id, status')
         .eq('id', id)
         .single();
+
+      if (fetchError) {
+        console.error('❌ ERROR OBTENIENDO RESERVA ACTUAL:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('📋 RESERVA ACTUAL:', currentReservation);
 
       // Actualizar reserva
       const { data: updatedReservation, error } = await supabase
@@ -128,7 +135,12 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR ACTUALIZANDO RESERVA:', error);
+        throw error;
+      }
+
+      console.log('✅ RESERVA ACTUALIZADA EN BD:', updatedReservation);
 
       // Actualizar estado de habitación si cambió el status
       if (data.status && currentReservation?.room_id) {
@@ -140,19 +152,28 @@ export const useHotelData = () => {
           roomStatus = 'available';
         }
 
-        await supabase
+        console.log('🏠 ACTUALIZANDO HABITACIÓN:', currentReservation.room_id, 'NUEVO ESTADO:', roomStatus);
+
+        const { error: roomError } = await supabase
           .from('rooms')
           .update({ status: roomStatus })
           .eq('id', currentReservation.room_id);
+
+        if (roomError) {
+          console.error('❌ ERROR ACTUALIZANDO HABITACIÓN:', roomError);
+        } else {
+          console.log('✅ HABITACIÓN ACTUALIZADA');
+        }
       }
       
       return updatedReservation;
     },
-    onSuccess: () => {
-      console.log('✅ RESERVA ACTUALIZADA - Datos se actualizarán automáticamente');
+    onSuccess: (data) => {
+      console.log('✅ MUTACIÓN EXITOSA - Los datos se actualizarán automáticamente via realtime');
+      console.log('📊 Datos actualizados:', data);
     },
     onError: (error) => {
-      console.error('❌ ERROR AL ACTUALIZAR RESERVA:', error);
+      console.error('❌ ERROR EN MUTACIÓN:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la reserva",
