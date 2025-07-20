@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,11 +17,18 @@ export const useHotelData = () => {
 
   // Configurar contexto de usuario para auditoría
   useEffect(() => {
-    if (user?.email) {
-      supabase.rpc('set_current_user', { user_name: user.email })
-        .then(() => console.log('✅ Contexto de usuario configurado'))
-        .catch(console.error);
-    }
+    const setUserContext = async () => {
+      if (user?.email) {
+        try {
+          await supabase.rpc('set_current_user', { user_name: user.email });
+          console.log('✅ Contexto de usuario configurado');
+        } catch (error) {
+          console.error('❌ Error configurando contexto de usuario:', error);
+        }
+      }
+    };
+    
+    setUserContext();
   }, [user?.email]);
 
   // Consultas optimizadas
