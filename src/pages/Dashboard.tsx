@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -21,7 +21,7 @@ const Dashboard = () => {
     );
   }
 
-  // Calcular datos en tiempo real con mejor lógica
+  // Calcular datos en tiempo real
   const today = new Date().toISOString().split('T')[0];
   
   const currentGuests = reservations.filter(r => 
@@ -30,33 +30,10 @@ const Dashboard = () => {
     r.check_out >= today
   );
   
-  const todayCheckIns = reservations.filter(r => 
-    r.check_in === today && 
-    (r.status === 'confirmed' || r.status === 'checked-in')
-  );
-  
-  const todayCheckOuts = reservations.filter(r => 
-    r.check_out === today && 
-    (r.status === 'checked-in' || r.status === 'checked-out')
-  );
-
-  // Contadores de check-ins y check-outs completados hoy
-  const todayCheckedIn = reservations.filter(r => 
-    r.check_in === today && r.status === 'checked-in'
-  );
-
-  const todayCheckedOut = reservations.filter(r => 
-    r.check_out === today && r.status === 'checked-out'
-  );
-  
   const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
 
-  console.log('📊 DASHBOARD - Calculando contadores en tiempo real:', {
+  console.log('📊 DASHBOARD - Estado actual:', {
     today,
-    todayCheckIns: todayCheckIns.length,
-    todayCheckOuts: todayCheckOuts.length,
-    todayCheckedIn: todayCheckedIn.length,
-    todayCheckedOut: todayCheckedOut.length,
     currentGuests: currentGuests.length,
     totalReservations: reservations.length
   });
@@ -71,19 +48,11 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Indicadores en tiempo real mejorados */}
+      {/* Indicadores en tiempo real */}
       <div className="flex gap-2 flex-wrap">
         <Badge variant="outline" className="text-green-600 border-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
           {currentGuests.length} En Hotel
-        </Badge>
-        <Badge variant="outline" className="text-blue-600 border-blue-600">
-          <ArrowRight className="h-3 w-3 mr-1" />
-          Check-ins: {todayCheckedIn.length}/{todayCheckIns.length}
-        </Badge>
-        <Badge variant="outline" className="text-orange-600 border-orange-600">
-          <ArrowLeft className="h-3 w-3 mr-1" />
-          Check-outs: {todayCheckedOut.length}/{todayCheckOuts.length}
         </Badge>
         <Badge variant="outline" className="text-purple-600 border-purple-600">
           <AlertTriangle className="h-3 w-3 mr-1" />
@@ -118,7 +87,7 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Estado del sistema con contadores actualizados en tiempo real */}
+      {/* Estado del sistema simplificado */}
       <Card className="border-green-200 bg-green-50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
@@ -127,7 +96,7 @@ const Dashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs space-y-1">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             <div>
               <strong>Reservas:</strong>
               <div>Total: {reservations.length}</div>
@@ -143,18 +112,11 @@ const Dashboard = () => {
               <div>Mantenimiento: {rooms.filter(r => r.status === 'maintenance').length}</div>
             </div>
             <div>
-              <strong>Movimiento Hoy ({today}):</strong>
-              <div>📥 Check-ins: {todayCheckedIn.length}/{todayCheckIns.length}</div>
-              <div>📤 Check-outs: {todayCheckedOut.length}/{todayCheckOuts.length}</div>
-              <div>🏨 En hotel: {currentGuests.length}</div>
-              <div>📊 Actividad: {todayCheckedIn.length + todayCheckedOut.length} movimientos</div>
-            </div>
-            <div>
               <strong>Sistema:</strong>
               <div>Huéspedes: {guests.length}</div>
               <div>Tiempo real: ✅ ACTIVO</div>
               <div>Estado: ✅ OPTIMIZADO</div>
-              <div>Contadores: ✅ SINCRONIZADOS</div>
+              <div>En hotel: {currentGuests.length}</div>
             </div>
           </div>
         </CardContent>
