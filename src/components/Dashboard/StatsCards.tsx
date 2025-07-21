@@ -20,7 +20,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
     .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  // Recalcular check-ins y check-outs con lógica corregida
+  // Recalcular check-ins y check-outs con lógica corregida y en tiempo real
   const todayCheckIns = reservations.filter(r => 
     r.check_in === today && 
     (r.status === 'confirmed' || r.status === 'checked-in')
@@ -28,7 +28,17 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
 
   const todayCheckOuts = reservations.filter(r => 
     r.check_out === today && 
-    r.status === 'checked-in'
+    (r.status === 'checked-in' || r.status === 'checked-out')
+  ).length;
+
+  // Huéspedes que han hecho check-in hoy (llegadas completadas)
+  const todayCheckedIn = reservations.filter(r => 
+    r.check_in === today && r.status === 'checked-in'
+  ).length;
+
+  // Huéspedes que han hecho check-out hoy (salidas completadas)
+  const todayCheckedOut = reservations.filter(r => 
+    r.check_out === today && r.status === 'checked-out'
   ).length;
 
   // Get maintenance room numbers
@@ -39,10 +49,12 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     return numA - numB;
   });
 
-  console.log('📊 STATS CARDS - Contadores calculados:', {
+  console.log('📊 STATS CARDS - Contadores calculados en tiempo real:', {
     today,
     todayCheckIns,
     todayCheckOuts,
+    todayCheckedIn,
+    todayCheckedOut,
     totalReservations: reservations.length,
     confirmedToday: reservations.filter(r => r.check_in === today && r.status === 'confirmed').length,
     checkedInToday: reservations.filter(r => r.check_in === today && r.status === 'checked-in').length
@@ -85,19 +97,19 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     },
     {
       title: 'Check-ins Hoy',
-      value: todayCheckIns,
+      value: `${todayCheckedIn}/${todayCheckIns}`,
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
-      subtitle: 'Llegadas esperadas'
+      subtitle: `${todayCheckedIn} completados de ${todayCheckIns} esperados`
     },
     {
       title: 'Check-outs Hoy',
-      value: todayCheckOuts,
+      value: `${todayCheckedOut}/${todayCheckOuts}`,
       icon: Clock,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
-      subtitle: 'Salidas programadas'
+      subtitle: `${todayCheckedOut} completados de ${todayCheckOuts} programados`
     },
     {
       title: 'Ingresos del Mes',

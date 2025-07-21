@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -55,6 +54,25 @@ const Index = () => {
       });
     }
   };
+
+  // Calculate real-time counters for today's activity
+  const today = new Date().toISOString().split('T')[0];
+  
+  const todayCheckIns = reservations.filter(r => 
+    r.check_in === today && (r.status === 'confirmed' || r.status === 'checked-in')
+  );
+  
+  const todayCheckOuts = reservations.filter(r => 
+    r.check_out === today && (r.status === 'checked-in' || r.status === 'checked-out')
+  );
+
+  const todayCheckedIn = reservations.filter(r => 
+    r.check_in === today && r.status === 'checked-in'
+  );
+
+  const todayCheckedOut = reservations.filter(r => 
+    r.check_out === today && r.status === 'checked-out'
+  );
 
   // Calculate the last system update based on most recent reservation activity
   const getLastUpdate = () => {
@@ -214,23 +232,35 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* System Status Card - Mobile optimized */}
+        {/* System Status Card - Mobile optimized with real-time counters */}
         <Card>
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
               <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
-              Estado del Sistema
+              Estado del Sistema - Actividad Diaria
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="space-y-2 sm:space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs sm:text-sm text-muted-foreground">Check-ins Hoy</span>
+                <span className="text-xs sm:text-sm font-medium text-blue-600">
+                  {todayCheckedIn.length}/{todayCheckIns.length} completados
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs sm:text-sm text-muted-foreground">Check-outs Hoy</span>
+                <span className="text-xs sm:text-sm font-medium text-orange-600">
+                  {todayCheckedOut.length}/{todayCheckOuts.length} completados
+                </span>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-muted-foreground">Sistema Operativo</span>
                 <span className="text-xs sm:text-sm font-medium text-green-600">Funcionando</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-muted-foreground">Última Actualización</span>
-                <span className="text-xs sm:text-sm font-medium">hace poco</span>
+                <span className="text-xs sm:text-sm font-medium">{getLastUpdate()}</span>
               </div>
             </div>
           </CardContent>
