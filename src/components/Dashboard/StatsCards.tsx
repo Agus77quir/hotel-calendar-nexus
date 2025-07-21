@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock } from 'lucide-react';
+import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { HotelStats, Room, Reservation } from '@/types/hotel';
 
 interface StatsCardsProps {
@@ -12,7 +12,7 @@ interface StatsCardsProps {
 export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsProps) => {
   const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
   
-  // Calcular métricas correctamente
+  // Calcular métricas correctamente con fecha actual
   const today = new Date().toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0, 7);
   
@@ -20,26 +20,37 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
     .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  // Recalcular check-ins y check-outs con lógica corregida y en tiempo real
-  const todayCheckIns = reservations.filter(r => 
-    r.check_in === today && 
-    (r.status === 'confirmed' || r.status === 'checked-in')
-  ).length;
+  // CONTADORES CORREGIDOS - Check-ins programados para hoy
+  const todayCheckIns = reservations.filter(r => {
+    const checkIn = r.check_in;
+    const isToday = checkIn === today;
+    const isExpected = r.status === 'confirmed' || r.status === 'checked-in';
+    return isToday && isExpected;
+  });
 
-  const todayCheckOuts = reservations.filter(r => 
-    r.check_out === today && 
-    (r.status === 'checked-in' || r.status === 'checked-out')
-  ).length;
+  // Check-outs programados para hoy
+  const todayCheckOuts = reservations.filter(r => {
+    const checkOut = r.check_out;
+    const isToday = checkOut === today;
+    const isExpected = r.status === 'checked-in' || r.status === 'checked-out';
+    return isToday && isExpected;
+  });
 
-  // Huéspedes que han hecho check-in hoy (llegadas completadas)
-  const todayCheckedIn = reservations.filter(r => 
-    r.check_in === today && r.status === 'checked-in'
-  ).length;
+  // Check-ins COMPLETADOS hoy
+  const todayCheckedIn = reservations.filter(r => {
+    const checkIn = r.check_in;
+    const isToday = checkIn === today;
+    const isCompleted = r.status === 'checked-in';
+    return isToday && isCompleted;
+  });
 
-  // Huéspedes que han hecho check-out hoy (salidas completadas)
-  const todayCheckedOut = reservations.filter(r => 
-    r.check_out === today && r.status === 'checked-out'
-  ).length;
+  // Check-outs COMPLETADOS hoy
+  const todayCheckedOut = reservations.filter(r => {
+    const checkOut = r.check_out;
+    const isToday = checkOut === today;
+    const isCompleted = r.status === 'checked-out';
+    return isToday && isCompleted;
+  });
 
   // Get maintenance room numbers
   const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
@@ -49,15 +60,17 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     return numA - numB;
   });
 
-  console.log('📊 STATS CARDS - Contadores calculados en tiempo real:', {
+  // Log para debugging
+  console.log('📊 STATS CARDS - Contadores actualizados:', {
     today,
-    todayCheckIns,
-    todayCheckOuts,
-    todayCheckedIn,
-    todayCheckedOut,
+    todayCheckInsExpected: todayCheckIns.length,
+    todayCheckInsCompleted: todayCheckedIn.length,
+    todayCheckOutsExpected: todayCheckOuts.length,
+    todayCheckOutsCompleted: todayCheckedOut.length,
     totalReservations: reservations.length,
-    confirmedToday: reservations.filter(r => r.check_in === today && r.status === 'confirmed').length,
-    checkedInToday: reservations.filter(r => r.check_in === today && r.status === 'checked-in').length
+    confirmedReservations: reservations.filter(r => r.status === 'confirmed').length,
+    checkedInReservations: reservations.filter(r => r.status === 'checked-in').length,
+    checkedOutReservations: reservations.filter(r => r.status === 'checked-out').length
   });
 
   const cards = [
@@ -97,19 +110,23 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     },
     {
       title: 'Check-ins Hoy',
-      value: `${todayCheckedIn}/${todayCheckIns}`,
-      icon: Calendar,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      subtitle: `${todayCheckedIn} completados de ${todayCheckIns} esperados`
+      value: `${todayCheckedIn.length}/${todayCheckIns.length}`,
+      icon: ArrowRight,
+      color: 'text-green-700',
+      bgColor: 'bg-green-100',
+      subtitle: todayCheckIns.length === 0 
+        ? 'Sin check-ins programados'
+        : `${todayCheckedIn.length} completados de ${todayCheckIns.length} esperados`
     },
     {
       title: 'Check-outs Hoy',
-      value: `${todayCheckedOut}/${todayCheckOuts}`,
-      icon: Clock,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-100',
-      subtitle: `${todayCheckedOut} completados de ${todayCheckOuts} programados`
+      value: `${todayCheckedOut.length}/${todayCheckOuts.length}`,
+      icon: ArrowLeft,
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-100',
+      subtitle: todayCheckOuts.length === 0
+        ? 'Sin check-outs programados'
+        : `${todayCheckedOut.length} completados de ${todayCheckOuts.length} programados`
     },
     {
       title: 'Ingresos del Mes',

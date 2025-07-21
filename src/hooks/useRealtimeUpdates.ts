@@ -18,24 +18,35 @@ export const useRealtimeUpdates = () => {
     initialized.current = true;
     isRealtimeActive = true;
 
-    console.log('🚀 INICIANDO TIEMPO REAL');
+    console.log('🚀 INICIANDO TIEMPO REAL MEJORADO');
 
     const channel = supabase
-      .channel('hotel-updates')
+      .channel('hotel-updates-optimized')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
-        async () => {
-          console.log('📝 RESERVA ACTUALIZADA VIA TIEMPO REAL');
-          await queryClient.refetchQueries({ queryKey: ['reservations'] });
-          await queryClient.refetchQueries({ queryKey: ['rooms'] });
+        async (payload) => {
+          console.log('📝 RESERVA ACTUALIZADA VIA TIEMPO REAL:', payload);
+          
+          // Invalidar TODAS las queries para asegurar sincronización
+          await queryClient.invalidateQueries();
+          
+          // Refrescar específicamente las queries críticas
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: ['reservations'] }),
+            queryClient.refetchQueries({ queryKey: ['rooms'] }),
+          ]);
+          
+          console.log('✅ DATOS SINCRONIZADOS VIA TIEMPO REAL');
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
-        async () => {
-          console.log('🏠 HABITACIÓN ACTUALIZADA VIA TIEMPO REAL');
+        async (payload) => {
+          console.log('🏠 HABITACIÓN ACTUALIZADA VIA TIEMPO REAL:', payload);
+          
+          await queryClient.invalidateQueries({ queryKey: ['rooms'] });
           await queryClient.refetchQueries({ queryKey: ['rooms'] });
         }
       )

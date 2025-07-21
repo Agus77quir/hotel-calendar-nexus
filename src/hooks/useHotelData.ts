@@ -29,7 +29,7 @@ export const useHotelData = () => {
     setUserContext();
   }, [user?.email]);
 
-  // Consultas con refetch automático
+  // Consultas con refetch automático más agresivo
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -46,9 +46,10 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 1000,
+    staleTime: 0, // Datos siempre se consideran obsoletos
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refrescar cada 5 segundos
   });
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
@@ -70,9 +71,10 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 1000,
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 5000,
   });
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
@@ -85,16 +87,27 @@ export const useHotelData = () => {
       
       if (error) throw error;
       
-      return (data || []).map(reservation => ({
+      const processedData = (data || []).map(reservation => ({
         ...reservation,
         status: reservation.status as Reservation['status'],
         guests_count: Number(reservation.guests_count),
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
+
+      console.log('🔄 RESERVACIONES RECARGADAS:', {
+        total: processedData.length,
+        confirmed: processedData.filter(r => r.status === 'confirmed').length,
+        checkedIn: processedData.filter(r => r.status === 'checked-in').length,
+        checkedOut: processedData.filter(r => r.status === 'checked-out').length,
+        timestamp: new Date().toISOString()
+      });
+
+      return processedData;
     },
-    staleTime: 1000,
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 3000, // Más frecuente para reservas
   });
 
   // Estadísticas calculadas
@@ -115,7 +128,7 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Mutación optimizada para check-in/check-out
+  // Mutación optimizada para check-in/check-out con invalidación más agresiva
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
@@ -163,15 +176,19 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('✅ RESERVA ACTUALIZADA - REFRESCANDO DATOS');
+      console.log('✅ RESERVA ACTUALIZADA - INVALIDANDO TODAS LAS QUERIES');
       
-      // Refrescar datos inmediatamente
+      // Invalidar TODAS las queries para forzar recarga completa
+      await queryClient.invalidateQueries();
+      
+      // Refrescar específicamente las queries críticas
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['reservations'] }),
         queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] }),
       ]);
       
-      console.log('🔄 DATOS REFRESCADOS');
+      console.log('🔄 TODAS LAS QUERIES REFRESCADAS');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);
@@ -292,8 +309,7 @@ export const useHotelData = () => {
       return data;
     },
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ['reservations'] });
-      await queryClient.refetchQueries({ queryKey: ['rooms'] });
+      await queryClient.invalidateQueries();
     },
   });
 
