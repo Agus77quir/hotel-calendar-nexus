@@ -14,6 +14,7 @@ import { GuestSearchInput } from './GuestSearchInput';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useIsIOS } from '@/hooks/use-mobile';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -55,6 +56,8 @@ export const ReservationFormFields = ({
   onRoomChange,
   onDateChange
 }: ReservationFormFieldsProps) => {
+
+  const isIOS = useIsIOS();
 
   const formatRoomType = (type: string) => {
     return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -108,7 +111,17 @@ export const ReservationFormFields = ({
                   value={formData.guest_id}
                   onValueChange={(value) => onFormChange('guest_id', value)}
                 >
-                  <SelectTrigger className="w-full max-w-md mx-auto">
+                  <SelectTrigger 
+                    className={cn(
+                      "w-full max-w-md mx-auto",
+                      isIOS && "min-h-[44px] touch-manipulation"
+                    )}
+                    style={isIOS ? {
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      touchAction: 'manipulation'
+                    } : {}}
+                  >
                     <SelectValue placeholder="Seleccionar huésped" />
                   </SelectTrigger>
                   <SelectContent>
@@ -235,7 +248,17 @@ export const ReservationFormFields = ({
               value={formData.room_id}
               onValueChange={onRoomChange}
             >
-              <SelectTrigger className="h-12">
+              <SelectTrigger 
+                className={cn(
+                  "h-12",
+                  isIOS && "min-h-[44px] touch-manipulation"
+                )}
+                style={isIOS ? {
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  touchAction: 'manipulation'
+                } : {}}
+              >
                 <SelectValue placeholder="Seleccionar habitación disponible" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
@@ -347,7 +370,14 @@ export const ReservationFormFields = ({
                 value={formData.guests_count.toString()}
                 onValueChange={(value) => onFormChange('guests_count', parseInt(value))}
               >
-                <SelectTrigger>
+                <SelectTrigger 
+                  className={isIOS ? "min-h-[44px] touch-manipulation" : ""}
+                  style={isIOS ? {
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    touchAction: 'manipulation'
+                  } : {}}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -370,7 +400,14 @@ export const ReservationFormFields = ({
                 value={formData.status}
                 onValueChange={(value) => onFormChange('status', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger 
+                  className={isIOS ? "min-h-[44px] touch-manipulation" : ""}
+                  style={isIOS ? {
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    touchAction: 'manipulation'
+                  } : {}}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

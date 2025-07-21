@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
@@ -16,4 +17,17 @@ export function useIsMobile() {
   }, [])
 
   return !!isMobile
+}
+
+// iOS detection hook for specific iOS optimizations
+export function useIsIOS() {
+  const [isIOS, setIsIOS] = React.useState<boolean>(false)
+
+  React.useEffect(() => {
+    const userAgent = window.navigator.userAgent.toLowerCase()
+    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent)
+    setIsIOS(isIOSDevice)
+  }, [])
+
+  return isIOS
 }
