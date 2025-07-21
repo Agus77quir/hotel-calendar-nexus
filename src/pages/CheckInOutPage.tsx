@@ -41,14 +41,18 @@ const CheckInOutPage = () => {
     setProcessingReservations(newProcessing);
 
     try {
+      console.log('🟢 INICIANDO CHECK-IN RESERVA:', reservationId);
+      
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
+      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      
       await updateReservation({ 
         id: reservationId, 
         status: 'checked-in' as Reservation['status']
       });
       
-      const reservation = reservations.find(r => r.id === reservationId);
-      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
-      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      console.log('✅ CHECK-IN COMPLETADO - UI DEBERÍA ACTUALIZARSE');
       
       toast({
         title: "✅ Check-in realizado",
@@ -57,6 +61,7 @@ const CheckInOutPage = () => {
           : "Check-in completado exitosamente",
       });
     } catch (error) {
+      console.error('❌ ERROR EN CHECK-IN:', error);
       toast({
         title: "❌ Error en check-in",
         description: "No se pudo realizar el check-in",
@@ -77,14 +82,18 @@ const CheckInOutPage = () => {
     setProcessingReservations(newProcessing);
 
     try {
+      console.log('🔴 INICIANDO CHECK-OUT RESERVA:', reservationId);
+      
+      const reservation = reservations.find(r => r.id === reservationId);
+      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
+      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      
       await updateReservation({ 
         id: reservationId, 
         status: 'checked-out' as Reservation['status']
       });
       
-      const reservation = reservations.find(r => r.id === reservationId);
-      const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
-      const room = reservation ? rooms.find(r => r.id === reservation.room_id) : null;
+      console.log('✅ CHECK-OUT COMPLETADO - UI DEBERÍA ACTUALIZARSE');
       
       toast({
         title: "✅ Check-out realizado",
@@ -93,6 +102,7 @@ const CheckInOutPage = () => {
           : "Check-out completado exitosamente",
       });
     } catch (error) {
+      console.error('❌ ERROR EN CHECK-OUT:', error);
       toast({
         title: "❌ Error en check-out",
         description: "No se pudo realizar el check-out",
