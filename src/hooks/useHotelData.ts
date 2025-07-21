@@ -48,7 +48,9 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 0, // Datos siempre frescos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
@@ -70,7 +72,9 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Datos siempre frescos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
@@ -90,7 +94,9 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Datos siempre frescos  
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Estadísticas calculadas
@@ -105,7 +111,7 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Mutación simplificada para actualizar reservas
+  // Mutación optimizada para actualizar reservas
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🔄 INICIANDO ACTUALIZACIÓN RESERVA:', id, data);
@@ -168,9 +174,18 @@ export const useHotelData = () => {
       
       return updatedReservation;
     },
-    onSuccess: (data) => {
-      console.log('✅ MUTACIÓN EXITOSA - Los datos se actualizarán automáticamente via realtime');
-      console.log('📊 Datos actualizados:', data);
+    onSuccess: async (data) => {
+      console.log('🎯 MUTACIÓN EXITOSA - FORZANDO ACTUALIZACIÓN INMEDIATA');
+      
+      // Invalidar queries inmediatamente
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      
+      // Refetch inmediatamente
+      await queryClient.refetchQueries({ queryKey: ['reservations'] });
+      await queryClient.refetchQueries({ queryKey: ['rooms'] });
+      
+      console.log('🔄 QUERIES ACTUALIZADAS FORZADAMENTE');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);
@@ -278,6 +293,8 @@ export const useHotelData = () => {
 
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('🆕 CREANDO NUEVA RESERVA:', reservationData);
+      
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
@@ -287,12 +304,24 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR CREANDO RESERVA:', error);
+        throw error;
+      }
+      
+      console.log('✅ RESERVA CREADA:', data);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    onSuccess: async () => {
+      console.log('🎯 RESERVA CREADA - ACTUALIZANDO DATOS');
+      
+      // Invalidar y refetch inmediatamente
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      await queryClient.refetchQueries({ queryKey: ['reservations'] });
+      await queryClient.refetchQueries({ queryKey: ['rooms'] });
+      
+      console.log('🔄 DATOS ACTUALIZADOS TRAS CREAR RESERVA');
     },
   });
 

@@ -29,29 +29,33 @@ export const useRealtimeUpdates = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
         async (payload) => {
-          console.log('📝 REALTIME - RESERVA ACTUALIZADA:', payload.eventType, payload.new, payload.old);
+          console.log('📝 REALTIME - RESERVA ACTUALIZADA:', payload.eventType, payload.new);
           
-          // Invalidar todas las consultas relacionadas
-          console.log('🔄 INVALIDANDO QUERIES DE RESERVAS Y HABITACIONES');
+          // Invalidar y refetch agresivo
+          console.log('🔄 ACTUALIZANDO DATOS INMEDIATAMENTE');
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['reservations'] }),
             queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+            queryClient.refetchQueries({ queryKey: ['reservations'] }),
+            queryClient.refetchQueries({ queryKey: ['rooms'] }),
           ]);
-          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
+          console.log('✅ DATOS ACTUALIZADOS VIA REALTIME');
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
         async (payload) => {
-          console.log('🏠 REALTIME - HABITACIÓN ACTUALIZADA:', payload.eventType, payload.new, payload.old);
+          console.log('🏠 REALTIME - HABITACIÓN ACTUALIZADA:', payload.eventType, payload.new);
           
-          console.log('🔄 INVALIDANDO QUERIES DE HABITACIONES Y RESERVAS');
+          console.log('🔄 ACTUALIZANDO DATOS DE HABITACIONES');
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['rooms'] }),
             queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+            queryClient.refetchQueries({ queryKey: ['rooms'] }),
+            queryClient.refetchQueries({ queryKey: ['reservations'] }),
           ]);
-          console.log('✅ QUERIES INVALIDADAS - UI DEBE ACTUALIZARSE');
+          console.log('✅ HABITACIONES ACTUALIZADAS VIA REALTIME');
         }
       )
       .subscribe((status) => {
