@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -160,7 +161,7 @@ const Index = () => {
 
       {/* Stats Cards - Mobile optimized */}
       {isReceptionist ? (
-        <ReceptionistStatsCards stats={stats} rooms={rooms} />
+        <ReceptionistStatsCards stats={stats} rooms={rooms} reservations={reservations} guests={guests} />
       ) : (
         <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
       )}
