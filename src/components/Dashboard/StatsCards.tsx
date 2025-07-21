@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { HotelStats, Room, Reservation } from '@/types/hotel';
 
 interface StatsCardsProps {
@@ -20,12 +20,57 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
     .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
+  // CONTADORES CORREGIDOS - Check-ins programados para hoy
+  const todayCheckIns = reservations.filter(r => {
+    const checkIn = r.check_in;
+    const isToday = checkIn === today;
+    const isExpected = r.status === 'confirmed' || r.status === 'checked-in';
+    return isToday && isExpected;
+  });
+
+  // Check-outs programados para hoy
+  const todayCheckOuts = reservations.filter(r => {
+    const checkOut = r.check_out;
+    const isToday = checkOut === today;
+    const isExpected = r.status === 'checked-in' || r.status === 'checked-out';
+    return isToday && isExpected;
+  });
+
+  // Check-ins COMPLETADOS hoy
+  const todayCheckedIn = reservations.filter(r => {
+    const checkIn = r.check_in;
+    const isToday = checkIn === today;
+    const isCompleted = r.status === 'checked-in';
+    return isToday && isCompleted;
+  });
+
+  // Check-outs COMPLETADOS hoy
+  const todayCheckedOut = reservations.filter(r => {
+    const checkOut = r.check_out;
+    const isToday = checkOut === today;
+    const isCompleted = r.status === 'checked-out';
+    return isToday && isCompleted;
+  });
+
   // Get maintenance room numbers
   const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
   const maintenanceRoomNumbers = maintenanceRooms.map(r => r.number).sort((a, b) => {
     const numA = parseInt(a) || 0;
     const numB = parseInt(b) || 0;
     return numA - numB;
+  });
+
+  // Log para debugging
+  console.log('📊 STATS CARDS - Contadores actualizados:', {
+    today,
+    todayCheckInsExpected: todayCheckIns.length,
+    todayCheckInsCompleted: todayCheckedIn.length,
+    todayCheckOutsExpected: todayCheckOuts.length,
+    todayCheckOutsCompleted: todayCheckedOut.length,
+    totalReservations: reservations.length,
+    confirmedReservations: reservations.filter(r => r.status === 'confirmed').length,
+    checkedInReservations: reservations.filter(r => r.status === 'checked-in').length,
+    checkedOutReservations: reservations.filter(r => r.status === 'checked-out').length
   });
 
   const cards = [
@@ -64,6 +109,26 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
         : 'Ninguna en mantenimiento'
     },
     {
+      title: 'Check-ins Hoy',
+      value: `${todayCheckedIn.length}/${todayCheckIns.length}`,
+      icon: ArrowRight,
+      color: 'text-green-700',
+      bgColor: 'bg-green-100',
+      subtitle: todayCheckIns.length === 0 
+        ? 'Sin check-ins programados'
+        : `${todayCheckedIn.length} completados de ${todayCheckIns.length} esperados`
+    },
+    {
+      title: 'Check-outs Hoy',
+      value: `${todayCheckedOut.length}/${todayCheckOuts.length}`,
+      icon: ArrowLeft,
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-100',
+      subtitle: todayCheckOuts.length === 0
+        ? 'Sin check-outs programados'
+        : `${todayCheckedOut.length} completados de ${todayCheckOuts.length} programados`
+    },
+    {
       title: 'Ingresos del Mes',
       value: `$${monthlyRevenue.toFixed(2)}`,
       icon: DollarSign,
@@ -82,7 +147,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
