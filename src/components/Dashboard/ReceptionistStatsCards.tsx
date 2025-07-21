@@ -1,72 +1,61 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BedDouble, Wrench, Calendar, Clock, Bed } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp } from 'lucide-react';
 import { HotelStats, Room, Reservation, Guest } from '@/types/hotel';
 
 interface ReceptionistStatsCardsProps {
   stats: HotelStats;
-  rooms?: Room[];
-  reservations?: Reservation[];
-  guests?: Guest[];
+  rooms: Room[];
+  reservations: Reservation[];
+  guests: Guest[];
 }
 
-export const ReceptionistStatsCards = ({ stats, rooms = [], reservations = [], guests = [] }: ReceptionistStatsCardsProps) => {
-  // Get maintenance room numbers
-  const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
-  const maintenanceRoomNumbers = maintenanceRooms.map(r => r.number).sort((a, b) => {
-    const numA = parseInt(a) || 0;
-    const numB = parseInt(b) || 0;
-    return numA - numB;
-  });
+export const ReceptionistStatsCards = ({ stats, rooms, reservations, guests }: ReceptionistStatsCardsProps) => {
+  const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
+  
+  // Calcular métricas
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthlyRevenue = reservations
+    .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  // Only show these specific cards for receptionists
   const cards = [
     {
-      title: 'Habitaciones Totales',
-      value: stats.totalRooms,
-      icon: Bed,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      subtitle: 'Total disponible'
-    },
-    {
-      title: 'Habitaciones Ocupadas',
-      value: stats.occupiedRooms,
-      icon: BedDouble,
+      title: 'Ingresos del Mes',
+      value: `$${monthlyRevenue.toFixed(2)}`,
+      icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
-      subtitle: 'Actualmente ocupadas'
+      subtitle: 'Facturación mensual'
     },
     {
-      title: 'Mantenimiento',
-      value: stats.maintenanceRooms,
-      icon: Wrench,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      subtitle: stats.maintenanceRooms > 0 
-        ? `Hab. ${maintenanceRoomNumbers.join(', ')}` 
-        : 'Ninguna en mantenimiento'
+      title: 'Tasa de Ocupación',
+      value: `${occupancyRate}%`,
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      subtitle: occupancyRate > 80 ? 'Excelente' : occupancyRate > 60 ? 'Buena' : 'Mejorable'
     },
     {
-      title: 'Check-ins Hoy',
-      value: stats.todayCheckIns,
-      icon: Calendar,
+      title: 'Total Huéspedes',
+      value: guests.length,
+      icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
-      subtitle: 'Llegadas esperadas'
+      subtitle: 'Registrados en sistema'
     },
     {
-      title: 'Check-outs Hoy',
-      value: stats.todayCheckOuts,
-      icon: Clock,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-100',
-      subtitle: 'Salidas programadas'
-    },
+      title: 'Reservas Activas',
+      value: reservations.filter(r => r.status === 'confirmed' || r.status === 'checked-in').length,
+      icon: Calendar,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100',
+      subtitle: 'Confirmadas y activas'
+    }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
