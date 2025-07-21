@@ -20,23 +20,25 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
     .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  // CONTADORES CORREGIDOS - Check-ins programados para hoy
+  // CONTADORES CORREGIDOS - Check-ins programados para hoy (confirmados + los que ya están registrados)
   const todayCheckIns = reservations.filter(r => {
     const checkIn = r.check_in;
     const isToday = checkIn === today;
-    const isExpected = r.status === 'confirmed' || r.status === 'checked-in';
-    return isToday && isExpected;
+    // Incluir tanto confirmadas como las ya registradas para el conteo total
+    const isRelevant = r.status === 'confirmed' || r.status === 'checked-in';
+    return isToday && isRelevant;
   });
 
-  // Check-outs programados para hoy
+  // Check-outs programados para hoy (registrados + los que ya hicieron check-out)
   const todayCheckOuts = reservations.filter(r => {
     const checkOut = r.check_out;
     const isToday = checkOut === today;
-    const isExpected = r.status === 'checked-in' || r.status === 'checked-out';
-    return isToday && isExpected;
+    // Incluir tanto registradas como las que ya hicieron check-out para el conteo total
+    const isRelevant = r.status === 'checked-in' || r.status === 'checked-out';
+    return isToday && isRelevant;
   });
 
-  // Check-ins COMPLETADOS hoy
+  // Check-ins COMPLETADOS hoy (solo los que cambiaron a checked-in hoy)
   const todayCheckedIn = reservations.filter(r => {
     const checkIn = r.check_in;
     const isToday = checkIn === today;
@@ -44,7 +46,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     return isToday && isCompleted;
   });
 
-  // Check-outs COMPLETADOS hoy
+  // Check-outs COMPLETADOS hoy (solo los que cambiaron a checked-out hoy)
   const todayCheckedOut = reservations.filter(r => {
     const checkOut = r.check_out;
     const isToday = checkOut === today;
@@ -73,6 +75,12 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
       programados: todayCheckOuts.length,
       porcentaje: todayCheckOuts.length > 0 ? Math.round((todayCheckedOut.length / todayCheckOuts.length) * 100) : 0
     },
+    reservaciones: reservations.map(r => ({
+      id: r.id.slice(-4),
+      checkIn: r.check_in,
+      checkOut: r.check_out,
+      status: r.status
+    })),
     timestamp: new Date().toLocaleTimeString()
   });
 
