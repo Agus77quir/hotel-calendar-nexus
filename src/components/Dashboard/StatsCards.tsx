@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock } from 'lucide-react';
 import { HotelStats, Room, Reservation } from '@/types/hotel';
@@ -13,7 +12,7 @@ interface StatsCardsProps {
 export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsProps) => {
   const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
   
-  // Calculate additional metrics
+  // Calcular métricas correctamente
   const today = new Date().toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0, 7);
   
@@ -21,10 +20,15 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
     .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  const activeReservations = reservations.filter(r => 
-    r.check_in <= today && 
-    r.check_out >= today && 
-    r.status !== 'cancelled'
+  // Recalcular check-ins y check-outs con lógica corregida
+  const todayCheckIns = reservations.filter(r => 
+    r.check_in === today && 
+    (r.status === 'confirmed' || r.status === 'checked-in')
+  ).length;
+
+  const todayCheckOuts = reservations.filter(r => 
+    r.check_out === today && 
+    r.status === 'checked-in'
   ).length;
 
   // Get maintenance room numbers
@@ -33,6 +37,15 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     const numA = parseInt(a) || 0;
     const numB = parseInt(b) || 0;
     return numA - numB;
+  });
+
+  console.log('📊 STATS CARDS - Contadores calculados:', {
+    today,
+    todayCheckIns,
+    todayCheckOuts,
+    totalReservations: reservations.length,
+    confirmedToday: reservations.filter(r => r.check_in === today && r.status === 'confirmed').length,
+    checkedInToday: reservations.filter(r => r.check_in === today && r.status === 'checked-in').length
   });
 
   const cards = [
@@ -72,7 +85,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     },
     {
       title: 'Check-ins Hoy',
-      value: stats.todayCheckIns,
+      value: todayCheckIns,
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
@@ -80,7 +93,7 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     },
     {
       title: 'Check-outs Hoy',
-      value: stats.todayCheckOuts,
+      value: todayCheckOuts,
       icon: Clock,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
@@ -125,4 +138,3 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     </div>
   );
 };
-

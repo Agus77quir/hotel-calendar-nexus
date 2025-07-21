@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,17 +99,34 @@ export const useHotelData = () => {
     refetchInterval: 2000, // Refetch cada 2 segundos
   });
 
-  // Estadísticas calculadas
+  // Estadísticas calculadas CON LÓGICA CORREGIDA
+  const today = new Date().toISOString().split('T')[0];
+  
   const stats: HotelStats = {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
     availableRooms: rooms.filter(r => r.status === 'available').length,
     maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
     totalReservations: reservations.length,
-    todayCheckIns: reservations.filter(r => r.check_in === new Date().toISOString().split('T')[0] && r.status === 'confirmed').length,
-    todayCheckOuts: reservations.filter(r => r.check_out === new Date().toISOString().split('T')[0] && r.status === 'checked-in').length,
+    // CORREGIR LÓGICA DE CHECK-INS Y CHECK-OUTS
+    todayCheckIns: reservations.filter(r => 
+      r.check_in === today && 
+      (r.status === 'confirmed' || r.status === 'checked-in')
+    ).length,
+    todayCheckOuts: reservations.filter(r => 
+      r.check_out === today && 
+      r.status === 'checked-in'
+    ).length,
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
+
+  console.log('📊 HOTEL DATA - Estadísticas calculadas:', {
+    today,
+    stats,
+    totalReservations: reservations.length,
+    checkinReservations: reservations.filter(r => r.check_in === today),
+    checkoutReservations: reservations.filter(r => r.check_out === today)
+  });
 
   // Mutación optimizada para actualizar reservas
   const updateReservationMutation = useMutation({
@@ -176,9 +192,9 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async (data) => {
-      console.log('🎯 MUTACIÓN EXITOSA - FORZANDO ACTUALIZACIÓN INMEDIATA');
+      console.log('🎯 MUTACIÓN EXITOSA - FORZANDO ACTUALIZACIÓN INMEDIATA DE CONTADORES');
       
-      // Invalidar y refetch todo inmediatamente
+      // Invalidar y refetch TODO inmediatamente para actualizar contadores
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['reservations'] }),
         queryClient.invalidateQueries({ queryKey: ['rooms'] }),
@@ -191,7 +207,7 @@ export const useHotelData = () => {
         queryClient.refetchQueries({ queryKey: ['guests'], type: 'active' }),
       ]);
       
-      console.log('🔄 TODAS LAS QUERIES ACTUALIZADAS FORZADAMENTE');
+      console.log('🔄 CONTADORES ACTUALIZADOS - DASHBOARD Y CHECK-IN/OUT DEBERÍAN REFLEJARLO');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);

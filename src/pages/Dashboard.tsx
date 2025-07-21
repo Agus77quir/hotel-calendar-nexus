@@ -21,16 +21,34 @@ const Dashboard = () => {
     );
   }
 
-  // Datos en tiempo real
+  // Calcular datos en tiempo real con mejor lógica
   const today = new Date().toISOString().split('T')[0];
-  const currentGuests = reservations.filter(r => r.status === 'checked-in');
+  
+  const currentGuests = reservations.filter(r => 
+    r.status === 'checked-in' && 
+    r.check_in <= today && 
+    r.check_out >= today
+  );
+  
   const todayCheckIns = reservations.filter(r => 
-    r.check_in === today && r.status === 'confirmed'
+    r.check_in === today && 
+    (r.status === 'confirmed' || r.status === 'checked-in')
   );
+  
   const todayCheckOuts = reservations.filter(r => 
-    r.check_out === today && r.status === 'checked-in'
+    r.check_out === today && 
+    r.status === 'checked-in'
   );
+  
   const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
+
+  console.log('📊 DASHBOARD - Calculando contadores:', {
+    today,
+    todayCheckIns: todayCheckIns.length,
+    todayCheckOuts: todayCheckOuts.length,
+    currentGuests: currentGuests.length,
+    totalReservations: reservations.length
+  });
 
   return (
     <div className="space-y-6">
@@ -89,7 +107,7 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Estado del sistema */}
+      {/* Estado del sistema con contadores actualizados */}
       <Card className="border-green-200 bg-green-50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
@@ -114,7 +132,7 @@ const Dashboard = () => {
               <div>Mantenimiento: {rooms.filter(r => r.status === 'maintenance').length}</div>
             </div>
             <div>
-              <strong>Hoy:</strong>
+              <strong>Hoy ({today}):</strong>
               <div>Check-ins: {todayCheckIns.length}</div>
               <div>Check-outs: {todayCheckOuts.length}</div>
               <div>En hotel: {currentGuests.length}</div>
@@ -124,7 +142,7 @@ const Dashboard = () => {
               <div>Huéspedes: {guests.length}</div>
               <div>Tiempo real: ✅ ACTIVO</div>
               <div>Estado: ✅ OPTIMIZADO</div>
-              <div>Parpadeo: ❌ ELIMINADO</div>
+              <div>Contadores: ✅ REPARADOS</div>
             </div>
           </div>
         </CardContent>

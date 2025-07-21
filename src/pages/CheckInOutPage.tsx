@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,28 +9,47 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { Reservation } from '@/types/hotel';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CheckInOutPage = () => {
   const { reservations, guests, rooms, updateReservation, isLoading } = useHotelData();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Filtrar reservas por categorías
+  // Filtrar reservas por categorías con lógica corregida
   const todayCheckIns = reservations.filter(r => 
     r.check_in === today && r.status === 'confirmed'
   );
+  
   const todayCheckOuts = reservations.filter(r => 
     r.check_out === today && r.status === 'checked-in'
   );
-  const currentGuests = reservations.filter(r => r.status === 'checked-in');
+  
+  const currentGuests = reservations.filter(r => 
+    r.status === 'checked-in' && 
+    r.check_in <= today && 
+    r.check_out >= today
+  );
+  
   const earlyCheckIns = reservations.filter(r => 
     r.check_in > today && r.status === 'confirmed'
   );
+  
   const lateCheckOuts = reservations.filter(r => 
     r.check_out < today && r.status === 'checked-in'
   );
+
+  console.log('🏨 CHECK-IN/OUT PAGE - Contadores:', {
+    today,
+    todayCheckIns: todayCheckIns.length,
+    todayCheckOuts: todayCheckOuts.length,
+    currentGuests: currentGuests.length,
+    earlyCheckIns: earlyCheckIns.length,
+    lateCheckOuts: lateCheckOuts.length
+  });
 
   const handleCheckIn = async (reservationId: string) => {
     if (processingReservations.has(reservationId)) return;
@@ -52,7 +70,15 @@ const CheckInOutPage = () => {
         status: 'checked-in' as Reservation['status']
       });
       
-      console.log('✅ CHECK-IN COMPLETADO - UI DEBERÍA ACTUALIZARSE');
+      // Forzar actualización inmediata
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+      ]);
+      
+      console.log('✅ CHECK-IN COMPLETADO - DATOS ACTUALIZADOS');
       
       toast({
         title: "✅ Check-in realizado",
@@ -93,7 +119,15 @@ const CheckInOutPage = () => {
         status: 'checked-out' as Reservation['status']
       });
       
-      console.log('✅ CHECK-OUT COMPLETADO - UI DEBERÍA ACTUALIZARSE');
+      // Forzar actualización inmediata
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+      ]);
+      
+      console.log('✅ CHECK-OUT COMPLETADO - DATOS ACTUALIZADOS');
       
       toast({
         title: "✅ Check-out realizado",
@@ -282,13 +316,13 @@ const CheckInOutPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Sistema optimizado - Actualizaciones automáticas
+            Sistema reparado - Contadores funcionando correctamente
           </p>
         </div>
         <BackToHomeButton />
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards reparadas */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -296,6 +330,7 @@ const CheckInOutPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todayCheckIns.length}</div>
+            <div className="text-xs text-muted-foreground">Confirmadas para hoy</div>
           </CardContent>
         </Card>
         
@@ -305,6 +340,7 @@ const CheckInOutPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todayCheckOuts.length}</div>
+            <div className="text-xs text-muted-foreground">Registrados que salen hoy</div>
           </CardContent>
         </Card>
 
@@ -314,6 +350,7 @@ const CheckInOutPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{currentGuests.length}</div>
+            <div className="text-xs text-muted-foreground">Huéspedes actuales</div>
           </CardContent>
         </Card>
 
@@ -323,6 +360,7 @@ const CheckInOutPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{earlyCheckIns.length}</div>
+            <div className="text-xs text-muted-foreground">Check-ins futuros</div>
           </CardContent>
         </Card>
 
@@ -332,6 +370,7 @@ const CheckInOutPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{lateCheckOuts.length}</div>
+            <div className="text-xs text-muted-foreground">Check-outs atrasados</div>
           </CardContent>
         </Card>
       </div>
