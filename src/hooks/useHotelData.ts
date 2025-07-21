@@ -11,26 +11,25 @@ export const useHotelData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Activar tiempo real UNA sola vez
+  // Activar tiempo real
   useRealtimeUpdates();
 
-  // Configurar contexto de usuario para auditoría
+  // Configurar contexto de usuario
   useEffect(() => {
     const setUserContext = async () => {
       if (user?.email) {
         try {
           await supabase.rpc('set_current_user', { user_name: user.email });
-          console.log('✅ Contexto de usuario configurado');
+          console.log('✅ Usuario configurado:', user.email);
         } catch (error) {
-          console.error('❌ Error configurando contexto de usuario:', error);
+          console.error('❌ Error configurando usuario:', error);
         }
       }
     };
-    
     setUserContext();
   }, [user?.email]);
 
-  // Consultas optimizadas
+  // Consultas con refetch automático
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
@@ -47,7 +46,7 @@ export const useHotelData = () => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
     },
-    staleTime: 0, // Datos siempre frescos
+    staleTime: 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -71,7 +70,7 @@ export const useHotelData = () => {
         amenities: room.amenities || []
       })) as Room[];
     },
-    staleTime: 0, // Datos siempre frescos
+    staleTime: 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -93,13 +92,12 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
     },
-    staleTime: 0, // Datos siempre frescos  
+    staleTime: 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 2000, // Refetch cada 2 segundos
   });
 
-  // Estadísticas calculadas CON LÓGICA CORREGIDA
+  // Estadísticas calculadas
   const today = new Date().toISOString().split('T')[0];
   
   const stats: HotelStats = {
@@ -108,30 +106,19 @@ export const useHotelData = () => {
     availableRooms: rooms.filter(r => r.status === 'available').length,
     maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
     totalReservations: reservations.length,
-    // CORREGIR LÓGICA DE CHECK-INS Y CHECK-OUTS
     todayCheckIns: reservations.filter(r => 
-      r.check_in === today && 
-      (r.status === 'confirmed' || r.status === 'checked-in')
+      r.check_in === today && r.status === 'confirmed'
     ).length,
     todayCheckOuts: reservations.filter(r => 
-      r.check_out === today && 
-      r.status === 'checked-in'
+      r.check_out === today && r.status === 'checked-in'
     ).length,
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  console.log('📊 HOTEL DATA - Estadísticas calculadas:', {
-    today,
-    stats,
-    totalReservations: reservations.length,
-    checkinReservations: reservations.filter(r => r.check_in === today),
-    checkoutReservations: reservations.filter(r => r.check_out === today)
-  });
-
-  // Mutación optimizada para actualizar reservas
+  // Mutación optimizada para check-in/check-out
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🔄 INICIANDO ACTUALIZACIÓN RESERVA:', id, data);
+      console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
       
       // Obtener reserva actual
       const { data: currentReservation, error: fetchError } = await supabase
@@ -140,12 +127,7 @@ export const useHotelData = () => {
         .eq('id', id)
         .single();
 
-      if (fetchError) {
-        console.error('❌ ERROR OBTENIENDO RESERVA ACTUAL:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('📋 RESERVA ACTUAL:', currentReservation);
+      if (fetchError) throw fetchError;
 
       // Actualizar reserva
       const { data: updatedReservation, error } = await supabase
@@ -158,14 +140,9 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('❌ ERROR ACTUALIZANDO RESERVA:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('✅ RESERVA ACTUALIZADA EN BD:', updatedReservation);
-
-      // Actualizar estado de habitación si cambió el status
+      // Actualizar estado de habitación
       if (data.status && currentReservation?.room_id) {
         let roomStatus: Room['status'] = 'available';
         
@@ -175,39 +152,26 @@ export const useHotelData = () => {
           roomStatus = 'available';
         }
 
-        console.log('🏠 ACTUALIZANDO HABITACIÓN:', currentReservation.room_id, 'NUEVO ESTADO:', roomStatus);
-
         const { error: roomError } = await supabase
           .from('rooms')
           .update({ status: roomStatus })
           .eq('id', currentReservation.room_id);
 
-        if (roomError) {
-          console.error('❌ ERROR ACTUALIZANDO HABITACIÓN:', roomError);
-        } else {
-          console.log('✅ HABITACIÓN ACTUALIZADA');
-        }
+        if (roomError) console.error('❌ Error actualizando habitación:', roomError);
       }
       
       return updatedReservation;
     },
-    onSuccess: async (data) => {
-      console.log('🎯 MUTACIÓN EXITOSA - FORZANDO ACTUALIZACIÓN INMEDIATA DE CONTADORES');
+    onSuccess: async () => {
+      console.log('✅ RESERVA ACTUALIZADA - REFRESCANDO DATOS');
       
-      // Invalidar y refetch TODO inmediatamente para actualizar contadores
+      // Refrescar datos inmediatamente
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.invalidateQueries({ queryKey: ['guests'] }),
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
       ]);
       
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['reservations'], type: 'active' }),
-        queryClient.refetchQueries({ queryKey: ['rooms'], type: 'active' }),
-        queryClient.refetchQueries({ queryKey: ['guests'], type: 'active' }),
-      ]);
-      
-      console.log('🔄 CONTADORES ACTUALIZADOS - DASHBOARD Y CHECK-IN/OUT DEBERÍAN REFLEJARLO');
+      console.log('🔄 DATOS REFRESCADOS');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);
@@ -315,8 +279,6 @@ export const useHotelData = () => {
 
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('🆕 CREANDO NUEVA RESERVA:', reservationData);
-      
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
@@ -326,30 +288,17 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('❌ ERROR CREANDO RESERVA:', error);
-        throw error;
-      }
-      
-      console.log('✅ RESERVA CREADA:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: async () => {
-      console.log('🎯 RESERVA CREADA - ACTUALIZANDO DATOS');
-      
-      // Invalidar y refetch inmediatamente
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
       await queryClient.refetchQueries({ queryKey: ['reservations'] });
       await queryClient.refetchQueries({ queryKey: ['rooms'] });
-      
-      console.log('🔄 DATOS ACTUALIZADOS TRAS CREAR RESERVA');
     },
   });
 
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Liberar habitación si es necesario
       const { data: reservation } = await supabase
         .from('reservations')
         .select('room_id, status')
@@ -376,13 +325,6 @@ export const useHotelData = () => {
     },
   });
 
-  const forceRefreshAllData = () => {
-    console.log('🔄 REFRESH MANUAL');
-    queryClient.invalidateQueries({ queryKey: ['reservations'] });
-    queryClient.invalidateQueries({ queryKey: ['rooms'] });
-    queryClient.invalidateQueries({ queryKey: ['guests'] });
-  };
-
   const isLoading = guestsLoading || roomsLoading || reservationsLoading;
 
   return {
@@ -400,6 +342,5 @@ export const useHotelData = () => {
     addReservation: addReservationMutation.mutateAsync,
     updateReservation: updateReservationMutation.mutateAsync,
     deleteReservation: deleteReservationMutation.mutateAsync,
-    forceRefresh: forceRefreshAllData
   };
 };

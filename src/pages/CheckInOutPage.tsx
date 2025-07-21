@@ -10,17 +10,15 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { Reservation } from '@/types/hotel';
-import { useQueryClient } from '@tanstack/react-query';
 
 const CheckInOutPage = () => {
   const { reservations, guests, rooms, updateReservation, isLoading } = useHotelData();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [processingReservations, setProcessingReservations] = useState<Set<string>>(new Set());
+  const [processing, setProcessing] = useState<Set<string>>(new Set());
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Filtrar reservas por categorías con lógica corregida
+  // Filtrar reservas por categorías
   const todayCheckIns = reservations.filter(r => 
     r.check_in === today && r.status === 'confirmed'
   );
@@ -34,33 +32,23 @@ const CheckInOutPage = () => {
     r.check_in <= today && 
     r.check_out >= today
   );
-  
-  const earlyCheckIns = reservations.filter(r => 
-    r.check_in > today && r.status === 'confirmed'
-  );
-  
-  const lateCheckOuts = reservations.filter(r => 
-    r.check_out < today && r.status === 'checked-in'
-  );
 
   console.log('🏨 CHECK-IN/OUT PAGE - Contadores:', {
     today,
     todayCheckIns: todayCheckIns.length,
     todayCheckOuts: todayCheckOuts.length,
     currentGuests: currentGuests.length,
-    earlyCheckIns: earlyCheckIns.length,
-    lateCheckOuts: lateCheckOuts.length
   });
 
   const handleCheckIn = async (reservationId: string) => {
-    if (processingReservations.has(reservationId)) return;
+    if (processing.has(reservationId)) return;
     
-    const newProcessing = new Set(processingReservations);
+    const newProcessing = new Set(processing);
     newProcessing.add(reservationId);
-    setProcessingReservations(newProcessing);
+    setProcessing(newProcessing);
 
     try {
-      console.log('🟢 INICIANDO CHECK-IN RESERVA:', reservationId);
+      console.log('🟢 INICIANDO CHECK-IN:', reservationId);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
@@ -71,15 +59,7 @@ const CheckInOutPage = () => {
         status: 'checked-in' as Reservation['status']
       });
       
-      // Forzar actualización inmediata
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['rooms'] }),
-      ]);
-      
-      console.log('✅ CHECK-IN COMPLETADO - DATOS ACTUALIZADOS');
+      console.log('✅ CHECK-IN COMPLETADO');
       
       toast({
         title: "✅ Check-in realizado",
@@ -95,21 +75,21 @@ const CheckInOutPage = () => {
         variant: "destructive",
       });
     } finally {
-      const newProcessing = new Set(processingReservations);
+      const newProcessing = new Set(processing);
       newProcessing.delete(reservationId);
-      setProcessingReservations(newProcessing);
+      setProcessing(newProcessing);
     }
   };
 
   const handleCheckOut = async (reservationId: string) => {
-    if (processingReservations.has(reservationId)) return;
+    if (processing.has(reservationId)) return;
     
-    const newProcessing = new Set(processingReservations);
+    const newProcessing = new Set(processing);
     newProcessing.add(reservationId);
-    setProcessingReservations(newProcessing);
+    setProcessing(newProcessing);
 
     try {
-      console.log('🔴 INICIANDO CHECK-OUT RESERVA:', reservationId);
+      console.log('🔴 INICIANDO CHECK-OUT:', reservationId);
       
       const reservation = reservations.find(r => r.id === reservationId);
       const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
@@ -120,15 +100,7 @@ const CheckInOutPage = () => {
         status: 'checked-out' as Reservation['status']
       });
       
-      // Forzar actualización inmediata
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
-        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
-        queryClient.refetchQueries({ queryKey: ['reservations'] }),
-        queryClient.refetchQueries({ queryKey: ['rooms'] }),
-      ]);
-      
-      console.log('✅ CHECK-OUT COMPLETADO - DATOS ACTUALIZADOS');
+      console.log('✅ CHECK-OUT COMPLETADO');
       
       toast({
         title: "✅ Check-out realizado",
@@ -144,9 +116,9 @@ const CheckInOutPage = () => {
         variant: "destructive",
       });
     } finally {
-      const newProcessing = new Set(processingReservations);
+      const newProcessing = new Set(processing);
       newProcessing.delete(reservationId);
-      setProcessingReservations(newProcessing);
+      setProcessing(newProcessing);
     }
   };
 
@@ -155,11 +127,11 @@ const CheckInOutPage = () => {
     type 
   }: { 
     reservation: any; 
-    type: 'checkin' | 'checkout' | 'current' | 'early' | 'late'
+    type: 'checkin' | 'checkout' | 'current'
   }) => {
     const guest = guests.find(g => g.id === reservation.guest_id);
     const room = rooms.find(r => r.id === reservation.room_id);
-    const isProcessing = processingReservations.has(reservation.id);
+    const isProcessing = processing.has(reservation.id);
     
     if (!guest || !room) return null;
 
@@ -171,10 +143,6 @@ const CheckInOutPage = () => {
           return { icon: Clock, color: 'text-blue-600', label: 'Salida Hoy', bgColor: 'bg-blue-600' };
         case 'current':
           return { icon: CheckCircle, color: 'text-green-600', label: 'En Hotel', bgColor: 'bg-green-600' };
-        case 'early':
-          return { icon: Calendar, color: 'text-orange-600', label: 'Check-in Anticipado', bgColor: 'bg-orange-600' };
-        case 'late':
-          return { icon: AlertTriangle, color: 'text-red-600', label: 'Check-out Tardío', bgColor: 'bg-red-600' };
       }
     };
 
@@ -184,7 +152,6 @@ const CheckInOutPage = () => {
     return (
       <Card className="w-full">
         <CardContent className="p-4 space-y-4">
-          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon className={`h-4 w-4 ${config.color}`} />
@@ -193,7 +160,6 @@ const CheckInOutPage = () => {
             <Badge variant="outline" className="text-xs">#{reservation.id.slice(0, 8)}</Badge>
           </div>
 
-          {/* Guest Info */}
           <div className="flex items-center gap-3">
             <User className="h-5 w-5 text-purple-600" />
             <div>
@@ -202,7 +168,6 @@ const CheckInOutPage = () => {
             </div>
           </div>
 
-          {/* Room Info */}
           <div className="flex items-center gap-3">
             <MapPin className="h-5 w-5 text-green-600" />
             <div>
@@ -213,7 +178,6 @@ const CheckInOutPage = () => {
             </div>
           </div>
 
-          {/* Dates */}
           <div className="flex justify-between text-sm">
             <div>
               <span className="text-muted-foreground">Entrada: </span>
@@ -229,9 +193,8 @@ const CheckInOutPage = () => {
             </div>
           </div>
 
-          {/* Action Button */}
           <div className="pt-2 border-t">
-            {(type === 'checkin' || type === 'early') && (
+            {type === 'checkin' && (
               <Button
                 onClick={() => handleCheckIn(reservation.id)}
                 disabled={isProcessing}
@@ -251,7 +214,7 @@ const CheckInOutPage = () => {
               </Button>
             )}
             
-            {(type === 'checkout' || type === 'late') && (
+            {type === 'checkout' && (
               <Button
                 onClick={() => handleCheckOut(reservation.id)}
                 disabled={isProcessing}
@@ -317,14 +280,14 @@ const CheckInOutPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-in / Check-out</h1>
           <p className="text-muted-foreground">
-            Sistema reparado - Contadores funcionando correctamente
+            Sistema simplificado y optimizado
           </p>
         </div>
         <BackToHomeButton />
       </div>
 
-      {/* Stats Cards reparadas */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-600">Check-ins Hoy</CardTitle>
@@ -352,26 +315,6 @@ const CheckInOutPage = () => {
           <CardContent>
             <div className="text-2xl font-bold">{currentGuests.length}</div>
             <div className="text-xs text-muted-foreground">Huéspedes actuales</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-600">Anticipados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{earlyCheckIns.length}</div>
-            <div className="text-xs text-muted-foreground">Check-ins futuros</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">Tardíos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lateCheckOuts.length}</div>
-            <div className="text-xs text-muted-foreground">Check-outs atrasados</div>
           </CardContent>
         </Card>
       </div>
@@ -445,54 +388,8 @@ const CheckInOutPage = () => {
         </Card>
       )}
 
-      {/* Early Check-ins */}
-      {earlyCheckIns.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-orange-600" />
-              Check-ins Anticipados ({earlyCheckIns.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {earlyCheckIns.map((reservation) => (
-                <ReservationCard
-                  key={reservation.id}
-                  reservation={reservation}
-                  type="early"
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Late Check-outs */}
-      {lateCheckOuts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              Check-outs Tardíos ({lateCheckOuts.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {lateCheckOuts.map((reservation) => (
-                <ReservationCard
-                  key={reservation.id}
-                  reservation={reservation}
-                  type="late"
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Empty State */}
-      {todayCheckIns.length === 0 && todayCheckOuts.length === 0 && currentGuests.length === 0 && earlyCheckIns.length === 0 && lateCheckOuts.length === 0 && (
+      {todayCheckIns.length === 0 && todayCheckOuts.length === 0 && currentGuests.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
             <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
