@@ -97,6 +97,7 @@ export const useHotelData = () => {
     staleTime: 0, // Datos siempre frescos  
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 2000, // Refetch cada 2 segundos
   });
 
   // Estadísticas calculadas
@@ -177,15 +178,20 @@ export const useHotelData = () => {
     onSuccess: async (data) => {
       console.log('🎯 MUTACIÓN EXITOSA - FORZANDO ACTUALIZACIÓN INMEDIATA');
       
-      // Invalidar queries inmediatamente
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      // Invalidar y refetch todo inmediatamente
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['rooms'] }),
+        queryClient.invalidateQueries({ queryKey: ['guests'] }),
+      ]);
       
-      // Refetch inmediatamente
-      await queryClient.refetchQueries({ queryKey: ['reservations'] });
-      await queryClient.refetchQueries({ queryKey: ['rooms'] });
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['reservations'], type: 'active' }),
+        queryClient.refetchQueries({ queryKey: ['rooms'], type: 'active' }),
+        queryClient.refetchQueries({ queryKey: ['guests'], type: 'active' }),
+      ]);
       
-      console.log('🔄 QUERIES ACTUALIZADAS FORZADAMENTE');
+      console.log('🔄 TODAS LAS QUERIES ACTUALIZADAS FORZADAMENTE');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);
