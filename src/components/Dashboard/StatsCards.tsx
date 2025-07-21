@@ -60,17 +60,20 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
     return numA - numB;
   });
 
-  // Log para debugging
-  console.log('📊 STATS CARDS - Contadores actualizados:', {
-    today,
-    todayCheckInsExpected: todayCheckIns.length,
-    todayCheckInsCompleted: todayCheckedIn.length,
-    todayCheckOutsExpected: todayCheckOuts.length,
-    todayCheckOutsCompleted: todayCheckedOut.length,
-    totalReservations: reservations.length,
-    confirmedReservations: reservations.filter(r => r.status === 'confirmed').length,
-    checkedInReservations: reservations.filter(r => r.status === 'checked-in').length,
-    checkedOutReservations: reservations.filter(r => r.status === 'checked-out').length
+  // Log mejorado para debugging de las tarjetas
+  console.log('🔄 TARJETAS ACTUALIZADAS - Check-ins/Check-outs de hoy:', {
+    fecha: today,
+    checkIns: {
+      completados: todayCheckedIn.length,
+      programados: todayCheckIns.length,
+      porcentaje: todayCheckIns.length > 0 ? Math.round((todayCheckedIn.length / todayCheckIns.length) * 100) : 0
+    },
+    checkOuts: {
+      completados: todayCheckedOut.length,
+      programados: todayCheckOuts.length,
+      porcentaje: todayCheckOuts.length > 0 ? Math.round((todayCheckedOut.length / todayCheckOuts.length) * 100) : 0
+    },
+    timestamp: new Date().toLocaleTimeString()
   });
 
   const cards = [

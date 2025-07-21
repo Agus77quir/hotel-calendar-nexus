@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -41,13 +40,23 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
+      console.log('🚀 REALIZANDO CHECK-IN:', {
+        reservationId: reservation.id,
+        guestName: `${guest.first_name} ${guest.last_name}`,
+        roomNumber: room.number,
+        checkInDate: reservation.check_in
+      });
+
       await onStatusChange(reservation.id, 'checked-in');
       
       toast({
         title: "✅ Check-in realizado",
         description: `${guest.first_name} ${guest.last_name} registrado en habitación ${room.number}`,
       });
+
+      console.log('✅ CHECK-IN COMPLETADO - Las tarjetas del dashboard se actualizarán automáticamente');
     } catch (error) {
+      console.error('❌ ERROR EN CHECK-IN:', error);
       toast({
         title: "❌ Error",
         description: "No se pudo realizar el check-in",
@@ -63,13 +72,23 @@ export const ReservationQuickActions = ({
     
     setProcessing(true);
     try {
+      console.log('🚀 REALIZANDO CHECK-OUT:', {
+        reservationId: reservation.id,
+        guestName: `${guest.first_name} ${guest.last_name}`,
+        roomNumber: room.number,
+        checkOutDate: reservation.check_out
+      });
+
       await onStatusChange(reservation.id, 'checked-out');
       
       toast({
         title: "✅ Check-out realizado",
         description: `${guest.first_name} ${guest.last_name} finalizó estadía. Habitación ${room.number} disponible`,
       });
+
+      console.log('✅ CHECK-OUT COMPLETADO - Las tarjetas del dashboard se actualizarán automáticamente');
     } catch (error) {
+      console.error('❌ ERROR EN CHECK-OUT:', error);
       toast({
         title: "❌ Error",
         description: "No se pudo realizar el check-out",
