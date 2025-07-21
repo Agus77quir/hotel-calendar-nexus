@@ -2,7 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
-import { HotelCalendar } from '@/components/Calendar/HotelCalendar';
+import { DailyReservationsCard } from '@/components/Dashboard/DailyReservationsCard';
+import { CalendarView } from '@/components/Calendar/CalendarView';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -23,6 +24,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reservationModal, setReservationModal] = useState({
     isOpen: false,
     mode: 'create' as 'create' | 'edit'
@@ -54,6 +56,10 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
   };
 
   // Calculate the last system update based on most recent reservation activity
@@ -148,13 +154,23 @@ const Index = () => {
         </CardContent>
       </Card>
 
-      {/* Calendar Section - Mobile optimized - MOVED HERE */}
+      {/* Daily Reservations Section - Mobile optimized */}
       <div className="mb-4 sm:mb-6">
-        <HotelCalendar 
+        <DailyReservationsCard 
           reservations={reservations}
           rooms={rooms}
           guests={guests}
+          selectedDate={selectedDate}
+        />
+      </div>
+
+      {/* Calendar Section - Mobile optimized */}
+      <div className="mb-4 sm:mb-6">
+        <CalendarView 
+          reservations={reservations}
           onAddReservation={handleNewReservation}
+          onDateSelect={handleDateSelect}
+          selectedDate={selectedDate}
         />
       </div>
 
