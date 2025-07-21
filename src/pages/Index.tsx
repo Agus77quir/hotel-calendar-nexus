@@ -148,6 +148,16 @@ const Index = () => {
         </CardContent>
       </Card>
 
+      {/* Calendar Section - Mobile optimized - MOVED HERE */}
+      <div className="mb-4 sm:mb-6">
+        <HotelCalendar 
+          reservations={reservations}
+          rooms={rooms}
+          guests={guests}
+          onAddReservation={handleNewReservation}
+        />
+      </div>
+
       {/* Export Buttons Section - Only for admins, mobile optimized */}
       {!isReceptionist && (
         <div className="flex justify-end">
@@ -165,16 +175,6 @@ const Index = () => {
       ) : (
         <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
       )}
-
-      {/* Calendar Section - Mobile optimized */}
-      <div className="mb-4 sm:mb-6">
-        <HotelCalendar 
-          reservations={reservations}
-          rooms={rooms}
-          guests={guests}
-          onAddReservation={handleNewReservation}
-        />
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         {/* Quick Actions Card - Mobile optimized */}
