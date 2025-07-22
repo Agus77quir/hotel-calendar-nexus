@@ -38,9 +38,8 @@ export const ReservationFormFields: React.FC<ReservationFormFieldsProps> = ({
       <div>
         <Label htmlFor="guest">Huésped</Label>
         <GuestSearchInput
-          selectedGuestId={formData.guest_id}
+          selectedGuest={selectedGuest}
           onGuestSelect={onGuestSelect}
-          placeholder="Buscar huésped..."
         />
       </div>
 
@@ -53,7 +52,7 @@ export const ReservationFormFields: React.FC<ReservationFormFieldsProps> = ({
           <SelectContent>
             {rooms.map((room) => (
               <SelectItem key={room.id} value={room.id}>
-                {room.number} - {room.type} (${room.pricePerNight}/noche)
+                {room.number} - {room.type} (${room.price}/noche)
               </SelectItem>
             ))}
           </SelectContent>

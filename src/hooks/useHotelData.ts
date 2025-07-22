@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Guest, Room, Reservation } from '@/types/hotel';
@@ -32,7 +33,7 @@ export const useHotelData = () => {
         .order('number');
 
       if (error) throw error;
-      setRooms(data || []);
+      setRooms(data as Room[] || []);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast.error('Error al cargar habitaciones');
@@ -47,7 +48,12 @@ export const useHotelData = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setReservations(data || []);
+      // Transform data to match Reservation interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        confirmation_number: item.id // Use id as confirmation number for now
+      }));
+      setReservations(transformedData as Reservation[]);
     } catch (error) {
       console.error('Error fetching reservations:', error);
       toast.error('Error al cargar reservas');
@@ -63,16 +69,17 @@ export const useHotelData = () => {
     loadData();
   }, []);
 
-  const addGuest = async (guestData: Omit<Guest, 'id' | 'createdAt'>) => {
+  const addGuest = async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
     try {
       const { data, error } = await supabase
         .from('guests')
         .insert([{
-          first_name: guestData.firstName,
-          last_name: guestData.lastName,
+          first_name: guestData.first_name,
+          last_name: guestData.last_name,
           email: guestData.email,
           phone: guestData.phone,
-          document: guestData.document
+          document: guestData.document,
+          nationality: guestData.nationality || 'No especificada'
         }])
         .select()
         .single();
@@ -81,12 +88,13 @@ export const useHotelData = () => {
 
       const newGuest: Guest = {
         id: data.id,
-        firstName: data.first_name,
-        lastName: data.last_name,
+        first_name: data.first_name,
+        last_name: data.last_name,
         email: data.email,
         phone: data.phone,
         document: data.document,
-        createdAt: new Date(data.created_at)
+        nationality: data.nationality,
+        created_at: data.created_at
       };
 
       setGuests(prev => [newGuest, ...prev]);
@@ -99,14 +107,15 @@ export const useHotelData = () => {
     }
   };
 
-  const updateGuest = async (id: string, guestData: Partial<Omit<Guest, 'id' | 'createdAt'>>) => {
+  const updateGuest = async (id: string, guestData: Partial<Omit<Guest, 'id' | 'created_at'>>) => {
     try {
       const updateData: any = {};
-      if (guestData.firstName) updateData.first_name = guestData.firstName;
-      if (guestData.lastName) updateData.last_name = guestData.lastName;
+      if (guestData.first_name) updateData.first_name = guestData.first_name;
+      if (guestData.last_name) updateData.last_name = guestData.last_name;
       if (guestData.email) updateData.email = guestData.email;
       if (guestData.phone) updateData.phone = guestData.phone;
       if (guestData.document) updateData.document = guestData.document;
+      if (guestData.nationality) updateData.nationality = guestData.nationality;
 
       const { data, error } = await supabase
         .from('guests')
@@ -119,12 +128,13 @@ export const useHotelData = () => {
 
       const updatedGuest: Guest = {
         id: data.id,
-        firstName: data.first_name,
-        lastName: data.last_name,
+        first_name: data.first_name,
+        last_name: data.last_name,
         email: data.email,
         phone: data.phone,
         document: data.document,
-        createdAt: new Date(data.created_at)
+        nationality: data.nationality,
+        created_at: data.created_at
       };
 
       setGuests(prev => prev.map(guest => guest.id === id ? updatedGuest : guest));
@@ -155,7 +165,7 @@ export const useHotelData = () => {
     }
   };
 
-  const addRoom = async (roomData: Omit<Room, 'id' | 'createdAt'>) => {
+  const addRoom = async (roomData: Omit<Room, 'id' | 'created_at'>) => {
     try {
       const { data, error } = await supabase
         .from('rooms')
@@ -167,7 +177,7 @@ export const useHotelData = () => {
 
       const newRoom: Room = {
         ...data,
-        createdAt: new Date(data.created_at)
+        created_at: data.created_at
       };
 
       setRooms(prev => [...prev, newRoom]);
@@ -180,7 +190,7 @@ export const useHotelData = () => {
     }
   };
 
-  const updateRoom = async (id: string, roomData: Partial<Omit<Room, 'id' | 'createdAt'>>) => {
+  const updateRoom = async (id: string, roomData: Partial<Omit<Room, 'id' | 'created_at'>>) => {
     try {
       const { data, error } = await supabase
         .from('rooms')
@@ -193,7 +203,7 @@ export const useHotelData = () => {
 
       const updatedRoom: Room = {
         ...data,
-        createdAt: new Date(data.created_at)
+        created_at: data.created_at
       };
 
       setRooms(prev => prev.map(room => room.id === id ? updatedRoom : room));
@@ -224,19 +234,19 @@ export const useHotelData = () => {
     }
   };
 
-  const addReservation = async (reservationData: Omit<Reservation, 'id' | 'createdAt'>) => {
+  const addReservation = async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
-          guest_id: reservationData.guestId,
-          room_id: reservationData.roomId,
-          check_in: reservationData.checkIn,
-          check_out: reservationData.checkOut,
-          guests_count: reservationData.guestsCount,
+          guest_id: reservationData.guest_id,
+          room_id: reservationData.room_id,
+          check_in: reservationData.check_in,
+          check_out: reservationData.check_out,
+          guests_count: reservationData.guests_count,
           status: reservationData.status,
-          special_requests: reservationData.specialRequests,
-          confirmation_number: reservationData.confirmationNumber
+          special_requests: reservationData.special_requests,
+          total_amount: reservationData.total_amount
         }])
         .select()
         .single();
@@ -244,16 +254,8 @@ export const useHotelData = () => {
       if (error) throw error;
 
       const newReservation: Reservation = {
-        id: data.id,
-        guestId: data.guest_id,
-        roomId: data.room_id,
-        checkIn: data.check_in,
-        checkOut: data.check_out,
-        guestsCount: data.guests_count,
-        status: data.status,
-        specialRequests: data.special_requests,
-        confirmationNumber: data.confirmation_number,
-        createdAt: new Date(data.created_at)
+        ...data,
+        confirmation_number: data.id // Use id as confirmation number for now
       };
 
       setReservations(prev => [newReservation, ...prev]);
@@ -266,17 +268,17 @@ export const useHotelData = () => {
     }
   };
 
-  const updateReservation = async (id: string, reservationData: Partial<Omit<Reservation, 'id' | 'createdAt'>>) => {
+  const updateReservation = async (id: string, reservationData: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
       const updateData: any = {};
-      if (reservationData.guestId) updateData.guest_id = reservationData.guestId;
-      if (reservationData.roomId) updateData.room_id = reservationData.roomId;
-      if (reservationData.checkIn) updateData.check_in = reservationData.checkIn;
-      if (reservationData.checkOut) updateData.check_out = reservationData.checkOut;
-      if (reservationData.guestsCount) updateData.guests_count = reservationData.guestsCount;
+      if (reservationData.guest_id) updateData.guest_id = reservationData.guest_id;
+      if (reservationData.room_id) updateData.room_id = reservationData.room_id;
+      if (reservationData.check_in) updateData.check_in = reservationData.check_in;
+      if (reservationData.check_out) updateData.check_out = reservationData.check_out;
+      if (reservationData.guests_count) updateData.guests_count = reservationData.guests_count;
       if (reservationData.status) updateData.status = reservationData.status;
-      if (reservationData.specialRequests) updateData.special_requests = reservationData.specialRequests;
-      if (reservationData.confirmationNumber) updateData.confirmation_number = reservationData.confirmationNumber;
+      if (reservationData.special_requests) updateData.special_requests = reservationData.special_requests;
+      if (reservationData.total_amount) updateData.total_amount = reservationData.total_amount;
 
       const { data, error } = await supabase
         .from('reservations')
@@ -288,16 +290,8 @@ export const useHotelData = () => {
       if (error) throw error;
 
       const updatedReservation: Reservation = {
-        id: data.id,
-        guestId: data.guest_id,
-        roomId: data.room_id,
-        checkIn: data.check_in,
-        checkOut: data.check_out,
-        guestsCount: data.guests_count,
-        status: data.status,
-        specialRequests: data.special_requests,
-        confirmationNumber: data.confirmation_number,
-        createdAt: new Date(data.created_at)
+        ...data,
+        confirmation_number: data.id // Use id as confirmation number for now
       };
 
       setReservations(prev => prev.map(reservation => 

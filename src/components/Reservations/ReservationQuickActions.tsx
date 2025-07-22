@@ -37,7 +37,7 @@ export const ReservationQuickActions: React.FC<ReservationQuickActionsProps> = (
   };
 
   const handleSendWhatsApp = () => {
-    const message = `Hola ${guest.firstName}, tu reserva en la habitación ${room.number} del ${reservation.checkIn} al ${reservation.checkOut} está confirmada. Número de confirmación: ${reservation.confirmationNumber}`;
+    const message = `Hola ${guest.first_name}, tu reserva en la habitación ${room.number} del ${reservation.check_in} al ${reservation.check_out} está confirmada. Número de confirmación: ${reservation.confirmation_number}`;
     const phoneNumber = guest.phone.replace(/\D/g, '');
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -51,7 +51,7 @@ export const ReservationQuickActions: React.FC<ReservationQuickActionsProps> = (
 
   return (
     <div className="flex gap-2">
-      {reservation.status === 'pending' && (
+      {reservation.status === 'confirmed' && (
         <>
           <Button onClick={handleConfirm} size="sm" variant="outline" className="text-green-600">
             <CheckCircle className="h-4 w-4 mr-1" />
