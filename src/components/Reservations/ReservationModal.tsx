@@ -33,7 +33,7 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest } = useHotelData();
+  const { reservations, addGuest } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
   const { toast } = useToast();
@@ -140,7 +140,7 @@ export const ReservationModal = ({
         guests_count: formData.guests_count,
         status: formData.status,
         special_requests: formData.special_requests,
-        total_amount: totals.total, // Use calculated total with discount
+        total_amount: totals.total,
         created_by: 'current-user-id',
       };
 
@@ -213,7 +213,7 @@ export const ReservationModal = ({
                   <div>
                     <h3 className="font-medium text-blue-900">Crear Huésped Rápido</h3>
                     <p className="text-sm text-blue-700">
-                      Se aplicarán automáticamente descuentos y configuraciones
+                      Crea un nuevo huésped directamente desde aquí
                     </p>
                   </div>
                   <Button

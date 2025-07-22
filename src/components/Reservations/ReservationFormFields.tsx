@@ -1,5 +1,5 @@
+
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign, CalendarIcon } from 'lucide-react';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { DiscountSection } from './DiscountSection';
 import { GuestSearchInput } from './GuestSearchInput';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,7 +24,6 @@ interface ReservationFormFieldsProps {
     guests_count: number;
     status: string;
     special_requests: string;
-    discount_percentage: number;
   };
   availableRooms: Room[];
   guests: Guest[];
@@ -35,7 +33,7 @@ interface ReservationFormFieldsProps {
   maxCapacity: number;
   availabilityError: string;
   today: string;
-  totals: { subtotal: number; discount: number; total: number };
+  totals: { subtotal: number; total: number };
   onFormChange: (field: string, value: any) => void;
   onRoomChange: (roomId: string) => void;
   onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
@@ -127,14 +125,7 @@ export const ReservationFormFields = ({
                   <SelectContent>
                     {guests.map((guest) => (
                       <SelectItem key={guest.id} value={guest.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{guest.first_name} {guest.last_name}</span>
-                          {guest.is_associated && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              Asociado
-                            </Badge>
-                          )}
-                        </div>
+                        <span>{guest.first_name} {guest.last_name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -154,9 +145,6 @@ export const ReservationFormFields = ({
                 </div>
                 <div>
                   <span className="font-medium">Documento:</span> {selectedGuest.document}
-                </div>
-                <div>
-                  <span className="font-medium">Nacionalidad:</span> {selectedGuest.nationality}
                 </div>
               </div>
             </div>
@@ -430,18 +418,27 @@ export const ReservationFormFields = ({
               className="min-h-[80px]"
             />
           </div>
+
+          {/* Total Amount Display */}
+          {totals.total > 0 && (
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    <span className="font-medium text-green-900">Total de la Reserva</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-800">
+                      ${totals.total.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
-
-      {/* Discount Section */}
-      <DiscountSection
-        selectedGuest={selectedGuest}
-        discountPercentage={formData.discount_percentage}
-        onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
-        subtotal={totals.subtotal}
-        discount={totals.discount}
-        total={totals.total}
-      />
     </div>
   );
 };

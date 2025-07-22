@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
   Table,
@@ -14,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { useHotelData } from '@/hooks/useHotelData';
 import { GuestModal } from '@/components/Guests/GuestModal';
-import { Plus, Search, Edit, Trash2, Users, UserCheck, UserX, Percent } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users } from 'lucide-react';
 import { Guest } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,13 +37,9 @@ const GuestsPage = () => {
       guest.last_name.toLowerCase().includes(searchLower) ||
       guest.email.toLowerCase().includes(searchLower) ||
       guest.phone.includes(searchLower) ||
-      guest.document.includes(searchLower) ||
-      guest.nationality.toLowerCase().includes(searchLower)
+      guest.document.includes(searchLower)
     );
   });
-
-  const associatedGuests = guests.filter(guest => guest.is_associated).length;
-  const regularGuests = guests.length - associatedGuests;
 
   const handleSaveGuest = async (guestData: any) => {
     try {
@@ -115,7 +110,7 @@ const GuestsPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Huéspedes</CardTitle>
@@ -123,24 +118,6 @@ const GuestsPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{guests.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Huéspedes Asociados</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{associatedGuests}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Huéspedes Regulares</CardTitle>
-            <UserX className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{regularGuests}</div>
           </CardContent>
         </Card>
       </div>
@@ -170,15 +147,13 @@ const GuestsPage = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Documento</TableHead>
-                  <TableHead>Nacionalidad</TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredGuests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No se encontraron huéspedes
                     </TableCell>
                   </TableRow>
@@ -193,22 +168,6 @@ const GuestsPage = () => {
                       <TableCell>{guest.email}</TableCell>
                       <TableCell>{guest.phone}</TableCell>
                       <TableCell>{guest.document}</TableCell>
-                      <TableCell className="capitalize">{guest.nationality}</TableCell>
-                      <TableCell>
-                        {guest.is_associated ? (
-                          <div className="flex items-center gap-2">
-                            <Badge variant="default" className="bg-green-500">
-                              Asociado
-                            </Badge>
-                            <div className="flex items-center gap-1 text-green-600">
-                              <Percent className="h-3 w-3" />
-                              <span className="text-xs">{guest.discount_percentage}%</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <Badge variant="outline">Regular</Badge>
-                        )}
-                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
