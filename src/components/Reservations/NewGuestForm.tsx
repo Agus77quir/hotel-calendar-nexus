@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { User, X, UserCheck } from 'lucide-react';
+import { User, X } from 'lucide-react';
 import { useIsIOS } from '@/hooks/use-mobile';
 
 interface NewGuestFormProps {
@@ -22,7 +21,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     email: '',
     phone: '',
     document: '',
-    nationality: '',
+    nationality: 'No especificado', // Default value since it's still required in the database
     is_associated: false,
     discount_percentage: 0,
   });
@@ -49,9 +48,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.document.trim()) {
       newErrors.document = 'Documento es requerido';
     }
-    if (!formData.nationality.trim()) {
-      newErrors.nationality = 'Nacionalidad es requerida';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -69,7 +65,9 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
-        discount_percentage: formData.is_associated ? formData.discount_percentage : 0
+        // Always set these values since we removed the UI controls
+        is_associated: false,
+        discount_percentage: 0
       };
       
       console.log('Attempting to create guest with data:', guestPayload);
@@ -81,21 +79,12 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean | number) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
-
-  const handleAssociatedChange = (checked: boolean) => {
-    console.log('Checkbox checked:', checked);
-    setFormData(prev => ({
-      ...prev,
-      is_associated: checked,
-      discount_percentage: checked ? 10 : 0 // Default 10% discount for associated guests
-    }));
   };
 
   return (
@@ -220,75 +209,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             />
             {errors.document && (
               <p className="text-red-500 text-sm mt-1">{errors.document}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="nationality">Nacionalidad *</Label>
-            <Input
-              id="nationality"
-              value={formData.nationality}
-              onChange={(e) => handleInputChange('nationality', e.target.value)}
-              disabled={isSubmitting}
-              className={`${errors.nationality ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
-            />
-            {errors.nationality && (
-              <p className="text-red-500 text-sm mt-1">{errors.nationality}</p>
-            )}
-          </div>
-
-          {/* Guest Association Section */}
-          <div className="border-t pt-4 mt-6">
-            <div className="flex items-center space-x-3 mb-3">
-              <Checkbox
-                id="is_associated"
-                checked={formData.is_associated}
-                onCheckedChange={(checked) => handleAssociatedChange(checked === true)}
-                disabled={isSubmitting}
-                className={`h-5 w-5 ${isIOS ? 'min-h-[44px] min-w-[44px] touch-manipulation' : ''}`}
-                style={isIOS ? {
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none',
-                  touchAction: 'manipulation'
-                } : {}}
-              />
-              <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-green-600" />
-                <Label htmlFor="is_associated" className="text-sm font-medium cursor-pointer">
-                  Huésped Asociado
-                </Label>
-              </div>
-            </div>
-            
-            {formData.is_associated && (
-              <div className="ml-8 mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <Label htmlFor="discount_percentage" className="text-sm font-medium">
-                  Porcentaje de Descuento (%)
-                </Label>
-                <Input
-                  id="discount_percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.discount_percentage}
-                  onChange={(e) => handleInputChange('discount_percentage', Number(e.target.value))}
-                  disabled={isSubmitting}
-                  className={`w-24 mt-1 ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-                  style={isIOS ? {
-                    WebkitTouchCallout: 'none',
-                    WebkitUserSelect: 'none',
-                    touchAction: 'manipulation'
-                  } : {}}
-                />
-                <p className="text-xs text-green-600 mt-1">
-                  Los huéspedes asociados reciben descuentos especiales
-                </p>
-              </div>
             )}
           </div>
 
