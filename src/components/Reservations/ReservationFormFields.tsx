@@ -20,7 +20,6 @@ interface ReservationFormFieldsProps {
     special_requests: string;
     discount_percentage: number;
   };
-  guests: Guest[];
   rooms: Room[];
   selectedGuest: Guest | null;
   showNewGuestForm: boolean;
@@ -33,7 +32,6 @@ interface ReservationFormFieldsProps {
 
 export const ReservationFormFields = ({
   formData,
-  guests,
   rooms,
   selectedGuest,
   showNewGuestForm,
@@ -73,7 +71,6 @@ export const ReservationFormFields = ({
       <GuestSearchInput
         selectedGuest={selectedGuest}
         onGuestSelect={onGuestSelect}
-        placeholder="Buscar huésped existente..."
       />
 
       {showNewGuestForm && (
@@ -154,7 +151,7 @@ export const ReservationFormFields = ({
       </div>
 
       <DiscountSection
-        discountPercentage={formData.discount_percentage}
+        discount={formData.discount_percentage}
         onDiscountChange={(discount) => onInputChange('discount_percentage', discount)}
         subtotal={calculateSubtotal()}
         total={calculateTotal()}

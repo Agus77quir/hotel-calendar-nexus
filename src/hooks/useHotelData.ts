@@ -33,7 +33,6 @@ export const useHotelData = () => {
         .order('number');
 
       if (error) throw error;
-      // Cast the data to ensure proper typing
       const typedRooms = (data || []).map(room => ({
         ...room,
         type: room.type as Room['type'],
@@ -54,10 +53,9 @@ export const useHotelData = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Transform data to match Reservation interface
       const transformedData = (data || []).map(item => ({
         ...item,
-        confirmation_number: item.id, // Use id as confirmation number for now
+        confirmation_number: item.id,
         status: item.status as Reservation['status']
       }));
       setReservations(transformedData as Reservation[]);
@@ -67,7 +65,6 @@ export const useHotelData = () => {
     }
   };
 
-  // Calculate stats from current data
   const calculateStats = (): HotelStats => {
     const today = new Date().toISOString().split('T')[0];
     
@@ -282,7 +279,7 @@ export const useHotelData = () => {
 
       const newReservation: Reservation = {
         ...data,
-        confirmation_number: data.id, // Use id as confirmation number for now
+        confirmation_number: data.id,
         status: data.status as Reservation['status']
       };
 
@@ -319,7 +316,7 @@ export const useHotelData = () => {
 
       const updatedReservation: Reservation = {
         ...data,
-        confirmation_number: data.id, // Use id as confirmation number for now
+        confirmation_number: data.id,
         status: data.status as Reservation['status']
       };
 
@@ -361,7 +358,7 @@ export const useHotelData = () => {
     reservations,
     stats,
     loading,
-    isLoading: loading, // Add alias for compatibility
+    isLoading: loading,
     addGuest,
     updateGuest,
     deleteGuest,
