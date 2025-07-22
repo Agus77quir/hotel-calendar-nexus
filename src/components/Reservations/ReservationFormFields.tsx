@@ -74,7 +74,7 @@ export const ReservationFormFields = ({
       />
 
       {showNewGuestForm && (
-        <NewGuestForm onSubmit={onNewGuestSubmit} onCancel={onToggleNewGuest} />
+        <NewGuestForm onSave={onNewGuestSubmit} onCancel={onToggleNewGuest} />
       )}
 
       <div className="grid grid-cols-2 gap-4">
@@ -151,10 +151,11 @@ export const ReservationFormFields = ({
       </div>
 
       <DiscountSection
-        discount={formData.discount_percentage}
-        onDiscountChange={(discount) => onInputChange('discount_percentage', discount)}
-        subtotal={calculateSubtotal()}
-        total={calculateTotal()}
+        selectedGuest={selectedGuest}
+        discountType="percentage"
+        discountValue={formData.discount_percentage}
+        setDiscountType={() => {}}
+        setDiscountValue={(value) => onInputChange('discount_percentage', value)}
       />
     </div>
   );

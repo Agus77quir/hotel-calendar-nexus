@@ -1,3 +1,4 @@
+
 import { Guest, Room, Reservation, HotelStats } from '@/types/hotel';
 
 const mockGuests: Guest[] = [
@@ -27,16 +28,20 @@ const mockRooms: Room[] = [
   {
     id: '101',
     number: '101',
-    type: 'standard',
+    type: 'matrimonial',
     price: 100,
+    capacity: 2,
+    amenities: ['WiFi', 'TV', 'AC'],
     status: 'available',
     created_at: '2024-01-01',
   },
   {
     id: '102',
     number: '102',
-    type: 'standard',
-    price: 100,
+    type: 'doble-individual',
+    price: 120,
+    capacity: 2,
+    amenities: ['WiFi', 'TV', 'AC'],
     status: 'occupied',
     created_at: '2024-01-01',
   },
