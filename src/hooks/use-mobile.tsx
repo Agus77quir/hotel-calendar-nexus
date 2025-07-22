@@ -55,8 +55,9 @@ export function useIsIPhone() {
       // Add iPhone-specific body class
       document.body.classList.add('iphone-optimized')
       
-      // Improve scroll performance
-      document.body.style.webkitOverflowScrolling = 'touch'
+      // Improve scroll performance - TypeScript-safe way to set webkit property
+      const bodyStyle = document.body.style as any
+      bodyStyle.webkitOverflowScrolling = 'touch'
     }
   }, [])
 
