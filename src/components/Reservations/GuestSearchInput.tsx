@@ -1,7 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -11,12 +10,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useHotelData } from '@/hooks/useHotelData';
 import { Guest } from '@/types/hotel';
-import { cn } from '@/lib/utils';
 
 interface GuestSearchInputProps {
   onGuestSelect: (guest: Guest | null) => void;

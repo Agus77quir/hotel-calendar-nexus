@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,11 +41,7 @@ export const useHotelData = () => {
       
       if (error) throw error;
       
-      return (data || []).map(guest => ({
-        ...guest,
-        is_associated: Boolean(guest.is_associated),
-        discount_percentage: Number(guest.discount_percentage) || 0
-      })) as Guest[];
+      return (data || []) as Guest[];
     },
     staleTime: 0, // Datos siempre se consideran obsoletos
     refetchOnMount: true,
@@ -91,7 +88,8 @@ export const useHotelData = () => {
         ...reservation,
         status: reservation.status as Reservation['status'],
         guests_count: Number(reservation.guests_count),
-        total_amount: Number(reservation.total_amount)
+        total_amount: Number(reservation.total_amount),
+        confirmation_number: reservation.id
       })) as Reservation[];
 
       console.log('🔄 RESERVACIONES RECARGADAS:', {
@@ -295,7 +293,7 @@ export const useHotelData = () => {
   });
 
   const addReservationMutation = useMutation({
-    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at' | 'confirmation_number'>) => {
       const { data, error } = await supabase
         .from('reservations')
         .insert([{

@@ -1,49 +1,53 @@
+
 import { Reservation, Guest, Room } from '@/types/hotel';
 
-const API_URL = process.env.NEXT_PUBLIC_WHATSAPP_API_URL;
-const API_TOKEN = process.env.NEXT_PUBLIC_WHATSAPP_API_TOKEN;
-const API_PHONE_ID = process.env.NEXT_PUBLIC_WHATSAPP_API_PHONE_ID;
-const VERIFY_TOKEN = process.env.NEXT_PUBLIC_WHATSAPP_VERIFY_TOKEN;
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+export const sendReservationConfirmation = async (
+  reservation: Reservation,
+  guest: Guest,
+  room: Room
+) => {
+  try {
+    const message = `¡Hola ${guest.first_name}! Tu reserva ha sido confirmada:
+    
+Confirmación: ${reservation.confirmation_number}
+Habitación: ${room.number}
+Check-in: ${reservation.check_in}
+Check-out: ${reservation.check_out}
+Total: $${reservation.total_amount}
 
-export const sendWhatsAppConfirmation = (reservation: Reservation, guest: Guest, room: Room) => {
-  const message = `
-🏨 *CONFIRMACIÓN DE RESERVA*
+¡Te esperamos!`;
 
-📋 *Detalles de la Reserva:*
-• Número de confirmación: ${reservation.confirmation_number}
-• Huésped: ${guest.first_name} ${guest.last_name}
-• Email: ${guest.email}
-• Documento: ${guest.document}
-
-🏠 *Habitación:*
-• Número: ${room.number}
-• Tipo: ${room.type}
-• Check-in: ${reservation.check_in}
-• Check-out: ${reservation.check_out}
-• Huéspedes: ${reservation.guests_count}
-
-💰 *Total: $${reservation.total_amount}*
-
-¡Gracias por su preferencia!
-  `.trim();
-
-  console.log('WhatsApp message would be sent:', message);
-  return message;
-};
-
-export const verifyWhatsAppWebhook = (mode: string, token: string, challenge: string) => {
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('✅ WH Webhook verified');
-    return challenge;
-  } else {
-    console.log('❌ WH Webhook verification failed');
-    return false;
+    // En un entorno real, aquí se enviaría el mensaje de WhatsApp
+    console.log('Enviando WhatsApp a:', guest.phone);
+    console.log('Mensaje:', message);
+    
+    return { success: true, message: 'WhatsApp enviado correctamente' };
+  } catch (error) {
+    console.error('Error enviando WhatsApp:', error);
+    return { success: false, error: 'Error al enviar WhatsApp' };
   }
 };
 
-export const processWhatsAppWebhook = (body: any) => {
-  console.log('WH Webhook event received:', body);
-  // Aquí puedes procesar los eventos de WhatsApp
-  return true;
+export const sendCheckInReminder = async (
+  reservation: Reservation,
+  guest: Guest,
+  room: Room
+) => {
+  try {
+    const message = `¡Hola ${guest.first_name}! Tu check-in es hoy:
+    
+Confirmación: ${reservation.confirmation_number}
+Habitación: ${room.number}
+Hora sugerida: 15:00
+
+¡Te esperamos!`;
+
+    console.log('Enviando recordatorio WhatsApp a:', guest.phone);
+    console.log('Mensaje:', message);
+    
+    return { success: true, message: 'Recordatorio enviado correctamente' };
+  } catch (error) {
+    console.error('Error enviando recordatorio:', error);
+    return { success: false, error: 'Error al enviar recordatorio' };
+  }
 };

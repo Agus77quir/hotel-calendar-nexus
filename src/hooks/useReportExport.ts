@@ -1,6 +1,9 @@
+
 import { useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { Guest, Room, Reservation } from '@/types/hotel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,11 +19,7 @@ export const useReportExport = () => {
       
       if (error) throw error;
       
-      return (data || []).map(guest => ({
-        ...guest,
-        is_associated: Boolean(guest.is_associated),
-        discount_percentage: Number(guest.discount_percentage) || 0
-      })) as Guest[];
+      return (data || []) as Guest[];
     },
   });
 
@@ -59,10 +58,71 @@ export const useReportExport = () => {
         ...reservation,
         status: reservation.status as Reservation['status'],
         guests_count: Number(reservation.guests_count),
-        total_amount: Number(reservation.total_amount)
+        total_amount: Number(reservation.total_amount),
+        confirmation_number: reservation.id
       })) as Reservation[];
     },
   });
+
+  const exportToPDF = useCallback((reservationData: Reservation[], guestData: Guest[], roomData: Room[]) => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Reporte de Hotel', 20, 20);
+    
+    const tableData = reservationData.map(reservation => {
+      const guest = guestData.find(g => g.id === reservation.guest_id);
+      const room = roomData.find(r => r.id === reservation.room_id);
+      
+      return [
+        reservation.confirmation_number,
+        guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
+        room ? room.number : 'N/A',
+        reservation.check_in,
+        reservation.check_out,
+        reservation.status,
+        `$${reservation.total_amount}`
+      ];
+    });
+
+    (doc as any).autoTable({
+      head: [['Confirmación', 'Huésped', 'Habitación', 'Check-in', 'Check-out', 'Estado', 'Total']],
+      body: tableData,
+      startY: 30,
+    });
+
+    doc.save('reporte-hotel.pdf');
+  }, []);
+
+  const exportToExcel = useCallback((reservationData: Reservation[], guestData: Guest[], roomData: Room[]) => {
+    const data = reservationData.map(reservation => {
+      const guest = guestData.find(g => g.id === reservation.guest_id);
+      const room = roomData.find(r => r.id === reservation.room_id);
+      
+      return {
+        'Número de Confirmación': reservation.confirmation_number,
+        'Huésped': guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
+        'Email': guest?.email || 'N/A',
+        'Teléfono': guest?.phone || 'N/A',
+        'Habitación': room?.number || 'N/A',
+        'Tipo de Habitación': room?.type || 'N/A',
+        'Check-in': reservation.check_in,
+        'Check-out': reservation.check_out,
+        'Número de Huéspedes': reservation.guests_count,
+        'Monto Total': reservation.total_amount,
+        'Estado': reservation.status,
+        'Creado por': reservation.created_by || 'Sistema',
+        'Fecha de Creación': new Date(reservation.created_at).toLocaleDateString()
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Reservas');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+    saveAs(blob, 'reporte-reservas.xlsx');
+  }, []);
 
   const exportGuestsToExcel = useCallback(() => {
     const guestData = guests.map(guest => ({
@@ -123,6 +183,8 @@ export const useReportExport = () => {
   }, [reservations]);
 
   return {
+    exportToPDF,
+    exportToExcel,
     exportGuestsToExcel,
     exportRoomsToExcel,
     exportReservationsToExcel

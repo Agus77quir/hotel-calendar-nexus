@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   ColumnDef,
@@ -15,66 +16,28 @@ import {
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button';
 import { Reservation, Guest, Room } from '@/types/hotel';
-import { Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
+  guests: Guest[];
+  rooms: Room[];
   onEdit: (reservation: Reservation) => void;
   onDelete: (id: string) => void;
-  onView: (reservation: Reservation) => void;
-  onCheckIn: (reservation: Reservation) => void;
-  onCheckOut: (reservation: Reservation) => void;
-}
-
-interface GuestInfo {
-  name: string;
-  details: string;
+  onNewReservationForGuest: (guestId: string) => void;
+  onStatusChange: (reservationId: string, newStatus: Reservation['status']) => void;
 }
 
 export const ReservationsTable = ({ 
   reservations, 
+  guests,
+  rooms,
   onEdit, 
   onDelete, 
-  onView,
-  onCheckIn,
-  onCheckOut 
+  onNewReservationForGuest,
+  onStatusChange
 }: ReservationsTableProps) => {
-  const [guests, setGuests] = React.useState<Guest[]>([]);
-  const [rooms, setRooms] = React.useState<Room[]>([]);
-
-  React.useEffect(() => {
-    const fetchGuests = async () => {
-      try {
-        const response = await fetch('/api/guests');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setGuests(data);
-      } catch (error) {
-        console.error("Could not fetch guests:", error);
-      }
-    };
-
-    const fetchRooms = async () => {
-      try {
-        const response = await fetch('/api/rooms');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setRooms(data);
-      } catch (error) {
-        console.error("Could not fetch rooms:", error);
-      }
-    };
-
-    fetchGuests();
-    fetchRooms();
-  }, []);
-
   const getRoomNumber = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     return room ? room.number : 'N/A';
@@ -101,10 +64,10 @@ export const ReservationsTable = ({
       cell: ({ row }) => {
         const guestInfo = getGuestInfo(row.getValue('guest_id'));
         return (
-          <>
+          <div>
             <p className="font-medium">{guestInfo.name}</p>
-            <p className="text-muted-foreground">{guestInfo.details}</p>
-          </>
+            <p className="text-muted-foreground text-sm">{guestInfo.details}</p>
+          </div>
         );
       },
     },
@@ -147,22 +110,19 @@ export const ReservationsTable = ({
       header: 'Acciones',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => onView(row.original)}>
-            Ver
-          </Button>
           <Button size="sm" onClick={() => onEdit(row.original)}>
             Editar
           </Button>
-          <Button size="sm" onClick={() => onDelete(row.original.id)}>
+          <Button size="sm" variant="destructive" onClick={() => onDelete(row.original.id)}>
             Eliminar
           </Button>
           {row.original.status === 'confirmed' && (
-            <Button size="sm" onClick={() => onCheckIn(row.original)}>
+            <Button size="sm" onClick={() => onStatusChange(row.original.id, 'checked-in')}>
               Check-in
             </Button>
           )}
           {row.original.status === 'checked-in' && (
-            <Button size="sm" onClick={() => onCheckOut(row.original)}>
+            <Button size="sm" onClick={() => onStatusChange(row.original.id, 'checked-out')}>
               Check-out
             </Button>
           )}

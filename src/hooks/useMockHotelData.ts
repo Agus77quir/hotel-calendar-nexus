@@ -1,3 +1,4 @@
+
 import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 
 const mockGuests: Guest[] = [
@@ -25,7 +26,7 @@ const mockRooms: Room[] = [
   {
     id: '101',
     number: '101',
-    type: 'individual',
+    type: 'doble-individual',
     status: 'available',
     price: 50,
     capacity: 1,
@@ -35,7 +36,7 @@ const mockRooms: Room[] = [
   {
     id: '102',
     number: '102',
-    type: 'double',
+    type: 'matrimonial',
     status: 'occupied',
     price: 100,
     capacity: 2,
@@ -45,7 +46,7 @@ const mockRooms: Room[] = [
   {
     id: '103',
     number: '103',
-    type: 'suite',
+    type: 'suite-presidencial-doble',
     status: 'maintenance',
     price: 150,
     capacity: 4,
@@ -66,7 +67,8 @@ const mockReservations: Reservation[] = [
     status: 'checked-in',
     confirmation_number: 'RES001',
     created_at: '2024-01-10',
-    created_by: 'admin@email.com'
+    created_by: 'admin@email.com',
+    updated_at: '2024-01-10'
   },
   {
     id: '2',
@@ -79,7 +81,8 @@ const mockReservations: Reservation[] = [
     status: 'confirmed',
     confirmation_number: 'RES002',
     created_at: '2024-01-25',
-    created_by: 'admin@email.com'
+    created_by: 'admin@email.com',
+    updated_at: '2024-01-25'
   }
 ];
 

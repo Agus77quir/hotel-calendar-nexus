@@ -1,3 +1,4 @@
+
 export interface Guest {
   id: string;
   first_name: string;
@@ -29,6 +30,7 @@ export interface Reservation {
   total_amount: number;
   status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
   special_requests?: string;
+  confirmation_number: string;
   created_at: string;
   created_by?: string;
   updated_at: string;
