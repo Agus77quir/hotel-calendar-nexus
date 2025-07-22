@@ -1,4 +1,3 @@
-
 export interface Guest {
   id: string;
   first_name: string;
@@ -6,6 +5,7 @@ export interface Guest {
   email: string;
   phone: string;
   document: string;
+  nationality: string;
   created_at: string;
 }
 

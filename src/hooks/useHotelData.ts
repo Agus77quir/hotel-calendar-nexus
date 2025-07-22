@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Guest, Room, Reservation } from '@/types/hotel';
+import { Guest, Room, Reservation, HotelStats } from '@/types/hotel';
 import { toast } from 'sonner';
 
 export const useHotelData = () => {
@@ -33,7 +33,13 @@ export const useHotelData = () => {
         .order('number');
 
       if (error) throw error;
-      setRooms(data as Room[] || []);
+      // Cast the data to ensure proper typing
+      const typedRooms = (data || []).map(room => ({
+        ...room,
+        type: room.type as Room['type'],
+        status: room.status as Room['status']
+      }));
+      setRooms(typedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast.error('Error al cargar habitaciones');
@@ -51,13 +57,30 @@ export const useHotelData = () => {
       // Transform data to match Reservation interface
       const transformedData = (data || []).map(item => ({
         ...item,
-        confirmation_number: item.id // Use id as confirmation number for now
+        confirmation_number: item.id, // Use id as confirmation number for now
+        status: item.status as Reservation['status']
       }));
       setReservations(transformedData as Reservation[]);
     } catch (error) {
       console.error('Error fetching reservations:', error);
       toast.error('Error al cargar reservas');
     }
+  };
+
+  // Calculate stats from current data
+  const calculateStats = (): HotelStats => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    return {
+      totalRooms: rooms.length,
+      occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
+      availableRooms: rooms.filter(r => r.status === 'available').length,
+      maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
+      totalReservations: reservations.length,
+      todayCheckIns: reservations.filter(r => r.check_in === today).length,
+      todayCheckOuts: reservations.filter(r => r.check_out === today).length,
+      revenue: reservations.reduce((sum, r) => sum + r.total_amount, 0)
+    };
   };
 
   useEffect(() => {
@@ -177,6 +200,8 @@ export const useHotelData = () => {
 
       const newRoom: Room = {
         ...data,
+        type: data.type as Room['type'],
+        status: data.status as Room['status'],
         created_at: data.created_at
       };
 
@@ -203,6 +228,8 @@ export const useHotelData = () => {
 
       const updatedRoom: Room = {
         ...data,
+        type: data.type as Room['type'],
+        status: data.status as Room['status'],
         created_at: data.created_at
       };
 
@@ -234,7 +261,7 @@ export const useHotelData = () => {
     }
   };
 
-  const addReservation = async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
+  const addReservation = async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at' | 'confirmation_number'>) => {
     try {
       const { data, error } = await supabase
         .from('reservations')
@@ -255,7 +282,8 @@ export const useHotelData = () => {
 
       const newReservation: Reservation = {
         ...data,
-        confirmation_number: data.id // Use id as confirmation number for now
+        confirmation_number: data.id, // Use id as confirmation number for now
+        status: data.status as Reservation['status']
       };
 
       setReservations(prev => [newReservation, ...prev]);
@@ -268,7 +296,7 @@ export const useHotelData = () => {
     }
   };
 
-  const updateReservation = async (id: string, reservationData: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateReservation = async (id: string, reservationData: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at' | 'confirmation_number'>>) => {
     try {
       const updateData: any = {};
       if (reservationData.guest_id) updateData.guest_id = reservationData.guest_id;
@@ -291,7 +319,8 @@ export const useHotelData = () => {
 
       const updatedReservation: Reservation = {
         ...data,
-        confirmation_number: data.id // Use id as confirmation number for now
+        confirmation_number: data.id, // Use id as confirmation number for now
+        status: data.status as Reservation['status']
       };
 
       setReservations(prev => prev.map(reservation => 
@@ -324,11 +353,15 @@ export const useHotelData = () => {
     }
   };
 
+  const stats = calculateStats();
+
   return {
     guests,
     rooms,
     reservations,
+    stats,
     loading,
+    isLoading: loading, // Add alias for compatibility
     addGuest,
     updateGuest,
     deleteGuest,

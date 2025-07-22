@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { GuestSearchInput } from './GuestSearchInput';
+import { NewGuestForm } from './NewGuestForm';
+import { DiscountSection } from './DiscountSection';
 import { Guest, Room } from '@/types/hotel';
 
-export interface ReservationFormFieldsProps {
+interface ReservationFormFieldsProps {
   formData: {
     guest_id: string;
     room_id: string;
@@ -18,77 +20,113 @@ export interface ReservationFormFieldsProps {
     special_requests: string;
     discount_percentage: number;
   };
+  guests: Guest[];
   rooms: Room[];
   selectedGuest: Guest | null;
+  showNewGuestForm: boolean;
   onInputChange: (field: string, value: any) => void;
   onGuestSelect: (guest: Guest) => void;
+  onToggleNewGuest: () => void;
+  onNewGuestSubmit: (guestData: Omit<Guest, 'id' | 'created_at'>) => Promise<void>;
   onRoomChange: (roomId: string) => void;
 }
 
-export const ReservationFormFields: React.FC<ReservationFormFieldsProps> = ({
+export const ReservationFormFields = ({
   formData,
+  guests,
   rooms,
   selectedGuest,
+  showNewGuestForm,
   onInputChange,
   onGuestSelect,
-  onRoomChange,
-}) => {
+  onToggleNewGuest,
+  onNewGuestSubmit,
+  onRoomChange
+}: ReservationFormFieldsProps) => {
+  const calculateNights = () => {
+    if (formData.check_in && formData.check_out) {
+      const checkIn = new Date(formData.check_in);
+      const checkOut = new Date(formData.check_out);
+      const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      return Math.max(1, nights);
+    }
+    return 1;
+  };
+
+  const calculateSubtotal = () => {
+    const selectedRoom = rooms.find(r => r.id === formData.room_id);
+    if (selectedRoom) {
+      const nights = calculateNights();
+      return selectedRoom.price * nights;
+    }
+    return 0;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discount = (subtotal * formData.discount_percentage) / 100;
+    return subtotal - discount;
+  };
+
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="guest">Huésped</Label>
-        <GuestSearchInput
-          selectedGuest={selectedGuest}
-          onGuestSelect={onGuestSelect}
-        />
-      </div>
+      <GuestSearchInput
+        selectedGuest={selectedGuest}
+        onGuestSelect={onGuestSelect}
+        placeholder="Buscar huésped existente..."
+      />
 
-      <div>
-        <Label htmlFor="room">Habitación</Label>
-        <Select value={formData.room_id} onValueChange={onRoomChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar habitación" />
-          </SelectTrigger>
-          <SelectContent>
-            {rooms.map((room) => (
-              <SelectItem key={room.id} value={room.id}>
-                {room.number} - {room.type} (${room.price}/noche)
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {showNewGuestForm && (
+        <NewGuestForm onSubmit={onNewGuestSubmit} onCancel={onToggleNewGuest} />
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="room_id">Habitación</Label>
+          <Select value={formData.room_id} onValueChange={onRoomChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar habitación" />
+            </SelectTrigger>
+            <SelectContent>
+              {rooms.filter(room => room.status === 'available').map((room) => (
+                <SelectItem key={room.id} value={room.id}>
+                  Habitación {room.number} - {room.type} (${room.price}/noche)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="guests_count">Número de huéspedes</Label>
+          <Input
+            type="number"
+            value={formData.guests_count}
+            onChange={(e) => onInputChange('guests_count', parseInt(e.target.value))}
+            min="1"
+            max="6"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="check_in">Fecha de Entrada</Label>
+          <Label htmlFor="check_in">Fecha de entrada</Label>
           <Input
-            id="check_in"
             type="date"
             value={formData.check_in}
             onChange={(e) => onInputChange('check_in', e.target.value)}
           />
         </div>
+
         <div>
-          <Label htmlFor="check_out">Fecha de Salida</Label>
+          <Label htmlFor="check_out">Fecha de salida</Label>
           <Input
-            id="check_out"
             type="date"
             value={formData.check_out}
             onChange={(e) => onInputChange('check_out', e.target.value)}
           />
         </div>
-      </div>
-
-      <div>
-        <Label htmlFor="guests_count">Número de Huéspedes</Label>
-        <Input
-          id="guests_count"
-          type="number"
-          min="1"
-          value={formData.guests_count}
-          onChange={(e) => onInputChange('guests_count', parseInt(e.target.value))}
-        />
       </div>
 
       <div>
@@ -99,34 +137,28 @@ export const ReservationFormFields: React.FC<ReservationFormFieldsProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="confirmed">Confirmada</SelectItem>
-            <SelectItem value="checked-in">Check-in</SelectItem>
-            <SelectItem value="checked-out">Check-out</SelectItem>
+            <SelectItem value="checked-in">Registrado</SelectItem>
+            <SelectItem value="checked-out">Finalizada</SelectItem>
             <SelectItem value="cancelled">Cancelada</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div>
-        <Label htmlFor="discount_percentage">Descuento (%)</Label>
-        <Input
-          id="discount_percentage"
-          type="number"
-          min="0"
-          max="100"
-          value={formData.discount_percentage}
-          onChange={(e) => onInputChange('discount_percentage', parseFloat(e.target.value) || 0)}
+        <Label htmlFor="special_requests">Solicitudes especiales</Label>
+        <Textarea
+          value={formData.special_requests}
+          onChange={(e) => onInputChange('special_requests', e.target.value)}
+          placeholder="Solicitudes especiales del huésped"
         />
       </div>
 
-      <div>
-        <Label htmlFor="special_requests">Solicitudes Especiales</Label>
-        <Textarea
-          id="special_requests"
-          value={formData.special_requests}
-          onChange={(e) => onInputChange('special_requests', e.target.value)}
-          placeholder="Ingrese cualquier solicitud especial..."
-        />
-      </div>
+      <DiscountSection
+        discountPercentage={formData.discount_percentage}
+        onDiscountChange={(discount) => onInputChange('discount_percentage', discount)}
+        subtotal={calculateSubtotal()}
+        total={calculateTotal()}
+      />
     </div>
   );
 };
