@@ -1,372 +1,362 @@
-
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Guest, Room, Reservation, HotelStats } from '@/types/hotel';
-import { toast } from 'sonner';
+import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useRealtimeUpdates } from './useRealtimeUpdates';
 
 export const useHotelData = () => {
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const fetchGuests = async () => {
-    try {
+  // Activar tiempo real
+  useRealtimeUpdates();
+
+  // Configurar contexto de usuario
+  useEffect(() => {
+    const setUserContext = async () => {
+      if (user?.email) {
+        try {
+          await supabase.rpc('set_current_user', { user_name: user.email });
+          console.log('✅ Usuario configurado:', user.email);
+        } catch (error) {
+          console.error('❌ Error configurando usuario:', error);
+        }
+      }
+    };
+    setUserContext();
+  }, [user?.email]);
+
+  // Consultas con refetch automático más agresivo
+  const { data: guests = [], isLoading: guestsLoading } = useQuery({
+    queryKey: ['guests'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('guests')
         .select('*')
         .order('created_at', { ascending: false });
-
+      
       if (error) throw error;
-      setGuests(data || []);
-    } catch (error) {
-      console.error('Error fetching guests:', error);
-      toast.error('Error al cargar huéspedes');
-    }
-  };
+      
+      return (data || []).map(guest => ({
+        ...guest,
+        is_associated: Boolean(guest.is_associated),
+        discount_percentage: Number(guest.discount_percentage) || 0
+      })) as Guest[];
+    },
+    staleTime: 0, // Datos siempre se consideran obsoletos
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refrescar cada 5 segundos
+  });
 
-  const fetchRooms = async () => {
-    try {
+  const { data: rooms = [], isLoading: roomsLoading } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
         .order('number');
-
+      
       if (error) throw error;
-      const typedRooms = (data || []).map(room => ({
+      
+      return (data || []).map(room => ({
         ...room,
         type: room.type as Room['type'],
-        status: room.status as Room['status']
-      }));
-      setRooms(typedRooms);
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      toast.error('Error al cargar habitaciones');
-    }
-  };
+        status: room.status as Room['status'],
+        price: Number(room.price),
+        capacity: Number(room.capacity),
+        amenities: room.amenities || []
+      })) as Room[];
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
+  });
 
-  const fetchReservations = async () => {
-    try {
+  const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
         .order('created_at', { ascending: false });
-
+      
       if (error) throw error;
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        confirmation_number: item.id,
-        status: item.status as Reservation['status']
-      }));
-      setReservations(transformedData as Reservation[]);
-    } catch (error) {
-      console.error('Error fetching reservations:', error);
-      toast.error('Error al cargar reservas');
-    }
+      
+      const processedData = (data || []).map(reservation => ({
+        ...reservation,
+        status: reservation.status as Reservation['status'],
+        guests_count: Number(reservation.guests_count),
+        total_amount: Number(reservation.total_amount)
+      })) as Reservation[];
+
+      console.log('🔄 RESERVACIONES RECARGADAS:', {
+        total: processedData.length,
+        confirmed: processedData.filter(r => r.status === 'confirmed').length,
+        checkedIn: processedData.filter(r => r.status === 'checked-in').length,
+        checkedOut: processedData.filter(r => r.status === 'checked-out').length,
+        timestamp: new Date().toISOString()
+      });
+
+      return processedData;
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 3000, // Más frecuente para reservas
+  });
+
+  // Estadísticas calculadas
+  const today = new Date().toISOString().split('T')[0];
+  
+  const stats: HotelStats = {
+    totalRooms: rooms.length,
+    occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
+    availableRooms: rooms.filter(r => r.status === 'available').length,
+    maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
+    totalReservations: reservations.length,
+    todayCheckIns: reservations.filter(r => 
+      r.check_in === today && r.status === 'confirmed'
+    ).length,
+    todayCheckOuts: reservations.filter(r => 
+      r.check_out === today && r.status === 'checked-in'
+    ).length,
+    revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  const calculateStats = (): HotelStats => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    return {
-      totalRooms: rooms.length,
-      occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
-      availableRooms: rooms.filter(r => r.status === 'available').length,
-      maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
-      totalReservations: reservations.length,
-      todayCheckIns: reservations.filter(r => r.check_in === today).length,
-      todayCheckOuts: reservations.filter(r => r.check_out === today).length,
-      revenue: reservations.reduce((sum, r) => sum + r.total_amount, 0)
-    };
-  };
-
-  useEffect(() => {
-    const loadData = async () => {
-      await Promise.all([fetchGuests(), fetchRooms(), fetchReservations()]);
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
-
-  const addGuest = async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('guests')
-        .insert([{
-          first_name: guestData.first_name,
-          last_name: guestData.last_name,
-          email: guestData.email,
-          phone: guestData.phone,
-          document: guestData.document,
-          nationality: guestData.nationality || 'No especificada'
-        }])
-        .select()
+  // Mutación optimizada para check-in/check-out con invalidación más agresiva
+  const updateReservationMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
+      console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
+      
+      // Obtener reserva actual
+      const { data: currentReservation, error: fetchError } = await supabase
+        .from('reservations')
+        .select('room_id, status')
+        .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      const newGuest: Guest = {
-        id: data.id,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        phone: data.phone,
-        document: data.document,
-        nationality: data.nationality,
-        created_at: data.created_at
-      };
-
-      setGuests(prev => [newGuest, ...prev]);
-      toast.success('Huésped agregado exitosamente');
-      return newGuest;
-    } catch (error) {
-      console.error('Error adding guest:', error);
-      toast.error('Error al agregar huésped');
-      throw error;
-    }
-  };
-
-  const updateGuest = async (id: string, guestData: Partial<Omit<Guest, 'id' | 'created_at'>>) => {
-    try {
-      const updateData: any = {};
-      if (guestData.first_name) updateData.first_name = guestData.first_name;
-      if (guestData.last_name) updateData.last_name = guestData.last_name;
-      if (guestData.email) updateData.email = guestData.email;
-      if (guestData.phone) updateData.phone = guestData.phone;
-      if (guestData.document) updateData.document = guestData.document;
-      if (guestData.nationality) updateData.nationality = guestData.nationality;
-
-      const { data, error } = await supabase
-        .from('guests')
-        .update(updateData)
+      // Actualizar reserva
+      const { data: updatedReservation, error } = await supabase
+        .from('reservations')
+        .update({ 
+          ...data, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', id)
         .select()
         .single();
-
+      
       if (error) throw error;
 
-      const updatedGuest: Guest = {
-        id: data.id,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        phone: data.phone,
-        document: data.document,
-        nationality: data.nationality,
-        created_at: data.created_at
-      };
+      // Actualizar estado de habitación
+      if (data.status && currentReservation?.room_id) {
+        let roomStatus: Room['status'] = 'available';
+        
+        if (data.status === 'checked-in') {
+          roomStatus = 'occupied';
+        } else if (data.status === 'checked-out' || data.status === 'cancelled') {
+          roomStatus = 'available';
+        }
 
-      setGuests(prev => prev.map(guest => guest.id === id ? updatedGuest : guest));
-      toast.success('Huésped actualizado exitosamente');
-      return updatedGuest;
-    } catch (error) {
-      console.error('Error updating guest:', error);
-      toast.error('Error al actualizar huésped');
-      throw error;
+        const { error: roomError } = await supabase
+          .from('rooms')
+          .update({ status: roomStatus })
+          .eq('id', currentReservation.room_id);
+
+        if (roomError) console.error('❌ Error actualizando habitación:', roomError);
+      }
+      
+      return updatedReservation;
+    },
+    onSuccess: async () => {
+      console.log('✅ RESERVA ACTUALIZADA - INVALIDANDO TODAS LAS QUERIES');
+      
+      // Invalidar TODAS las queries para forzar recarga completa
+      await queryClient.invalidateQueries();
+      
+      // Refrescar específicamente las queries críticas
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] }),
+      ]);
+      
+      console.log('🔄 TODAS LAS QUERIES REFRESCADAS');
+    },
+    onError: (error) => {
+      console.error('❌ ERROR EN MUTACIÓN:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la reserva",
+        variant: "destructive",
+      });
     }
-  };
+  });
 
-  const deleteGuest = async (id: string) => {
-    try {
+  const addGuestMutation = useMutation({
+    mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('guests')
+        .insert([guestData])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+    },
+  });
+
+  const updateGuestMutation = useMutation({
+    mutationFn: async ({ id, ...guestData }: { id: string } & Partial<Omit<Guest, 'id'>>) => {
+      const { data, error } = await supabase
+        .from('guests')
+        .update(guestData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+    },
+  });
+
+  const deleteGuestMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('guests')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+    },
+  });
 
-      setGuests(prev => prev.filter(guest => guest.id !== id));
-      toast.success('Huésped eliminado exitosamente');
-    } catch (error) {
-      console.error('Error deleting guest:', error);
-      toast.error('Error al eliminar huésped');
-      throw error;
-    }
-  };
-
-  const addRoom = async (roomData: Omit<Room, 'id' | 'created_at'>) => {
-    try {
+  const addRoomMutation = useMutation({
+    mutationFn: async (roomData: Omit<Room, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
         .from('rooms')
         .insert([roomData])
         .select()
         .single();
-
+      
       if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+  });
 
-      const newRoom: Room = {
-        ...data,
-        type: data.type as Room['type'],
-        status: data.status as Room['status'],
-        created_at: data.created_at
-      };
-
-      setRooms(prev => [...prev, newRoom]);
-      toast.success('Habitación agregada exitosamente');
-      return newRoom;
-    } catch (error) {
-      console.error('Error adding room:', error);
-      toast.error('Error al agregar habitación');
-      throw error;
-    }
-  };
-
-  const updateRoom = async (id: string, roomData: Partial<Omit<Room, 'id' | 'created_at'>>) => {
-    try {
+  const updateRoomMutation = useMutation({
+    mutationFn: async ({ id, ...roomData }: { id: string } & Partial<Omit<Room, 'id'>>) => {
       const { data, error } = await supabase
         .from('rooms')
         .update(roomData)
         .eq('id', id)
         .select()
         .single();
-
+      
       if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+  });
 
-      const updatedRoom: Room = {
-        ...data,
-        type: data.type as Room['type'],
-        status: data.status as Room['status'],
-        created_at: data.created_at
-      };
-
-      setRooms(prev => prev.map(room => room.id === id ? updatedRoom : room));
-      toast.success('Habitación actualizada exitosamente');
-      return updatedRoom;
-    } catch (error) {
-      console.error('Error updating room:', error);
-      toast.error('Error al actualizar habitación');
-      throw error;
-    }
-  };
-
-  const deleteRoom = async (id: string) => {
-    try {
+  const deleteRoomMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('rooms')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+  });
 
-      setRooms(prev => prev.filter(room => room.id !== id));
-      toast.success('Habitación eliminada exitosamente');
-    } catch (error) {
-      console.error('Error deleting room:', error);
-      toast.error('Error al eliminar habitación');
-      throw error;
-    }
-  };
-
-  const addReservation = async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at' | 'confirmation_number'>) => {
-    try {
+  const addReservationMutation = useMutation({
+    mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
-          guest_id: reservationData.guest_id,
-          room_id: reservationData.room_id,
-          check_in: reservationData.check_in,
-          check_out: reservationData.check_out,
-          guests_count: reservationData.guests_count,
-          status: reservationData.status,
-          special_requests: reservationData.special_requests,
-          total_amount: reservationData.total_amount
+          ...reservationData,
+          created_by: user?.email || 'sistema'
         }])
         .select()
         .single();
-
+      
       if (error) throw error;
+      return data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+    },
+  });
 
-      const newReservation: Reservation = {
-        ...data,
-        confirmation_number: data.id,
-        status: data.status as Reservation['status']
-      };
-
-      setReservations(prev => [newReservation, ...prev]);
-      toast.success('Reserva agregada exitosamente');
-      return newReservation;
-    } catch (error) {
-      console.error('Error adding reservation:', error);
-      toast.error('Error al agregar reserva');
-      throw error;
-    }
-  };
-
-  const updateReservation = async (id: string, reservationData: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at' | 'confirmation_number'>>) => {
-    try {
-      const updateData: any = {};
-      if (reservationData.guest_id) updateData.guest_id = reservationData.guest_id;
-      if (reservationData.room_id) updateData.room_id = reservationData.room_id;
-      if (reservationData.check_in) updateData.check_in = reservationData.check_in;
-      if (reservationData.check_out) updateData.check_out = reservationData.check_out;
-      if (reservationData.guests_count) updateData.guests_count = reservationData.guests_count;
-      if (reservationData.status) updateData.status = reservationData.status;
-      if (reservationData.special_requests) updateData.special_requests = reservationData.special_requests;
-      if (reservationData.total_amount) updateData.total_amount = reservationData.total_amount;
-
-      const { data, error } = await supabase
+  const deleteReservationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: reservation } = await supabase
         .from('reservations')
-        .update(updateData)
+        .select('room_id, status')
         .eq('id', id)
-        .select()
         .single();
 
-      if (error) throw error;
+      if (reservation && reservation.status === 'checked-in') {
+        await supabase
+          .from('rooms')
+          .update({ status: 'available' })
+          .eq('id', reservation.room_id);
+      }
 
-      const updatedReservation: Reservation = {
-        ...data,
-        confirmation_number: data.id,
-        status: data.status as Reservation['status']
-      };
-
-      setReservations(prev => prev.map(reservation => 
-        reservation.id === id ? updatedReservation : reservation
-      ));
-      toast.success('Reserva actualizada exitosamente');
-      return updatedReservation;
-    } catch (error) {
-      console.error('Error updating reservation:', error);
-      toast.error('Error al actualizar reserva');
-      throw error;
-    }
-  };
-
-  const deleteReservation = async (id: string) => {
-    try {
       const { error } = await supabase
         .from('reservations')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+  });
 
-      setReservations(prev => prev.filter(reservation => reservation.id !== id));
-      toast.success('Reserva eliminada exitosamente');
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-      toast.error('Error al eliminar reserva');
-      throw error;
-    }
-  };
-
-  const stats = calculateStats();
+  const isLoading = guestsLoading || roomsLoading || reservationsLoading;
 
   return {
     guests,
     rooms,
     reservations,
     stats,
-    loading,
-    isLoading: loading,
-    addGuest,
-    updateGuest,
-    deleteGuest,
-    addRoom,
-    updateRoom,
-    deleteRoom,
-    addReservation,
-    updateReservation,
-    deleteReservation,
+    isLoading,
+    addGuest: addGuestMutation.mutateAsync,
+    updateGuest: updateGuestMutation.mutateAsync,
+    deleteGuest: deleteGuestMutation.mutateAsync,
+    addRoom: addRoomMutation.mutateAsync,
+    updateRoom: updateRoomMutation.mutateAsync,
+    deleteRoom: deleteRoomMutation.mutateAsync,
+    addReservation: addReservationMutation.mutateAsync,
+    updateReservation: updateReservationMutation.mutateAsync,
+    deleteReservation: deleteReservationMutation.mutateAsync,
   };
 };

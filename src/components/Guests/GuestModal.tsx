@@ -27,6 +27,7 @@ export const GuestModal = ({
     email: '',
     phone: '',
     document: '',
+    nationality: '',
   });
 
   const [emailError, setEmailError] = useState('');
@@ -40,6 +41,7 @@ export const GuestModal = ({
         email: guest.email || '',
         phone: guest.phone || '',
         document: guest.document || '',
+        nationality: guest.nationality || '',
       });
     } else {
       setFormData({
@@ -48,6 +50,7 @@ export const GuestModal = ({
         email: '',
         phone: '',
         document: '',
+        nationality: '',
       });
     }
     setEmailError('');
@@ -95,6 +98,10 @@ export const GuestModal = ({
       console.error('Validation error: Documento requerido');
       return false;
     }
+    if (!formData.nationality.trim()) {
+      console.error('Validation error: Nacionalidad requerida');
+      return false;
+    }
     console.log('Form validation passed');
     return true;
   };
@@ -111,8 +118,14 @@ export const GuestModal = ({
     setIsSubmitting(true);
     
     try {
-      console.log('Attempting to save guest with data:', formData);
-      await onSave(formData);
+      const guestPayload = {
+        ...formData,
+        is_associated: false,
+        discount_percentage: 0
+      };
+      
+      console.log('Attempting to save guest with data:', guestPayload);
+      await onSave(guestPayload);
       console.log('Guest saved successfully');
       onClose();
     } catch (error) {
@@ -194,6 +207,17 @@ export const GuestModal = ({
               id="document"
               value={formData.document}
               onChange={(e) => setFormData({...formData, document: e.target.value})}
+              required
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="nationality">Nacionalidad *</Label>
+            <Input
+              id="nationality"
+              value={formData.nationality}
+              onChange={(e) => setFormData({...formData, nationality: e.target.value})}
               required
               disabled={isSubmitting}
             />

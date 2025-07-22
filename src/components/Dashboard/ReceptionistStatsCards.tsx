@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, TrendingUp } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp } from 'lucide-react';
 import { HotelStats, Room, Reservation, Guest } from '@/types/hotel';
 
 interface ReceptionistStatsCardsProps {
@@ -12,8 +12,22 @@ interface ReceptionistStatsCardsProps {
 
 export const ReceptionistStatsCards = ({ stats, rooms, reservations, guests }: ReceptionistStatsCardsProps) => {
   const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
+  
+  // Calcular métricas
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthlyRevenue = reservations
+    .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
   const cards = [
+    {
+      title: 'Ingresos del Mes',
+      value: `$${monthlyRevenue.toFixed(2)}`,
+      icon: DollarSign,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      subtitle: 'Facturación mensual'
+    },
     {
       title: 'Tasa de Ocupación',
       value: `${occupancyRate}%`,
@@ -41,7 +55,7 @@ export const ReceptionistStatsCards = ({ stats, rooms, reservations, guests }: R
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

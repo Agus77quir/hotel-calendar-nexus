@@ -6,6 +6,8 @@ export interface Guest {
   phone: string;
   document: string;
   nationality: string;
+  is_associated: boolean;
+  discount_percentage: number;
   created_at: string;
 }
 
@@ -30,7 +32,6 @@ export interface Reservation {
   total_amount: number;
   status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
   special_requests?: string;
-  confirmation_number: string;
   created_at: string;
   created_by?: string;
   updated_at: string;

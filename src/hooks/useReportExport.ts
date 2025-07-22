@@ -1,192 +1,241 @@
 
 import { useCallback } from 'react';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { Guest, Room, Reservation } from '@/types/hotel';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Reservation, Guest, Room } from '@/types/hotel';
 
 export const useReportExport = () => {
-  const { data: guests = [] } = useQuery({
-    queryKey: ['guests'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('guests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      return (data || []) as Guest[];
-    },
-  });
-
-  const { data: rooms = [] } = useQuery({
-    queryKey: ['rooms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('number');
-      
-      if (error) throw error;
-      
-      return (data || []).map(room => ({
-        ...room,
-        type: room.type as Room['type'],
-        status: room.status as Room['status'],
-        price: Number(room.price),
-        capacity: Number(room.capacity),
-        amenities: room.amenities || []
-      })) as Room[];
-    },
-  });
-
-  const { data: reservations = [] } = useQuery({
-    queryKey: ['reservations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reservations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      return (data || []).map(reservation => ({
-        ...reservation,
-        status: reservation.status as Reservation['status'],
-        guests_count: Number(reservation.guests_count),
-        total_amount: Number(reservation.total_amount),
-        confirmation_number: reservation.id
-      })) as Reservation[];
-    },
-  });
-
-  const exportToPDF = useCallback((reservationData: Reservation[], guestData: Guest[], roomData: Room[]) => {
+  const exportToPDF = useCallback((
+    reservations: Reservation[],
+    guests: Guest[],
+    rooms: Room[]
+  ) => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    doc.setFontSize(18);
-    doc.text('Reporte de Hotel', 20, 20);
+    // Título del reporte
+    doc.setFontSize(20);
+    doc.text('Reporte del Hotel', pageWidth / 2, 20, { align: 'center' });
     
-    const tableData = reservationData.map(reservation => {
-      const guest = guestData.find(g => g.id === reservation.guest_id);
-      const room = roomData.find(r => r.id === reservation.room_id);
+    // Fecha del reporte
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 20, 35);
+    
+    let yPosition = 50;
+    
+    // Resumen de habitaciones
+    doc.setFontSize(16);
+    doc.text('Resumen de Habitaciones', 20, yPosition);
+    yPosition += 10;
+    
+    const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
+    const availableRooms = rooms.filter(r => r.status === 'available').length;
+    const maintenanceRooms = rooms.filter(r => r.status === 'maintenance').length;
+    
+    doc.setFontSize(12);
+    doc.text(`Total de habitaciones: ${rooms.length}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Habitaciones ocupadas: ${occupiedRooms}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Habitaciones disponibles: ${availableRooms}`, 20, yPosition);
+    yPosition += 8;
+    doc.text(`Habitaciones en mantenimiento: ${maintenanceRooms}`, 20, yPosition);
+    yPosition += 15;
+    
+    // Tabla de reservas
+    doc.setFontSize(16);
+    doc.text('Reservas Activas', 20, yPosition);
+    yPosition += 10;
+    
+    const reservationData = reservations
+      .filter(r => r.status !== 'cancelled')
+      .map(reservation => {
+        const guest = guests.find(g => g.id === reservation.guest_id);
+        const room = rooms.find(r => r.id === reservation.room_id);
+        
+        return [
+          reservation.id.slice(0, 8),
+          `${guest?.first_name || ''} ${guest?.last_name || ''}`,
+          room?.number || 'N/A',
+          format(new Date(reservation.check_in), 'dd/MM/yyyy'),
+          format(new Date(reservation.check_out), 'dd/MM/yyyy'),
+          reservation.status === 'confirmed' ? 'Confirmada' :
+          reservation.status === 'checked-in' ? 'Registrado' :
+          reservation.status === 'checked-out' ? 'Check-out' : reservation.status,
+          `$${reservation.total_amount}`
+        ];
+      });
+    
+    autoTable(doc, {
+      startY: yPosition,
+      head: [['ID', 'Huésped', 'Habitación', 'Check-in', 'Check-out', 'Estado', 'Total']],
+      body: reservationData,
+      theme: 'striped',
+      headStyles: { fillColor: [66, 66, 66] },
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 20 }
+      }
+    });
+    
+    // Nueva página para huéspedes si es necesario
+    if (doc.internal.pageSize.height - (doc as any).lastAutoTable.finalY < 60) {
+      doc.addPage();
+      yPosition = 20;
+    } else {
+      yPosition = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Tabla de huéspedes
+    doc.setFontSize(16);
+    doc.text('Lista de Huéspedes', 20, yPosition);
+    yPosition += 10;
+    
+    const guestData = guests.map(guest => [
+      `${guest.first_name} ${guest.last_name}`,
+      guest.email,
+      guest.phone,
+      guest.nationality,
+      format(new Date(guest.created_at), 'dd/MM/yyyy')
+    ]);
+    
+    autoTable(doc, {
+      startY: yPosition,
+      head: [['Nombre', 'Email', 'Teléfono', 'Nacionalidad', 'Registro']],
+      body: guestData,
+      theme: 'striped',
+      headStyles: { fillColor: [66, 66, 66] },
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 25 }
+      }
+    });
+    
+    // Guardar el PDF
+    doc.save(`reporte-hotel-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  }, []);
+  
+  const exportToExcel = useCallback((
+    reservations: Reservation[],
+    guests: Guest[],
+    rooms: Room[]
+  ) => {
+    const workbook = XLSX.utils.book_new();
+    
+    // Hoja de resumen
+    const summaryData = [
+      ['Reporte del Hotel'],
+      [`Fecha: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`],
+      [''],
+      ['Resumen de Habitaciones'],
+      ['Total de habitaciones', rooms.length.toString()],
+      ['Habitaciones ocupadas', rooms.filter(r => r.status === 'occupied').length.toString()],
+      ['Habitaciones disponibles', rooms.filter(r => r.status === 'available').length.toString()],
+      ['Habitaciones en mantenimiento', rooms.filter(r => r.status === 'maintenance').length.toString()],
+      [''],
+      ['Resumen de Reservas'],
+      ['Total de reservas', reservations.length.toString()],
+      ['Reservas confirmadas', reservations.filter(r => r.status === 'confirmed').length.toString()],
+      ['Reservas registradas', reservations.filter(r => r.status === 'checked-in').length.toString()],
+      ['Reservas completadas', reservations.filter(r => r.status === 'checked-out').length.toString()],
+      ['Reservas canceladas', reservations.filter(r => r.status === 'cancelled').length.toString()]
+    ];
+    
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumen');
+    
+    // Hoja de reservas
+    const reservationData = [
+      ['ID', 'ID Huésped', 'Nombre Huésped', 'Habitación', 'Check-in', 'Check-out', 'Huéspedes', 'Estado', 'Total', 'Solicitudes Especiales']
+    ];
+    
+    reservations.forEach(reservation => {
+      const guest = guests.find(g => g.id === reservation.guest_id);
+      const room = rooms.find(r => r.id === reservation.room_id);
       
-      return [
-        reservation.confirmation_number,
-        guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
-        room ? room.number : 'N/A',
+      reservationData.push([
+        reservation.id,
+        reservation.guest_id,
+        `${guest?.first_name || ''} ${guest?.last_name || ''}`,
+        room?.number || 'N/A',
         reservation.check_in,
         reservation.check_out,
-        reservation.status,
-        `$${reservation.total_amount}`
-      ];
+        reservation.guests_count.toString(),
+        reservation.status === 'confirmed' ? 'Confirmada' :
+        reservation.status === 'checked-in' ? 'Registrado' :
+        reservation.status === 'checked-out' ? 'Check-out' :
+        reservation.status === 'cancelled' ? 'Cancelada' : reservation.status,
+        reservation.total_amount.toString(),
+        reservation.special_requests || ''
+      ]);
     });
-
-    (doc as any).autoTable({
-      head: [['Confirmación', 'Huésped', 'Habitación', 'Check-in', 'Check-out', 'Estado', 'Total']],
-      body: tableData,
-      startY: 30,
+    
+    const reservationSheet = XLSX.utils.aoa_to_sheet(reservationData);
+    XLSX.utils.book_append_sheet(workbook, reservationSheet, 'Reservas');
+    
+    // Hoja de huéspedes
+    const guestData = [
+      ['ID', 'Nombre', 'Apellido', 'Email', 'Teléfono', 'Documento', 'Nacionalidad', 'Fecha Registro']
+    ];
+    
+    guests.forEach(guest => {
+      guestData.push([
+        guest.id,
+        guest.first_name,
+        guest.last_name,
+        guest.email,
+        guest.phone,
+        guest.document,
+        guest.nationality,
+        format(new Date(guest.created_at), 'dd/MM/yyyy')
+      ]);
     });
-
-    doc.save('reporte-hotel.pdf');
+    
+    const guestSheet = XLSX.utils.aoa_to_sheet(guestData);
+    XLSX.utils.book_append_sheet(workbook, guestSheet, 'Huéspedes');
+    
+    // Hoja de habitaciones
+    const roomData = [
+      ['ID', 'Número', 'Tipo', 'Capacidad', 'Precio', 'Estado', 'Amenidades', 'Fecha Creación']
+    ];
+    
+    rooms.forEach(room => {
+      roomData.push([
+        room.id,
+        room.number,
+        room.type,
+        room.capacity.toString(),
+        room.price.toString(),
+        room.status === 'available' ? 'Disponible' :
+        room.status === 'occupied' ? 'Ocupada' :
+        room.status === 'maintenance' ? 'Mantenimiento' : room.status,
+        room.amenities?.join(', ') || '',
+        format(new Date(room.created_at), 'dd/MM/yyyy')
+      ]);
+    });
+    
+    const roomSheet = XLSX.utils.aoa_to_sheet(roomData);
+    XLSX.utils.book_append_sheet(workbook, roomSheet, 'Habitaciones');
+    
+    // Guardar el archivo Excel
+    XLSX.writeFile(workbook, `reporte-hotel-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   }, []);
-
-  const exportToExcel = useCallback((reservationData: Reservation[], guestData: Guest[], roomData: Room[]) => {
-    const data = reservationData.map(reservation => {
-      const guest = guestData.find(g => g.id === reservation.guest_id);
-      const room = roomData.find(r => r.id === reservation.room_id);
-      
-      return {
-        'Número de Confirmación': reservation.confirmation_number,
-        'Huésped': guest ? `${guest.first_name} ${guest.last_name}` : 'N/A',
-        'Email': guest?.email || 'N/A',
-        'Teléfono': guest?.phone || 'N/A',
-        'Habitación': room?.number || 'N/A',
-        'Tipo de Habitación': room?.type || 'N/A',
-        'Check-in': reservation.check_in,
-        'Check-out': reservation.check_out,
-        'Número de Huéspedes': reservation.guests_count,
-        'Monto Total': reservation.total_amount,
-        'Estado': reservation.status,
-        'Creado por': reservation.created_by || 'Sistema',
-        'Fecha de Creación': new Date(reservation.created_at).toLocaleDateString()
-      };
-    });
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Reservas');
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(blob, 'reporte-reservas.xlsx');
-  }, []);
-
-  const exportGuestsToExcel = useCallback(() => {
-    const guestData = guests.map(guest => ({
-      'Nombre': guest.first_name,
-      'Apellido': guest.last_name,
-      'Email': guest.email,
-      'Teléfono': guest.phone,
-      'Documento': guest.document,
-      'Fecha de Registro': new Date(guest.created_at).toLocaleDateString()
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(guestData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Guests');
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(data, 'guests.xlsx');
-  }, [guests]);
-
-  const exportRoomsToExcel = useCallback(() => {
-    const roomData = rooms.map(room => ({
-      'Número': room.number,
-      'Tipo': room.type,
-      'Precio': room.price,
-      'Capacidad': room.capacity,
-      'Estado': room.status,
-      'Comodidades': room.amenities?.join(', ') || 'N/A'
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(roomData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Rooms');
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(data, 'rooms.xlsx');
-  }, [rooms]);
-
-  const exportReservationsToExcel = useCallback(() => {
-    const reservationData = reservations.map(reservation => ({
-      'Número de Confirmación': reservation.confirmation_number,
-      'Huésped': reservation.guest_id,
-      'Habitación': reservation.room_id,
-      'Check-in': reservation.check_in,
-      'Check-out': reservation.check_out,
-      'Número de Huéspedes': reservation.guests_count,
-      'Monto Total': reservation.total_amount,
-      'Estado': reservation.status,
-      'Creado por': reservation.created_by,
-      'Fecha de Creación': new Date(reservation.created_at).toLocaleDateString()
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(reservationData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Reservations');
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(data, 'reservations.xlsx');
-  }, [reservations]);
-
+  
   return {
     exportToPDF,
-    exportToExcel,
-    exportGuestsToExcel,
-    exportRoomsToExcel,
-    exportReservationsToExcel
+    exportToExcel
   };
 };

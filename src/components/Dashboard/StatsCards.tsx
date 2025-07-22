@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bed, Users, Calendar, BedDouble, Wrench, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Bed, Users, Calendar, DollarSign, BedDouble, Wrench, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { HotelStats, Room, Reservation } from '@/types/hotel';
 
 interface StatsCardsProps {
@@ -12,6 +12,14 @@ interface StatsCardsProps {
 export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsProps) => {
   const occupancyRate = stats.totalRooms > 0 ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100) : 0;
   
+  // Calcular métricas correctamente con fecha actual
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  
+  const monthlyRevenue = reservations
+    .filter(r => r.created_at?.slice(0, 7) === thisMonth && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+
   // Get maintenance room numbers
   const maintenanceRooms = rooms.filter(r => r.status === 'maintenance');
   const maintenanceRoomNumbers = maintenanceRooms.map(r => r.number).sort((a, b) => {
@@ -54,6 +62,14 @@ export const StatsCards = ({ stats, rooms = [], reservations = [] }: StatsCardsP
       subtitle: stats.maintenanceRooms > 0 
         ? `Hab. ${maintenanceRoomNumbers.join(', ')}` 
         : 'Ninguna en mantenimiento'
+    },
+    {
+      title: 'Ingresos del Mes',
+      value: `$${monthlyRevenue.toFixed(2)}`,
+      icon: DollarSign,
+      color: 'text-green-700',
+      bgColor: 'bg-green-100',
+      subtitle: 'Facturación mensual'
     },
     {
       title: 'Tasa de Ocupación',

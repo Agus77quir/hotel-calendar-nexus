@@ -1,114 +1,355 @@
-
-import { Guest, Room, Reservation, HotelStats } from '@/types/hotel';
+import { useState } from 'react';
+import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
 
 const mockGuests: Guest[] = [
   {
-    id: '1',
+    id: '01',
     first_name: 'Juan',
     last_name: 'Pérez',
     email: 'juan.perez@email.com',
     phone: '+1234567890',
     document: '12345678',
-    nationality: 'Mexicana',
-    created_at: '2024-01-15',
+    nationality: 'Mexicano',
+    is_associated: false,
+    discount_percentage: 0,
+    created_at: '2024-01-15T10:00:00Z',
   },
   {
-    id: '2',
+    id: '02',
     first_name: 'María',
-    last_name: 'García',
-    email: 'maria.garcia@email.com',
-    phone: '+0987654321',
+    last_name: 'González',
+    email: 'maria.gonzalez@email.com',
+    phone: '+1234567891',
     document: '87654321',
     nationality: 'Española',
-    created_at: '2024-01-16',
+    is_associated: true,
+    discount_percentage: 15,
+    created_at: '2024-01-16T11:00:00Z',
   },
 ];
-
-const mockRooms: Room[] = [
-  {
-    id: '101',
-    number: '101',
-    type: 'matrimonial',
-    price: 100,
-    capacity: 2,
-    amenities: ['WiFi', 'TV', 'AC'],
-    status: 'available',
-    created_at: '2024-01-01',
-  },
-  {
-    id: '102',
-    number: '102',
-    type: 'doble-individual',
-    price: 120,
-    capacity: 2,
-    amenities: ['WiFi', 'TV', 'AC'],
-    status: 'occupied',
-    created_at: '2024-01-01',
-  },
-];
-
-const mockReservations: Reservation[] = [
-  {
-    id: '1',
-    guest_id: '1',
-    room_id: '102',
-    check_in: '2024-02-01',
-    check_out: '2024-02-05',
-    guests_count: 2,
-    status: 'confirmed',
-    special_requests: 'None',
-    total_amount: 400,
-    confirmation_number: '123456',
-    created_at: '2024-01-20',
-    updated_at: '2024-01-20',
-  },
-];
-
-const mockStats: HotelStats = {
-  totalRooms: 10,
-  occupiedRooms: 5,
-  availableRooms: 5,
-  maintenanceRooms: 0,
-  totalReservations: 20,
-  todayCheckIns: 3,
-  todayCheckOuts: 2,
-  revenue: 5000,
-};
 
 export const useMockHotelData = () => {
+  const [rooms] = useState<Room[]>([
+    {
+      id: 'room-09',
+      number: '09',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-10',
+      number: '10',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-11',
+      number: '11',
+      type: 'triple-individual',
+      price: 150,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-12',
+      number: '12',
+      type: 'triple-individual',
+      price: 150,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-13',
+      number: '13',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-14',
+      number: '14',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-15',
+      number: '15',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-16',
+      number: '16',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-17',
+      number: '17',
+      type: 'doble-individual',
+      price: 140,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-18',
+      number: '18',
+      type: 'doble-individual',
+      price: 140,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-19',
+      number: '19',
+      type: 'triple-individual',
+      price: 150,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-20',
+      number: '20',
+      type: 'triple-individual',
+      price: 150,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-21',
+      number: '21',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-22',
+      number: '22',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-23',
+      number: '23',
+      type: 'triple-matrimonial',
+      price: 160,
+      capacity: 3,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-24',
+      number: '24',
+      type: 'doble-individual',
+      price: 140,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-25',
+      number: '25',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-26',
+      number: '26',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-28',
+      number: '28',
+      type: 'suite-presidencial-doble',
+      price: 250,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado', 'Jacuzzi', 'Sala de estar'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-30',
+      number: '30',
+      type: 'suite-presidencial-doble',
+      price: 250,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado', 'Jacuzzi', 'Sala de estar'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-31',
+      number: '31',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'room-32',
+      number: '32',
+      type: 'matrimonial',
+      price: 120,
+      capacity: 2,
+      amenities: ['WiFi', 'TV', 'Aire acondicionado', 'Baño privado'],
+      status: 'available',
+      created_at: new Date().toISOString(),
+    },
+  ]);
+
+  const [guests, setGuests] = useState<Guest[]>(mockGuests);
+
+  const [reservations, setReservations] = useState<Reservation[]>([
+    {
+      id: 'res-1',
+      guest_id: 'guest-1',
+      room_id: 'room-09',
+      check_in: new Date().toISOString().split('T')[0],
+      check_out: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      guests_count: 2,
+      total_amount: 240,
+      status: 'confirmed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'res-2',
+      guest_id: 'guest-2',
+      room_id: 'room-11',
+      check_in: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      check_out: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      guests_count: 3,
+      total_amount: 450,
+      status: 'confirmed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]);
+
+  const addGuest = (guestData: Omit<Guest, 'id' | 'created_at'>) => {
+    const newGuest: Guest = {
+      ...guestData,
+      id: `guest-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+    setGuests(prev => [newGuest, ...prev]);
+  };
+
+  const updateGuest = (id: string, updates: Partial<Guest>) => {
+    setGuests(prev => prev.map(guest => 
+      guest.id === id ? { ...guest, ...updates } : guest
+    ));
+  };
+
+  const deleteGuest = (id: string) => {
+    setGuests(prev => prev.filter(guest => guest.id !== id));
+    setReservations(prev => prev.filter(res => res.guest_id !== id));
+  };
+
+  const addRoom = (roomData: Omit<Room, 'id' | 'created_at'>) => {
+    const newRoom: Room = {
+      ...roomData,
+      id: `room-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+    // Note: rooms are now static, but keeping this for consistency
+  };
+
+  const updateRoom = (id: string, updates: Partial<Room>) => {
+    // Note: rooms are now static, but keeping this for consistency
+  };
+
+  const deleteRoom = (id: string) => {
+    // Note: rooms are now static, but keeping this for consistency
+  };
+
+  const addReservation = (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
+    const newReservation: Reservation = {
+      ...reservationData,
+      id: `res-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setReservations(prev => [newReservation, ...prev]);
+  };
+
+  const updateReservation = (id: string, updates: Partial<Reservation>) => {
+    setReservations(prev => prev.map(res => 
+      res.id === id ? { ...res, ...updates, updated_at: new Date().toISOString() } : res
+    ));
+  };
+
+  const deleteReservation = (id: string) => {
+    setReservations(prev => prev.filter(res => res.id !== id));
+  };
+
   return {
-    guests: mockGuests,
-    rooms: mockRooms,
-    reservations: mockReservations,
-    stats: mockStats,
-    loading: false,
-    isLoading: false,
-    addGuest: async (guest: Omit<Guest, 'id' | 'created_at'>) => {
-      console.log('Adding guest:', guest);
-    },
-    updateGuest: async (id: string, guest: Partial<Guest>) => {
-      console.log('Updating guest:', id, guest);
-    },
-    deleteGuest: async (id: string) => {
-      console.log('Deleting guest:', id);
-    },
-    addRoom: async (room: Omit<Room, 'id' | 'created_at'>) => {
-      console.log('Adding room:', room);
-    },
-    updateRoom: async (id: string, room: Partial<Room>) => {
-      console.log('Updating room:', id, room);
-    },
-    deleteRoom: async (id: string) => {
-      console.log('Deleting room:', id);
-    },
-    addReservation: async (reservation: any) => {
-      console.log('Adding reservation:', reservation);
-    },
-    updateReservation: async (id: string, reservation: any) => {
-      console.log('Updating reservation:', id, reservation);
-    },
-    deleteReservation: async (id: string) => {
-      console.log('Deleting reservation:', id);
-    },
+    rooms,
+    guests,
+    reservations,
+    addGuest,
+    updateGuest,
+    deleteGuest,
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    addReservation,
+    updateReservation,
+    deleteReservation,
   };
 };
