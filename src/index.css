@@ -99,17 +99,42 @@
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
-    /* Safari-specific optimizations */
+    /* Enhanced iOS Safari optimizations */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Prevent rubber band scrolling on iOS */
+    overscroll-behavior: none;
+    /* Enhanced touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  /* iPhone-specific optimizations */
+  .iphone-optimized * {
+    /* Prevent text selection issues */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Allow selection for inputs and content areas */
+  }
+
+  .iphone-optimized input,
+  .iphone-optimized textarea,
+  .iphone-optimized [contenteditable],
+  .iphone-optimized .selectable-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
   }
 }
 
-/* Safari-compatible scrollbar styles */
+/* Enhanced iPhone Safari scrollbar styles */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -117,79 +142,124 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  -webkit-border-radius: 3px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
 }
 
-/* Glass effect for cards - Safari compatible */
+/* Enhanced glass effect for iPhone */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* iPhone-specific enhancements */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
-/* Safari-specific fixes */
+/* iPhone Safari specific fixes */
 @supports (-webkit-appearance: none) {
-  /* Safari-specific styles */
+  /* Enhanced form element styling for iPhone */
   input[type="text"],
   input[type="email"],
   input[type="password"],
   input[type="number"],
   input[type="tel"],
   input[type="date"],
+  input[type="search"],
   textarea,
   select {
     -webkit-appearance: none;
     appearance: none;
+    border-radius: 8px;
+    /* Prevent zoom on focus - iPhone specific */
+    font-size: 16px;
+    /* Enhanced touch targets */
+    min-height: 44px;
   }
   
   button {
     -webkit-appearance: none;
     appearance: none;
+    /* Enhanced touch targets for iPhone */
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
-/* Prevent text selection issues in Safari */
-.no-select {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Safari touch optimizations */
+/* Enhanced iPhone touch optimizations */
 @media (hover: none) and (pointer: coarse) {
+  /* iPhone-specific button interactions */
   button, 
-  .cursor-pointer {
+  .cursor-pointer,
+  [role="button"] {
     cursor: default;
+    /* Enhanced active states for iPhone */
+  }
+  
+  button:active,
+  .cursor-pointer:active,
+  [role="button"]:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
+  }
+  
+  /* Enhanced card interactions for iPhone */
+  .card:active,
+  [role="card"]:active {
+    transform: scale(0.99);
+    transition: all 0.1s ease;
   }
 }
 
-/* iOS Safari specific optimizations for notifications */
+/* Enhanced iPhone Safari specific optimizations for fixed positioning */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari detection */
+  /* iPhone Safari detection and fixes */
   .fixed {
-    /* Ensure fixed positioning works correctly on iOS Safari */
+    /* Ensure fixed positioning works correctly on iPhone Safari */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    /* Prevent position shifting on scroll */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Enhanced header positioning for iPhone Safari */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* iPhone-specific optimizations */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 }
 
-/* Touch action optimization for better mobile performance */
+/* Enhanced touch action optimization for better iPhone performance */
 .touch-manipulation {
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* Enhanced for iPhone */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
-/* Line clamp utility for text truncation on mobile */
+/* Enhanced line clamp utility for iPhone text truncation */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -197,34 +267,136 @@
   overflow: hidden;
 }
 
-/* Smooth scrolling for notification panel on iOS */
-.-webkit-overflow-scrolling-touch {
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Enhanced smooth scrolling for iPhone */
+.smooth-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
-/* Improved button interactions on touch devices */
-@media (hover: none) and (pointer: coarse) {
-  button:active,
-  .button:active {
-    background-color: rgba(0, 0, 0, 0.1);
-    transform: scale(0.98);
-    transition: all 0.1s ease;
-  }
-}
-
-/* Notification panel mobile-specific styles */
+/* Enhanced iPhone-specific modal and panel styles */
 @media (max-width: 768px) {
-  .notification-panel {
-    max-height: calc(100vh - 100px);
+  .modal-panel,
+  .notification-panel,
+  .drawer-panel {
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* iPhone notch and home indicator support */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
-/* Prevent zoom on input focus in Safari iOS */
+/* Enhanced iPhone font size optimizations to prevent zoom */
 @media screen and (max-width: 768px) {
-  input, textarea, select {
-    font-size: 16px;
+  input, 
+  textarea, 
+  select,
+  button {
+    font-size: 16px !important;
+    /* Enhanced touch targets */
+    min-height: 44px;
   }
+  
+  /* Smaller elements get appropriate sizing */
+  .text-xs input,
+  .text-sm input,
+  .small-input {
+    font-size: 14px !important;
+    min-height: 40px;
+  }
+}
+
+/* Enhanced iPhone-specific utility classes */
+.iphone-safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.iphone-full-height {
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Enhanced iPhone keyboard handling */
+.keyboard-adjust {
+  /* Adjust for iPhone virtual keyboard */
+  padding-bottom: env(keyboard-inset-height, 0px);
+}
+
+/* Enhanced iPhone-specific animations */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-bounce-gentle {
+    animation: bounce-gentle 1s infinite;
+  }
+  
+  @keyframes bounce-gentle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+}
+
+/* Enhanced iPhone landscape optimizations */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+  .landscape-optimize {
+    /* Optimize for iPhone landscape mode */
+    padding: 8px;
+  }
+  
+  .landscape-hide {
+    display: none;
+  }
+}
+
+/* Enhanced iPhone-specific component optimizations */
+.iphone-button {
+  /* Optimal button sizing for iPhone */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  /* Enhanced touch feedback */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.iphone-input {
+  /* Optimal input styling for iPhone */
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--background));
+  /* Prevent zoom on focus */
+  transform: translateZ(0);
+}
+
+.iphone-card {
+  /* Enhanced card styling for iPhone */
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--card));
+  /* Enhanced touch feedback */
+  transition: transform 0.1s ease;
+}
+
+.iphone-card:active {
+  transform: scale(0.99);
 }

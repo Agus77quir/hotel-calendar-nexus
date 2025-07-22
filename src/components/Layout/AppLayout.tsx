@@ -4,16 +4,19 @@ import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, LogOut, User, Clock, Shield } from 'lucide-react';
+import { Menu, LogOut, User, Clock, Shield, Smartphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useIsIPhone, useIsIOS } from '@/hooks/use-mobile';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const isIPhone = useIsIPhone();
+  const isIOS = useIsIOS();
 
   // Update current date and time every second
   useEffect(() => {
@@ -23,6 +26,35 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // iPhone-specific optimizations
+  useEffect(() => {
+    if (isIPhone) {
+      // Optimize viewport for iPhone
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      }
+      
+      // Add iPhone-specific styles
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      
+      // Handle orientation changes
+      const handleOrientationChange = () => {
+        setTimeout(() => {
+          document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        }, 100);
+      };
+      
+      window.addEventListener('orientationchange', handleOrientationChange);
+      window.addEventListener('resize', handleOrientationChange);
+      
+      return () => {
+        window.removeEventListener('orientationchange', handleOrientationChange);
+        window.removeEventListener('resize', handleOrientationChange);
+      };
+    }
+  }, [isIPhone]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -48,7 +80,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getSystemStatus = () => {
-    return 'Sistema Operativo'; // Sistema siempre operativo
+    return isIPhone ? 'iPhone Optimizado' : 'Sistema Operativo';
   };
 
   if (!isAuthenticated) {
@@ -57,7 +89,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full relative flex-col">
+      <div className={`min-h-screen flex w-full relative flex-col ${isIPhone ? 'iphone-safe-area iphone-full-height' : ''}`}>
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10 z-0"
@@ -67,11 +99,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="flex flex-1 relative z-10">
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="h-14 sm:h-16 md:h-20 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-3 md:px-6 shadow-lg">
+            <header className={`${isIPhone ? 'h-16 sticky-header' : 'h-14 sm:h-16 md:h-20'} flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-3 md:px-6 shadow-lg touch-manipulation`}>
               <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
                 <SidebarTrigger>
-                  <Button variant="ghost" size="sm" className="p-1 sm:p-2 md:p-3 flex-shrink-0">
-                    <Menu className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-700 drop-shadow-md" />
+                  <Button variant="ghost" size="sm" className={`${isIPhone ? 'p-2 min-h-11 min-w-11' : 'p-1 sm:p-2 md:p-3'} flex-shrink-0 touch-manipulation`}>
+                    <Menu className={`${isIPhone ? 'h-6 w-6' : 'h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6'} text-blue-700 drop-shadow-md`} />
                   </Button>
                 </SidebarTrigger>
                 <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 overflow-hidden flex-1">
@@ -79,30 +111,36 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     <img 
                       src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
                       alt="NARDINI SRL" 
-                      className="h-6 sm:h-8 md:h-12 w-auto object-contain flex-shrink-0"
+                      className={`${isIPhone ? 'h-8' : 'h-6 sm:h-8 md:h-12'} w-auto object-contain flex-shrink-0`}
                     />
-                    <span className="font-bold text-xs sm:text-sm md:text-lg text-blue-600 truncate">
-                      <span className="hidden sm:inline">Gestión de Hoteles</span>
-                      <span className="sm:hidden">Hotel</span>
+                    <span className={`font-bold text-blue-600 truncate ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm md:text-lg'}`}>
+                      <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Gestión de Hoteles</span>
+                      <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Hotel</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2 md:gap-3 text-xs flex-wrap">
+                  <div className={`flex items-center gap-1 sm:gap-2 md:gap-3 ${isIPhone ? 'text-sm' : 'text-xs'} flex-wrap`}>
                     <div className="flex items-center gap-1 text-green-600 font-medium">
-                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="hidden sm:inline">{getSystemStatus()}</span>
-                      <span className="sm:hidden">Online</span>
+                      <div className={`${isIPhone ? 'w-2 h-2' : 'w-1.5 h-1.5 sm:w-2 sm:h-2'} bg-green-500 rounded-full animate-pulse`}></div>
+                      <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>{getSystemStatus()}</span>
+                      <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Online</span>
                     </div>
+                    {isIPhone && (
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <Smartphone className="h-3 w-3" />
+                        <span className="font-medium text-xs">iOS</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1 text-blue-600">
-                      <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                      <span className="font-medium text-xs truncate">{getRoleDisplayName(user?.role || '')}</span>
+                      <Shield className={`${isIPhone ? 'h-3 w-3' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'}`} />
+                      <span className={`font-medium ${isIPhone ? 'text-sm' : 'text-xs'} truncate`}>{getRoleDisplayName(user?.role || '')}</span>
                     </div>
-                    <div className="hidden sm:flex items-center gap-1 text-gray-600">
-                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                      <span className="font-mono text-xs">
-                        <span className="hidden md:inline">
-                          {format(currentDateTime, 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
+                    <div className={`${isIPhone ? 'flex' : 'hidden sm:flex'} items-center gap-1 text-gray-600`}>
+                      <Clock className={`${isIPhone ? 'h-3 w-3' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'}`} />
+                      <span className={`font-mono ${isIPhone ? 'text-sm' : 'text-xs'}`}>
+                        <span className={isIPhone ? 'inline' : 'hidden md:inline'}>
+                          {format(currentDateTime, isIPhone ? 'dd/MM - HH:mm' : 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
                         </span>
-                        <span className="md:hidden">
+                        <span className={isIPhone ? 'hidden' : 'md:hidden'}>
                           {format(currentDateTime, 'dd/MM - HH:mm', { locale: es })}
                         </span>
                       </span>
@@ -111,27 +149,31 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-                {/* User info - hidden on small screens, shown on large screens */}
-                <div className="hidden lg:flex items-center gap-2 bg-white/80 rounded-lg px-2 sm:px-3 py-1 sm:py-2">
-                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                  <div className="text-xs sm:text-sm">
+                {/* Enhanced User info for iPhone */}
+                <div className={`${isIPhone ? 'flex' : 'hidden lg:flex'} items-center gap-2 bg-white/80 rounded-lg px-2 sm:px-3 py-1 sm:py-2`}>
+                  <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'} text-blue-600`} />
+                  <div className={isIPhone ? 'text-sm' : 'text-xs sm:text-sm'}>
                     <div className="font-medium text-gray-900 truncate max-w-20">{user?.firstName}</div>
-                    <div className="text-xs text-gray-600 truncate">{getRoleDisplayName(user?.role || '')}</div>
+                    <div className={`${isIPhone ? 'text-sm' : 'text-xs'} text-gray-600 truncate`}>{getRoleDisplayName(user?.role || '')}</div>
                   </div>
                 </div>
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="bg-white/80 hover:bg-white flex items-center gap-1 text-xs px-2 sm:px-3 md:px-4 flex-shrink-0 h-7 sm:h-8 md:h-10"
+                  className={`bg-white/80 hover:bg-white flex items-center gap-1 flex-shrink-0 touch-manipulation ${
+                    isIPhone ? 'text-sm px-3 py-2 h-10 min-h-11' : 'text-xs px-2 sm:px-3 md:px-4 h-7 sm:h-8 md:h-10'
+                  }`}
                   title="Cerrar Sesión"
                   size="sm"
                 >
-                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Cerrar</span>
+                  <LogOut className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
+                  <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Cerrar</span>
                 </Button>
               </div>
             </header>
-            <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-y-auto bg-white/80 backdrop-blur-sm">
+            <main className={`flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm smooth-scroll ${
+              isIPhone ? 'p-3 keyboard-adjust' : 'p-2 sm:p-3 md:p-6'
+            }`}>
               {children}
             </main>
           </div>
