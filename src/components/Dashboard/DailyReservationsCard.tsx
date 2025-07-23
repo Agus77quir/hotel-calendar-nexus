@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -19,10 +18,12 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
   const [searchTerm, setSearchTerm] = useState('');
 
   const getReservationsForDate = (date: Date) => {
+    const selectedDateStr = format(date, 'yyyy-MM-dd');
+    
     return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
-      return date >= checkIn && date <= checkOut;
+      const checkIn = reservation.check_in;
+      const checkOut = reservation.check_out;
+      return checkIn <= selectedDateStr && checkOut >= selectedDateStr;
     });
   };
 
@@ -143,8 +144,8 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
             {displayedReservations.map((reservation) => {
               const guest = guests.find(g => g.id === reservation.guest_id);
               const room = rooms.find(r => r.id === reservation.room_id);
-              const isCheckIn = format(new Date(reservation.check_in), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
-              const isCheckOut = format(new Date(reservation.check_out), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+              const isCheckIn = reservation.check_in === format(selectedDate, 'yyyy-MM-dd');
+              const isCheckOut = reservation.check_out === format(selectedDate, 'yyyy-MM-dd');
               const guestColorClass = getGuestColor(reservation.guest_id);
 
               return (
