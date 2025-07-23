@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -17,14 +18,32 @@ interface DailyReservationsCardProps {
 export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDate }: DailyReservationsCardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Función para obtener reservas que están activas en una fecha específica
   const getReservationsForDate = (date: Date) => {
     const selectedDateStr = format(date, 'yyyy-MM-dd');
     
-    return reservations.filter(reservation => {
+    console.log('🔍 BUSCANDO RESERVAS PARA:', selectedDateStr);
+    console.log('📋 TOTAL RESERVAS DISPONIBLES:', reservations.length);
+    
+    const filtered = reservations.filter(reservation => {
       const checkIn = reservation.check_in;
       const checkOut = reservation.check_out;
-      return checkIn <= selectedDateStr && checkOut >= selectedDateStr;
+      const isActive = checkIn <= selectedDateStr && checkOut >= selectedDateStr;
+      
+      if (isActive) {
+        console.log('✅ RESERVA ACTIVA:', {
+          id: reservation.id,
+          checkIn,
+          checkOut,
+          selectedDate: selectedDateStr
+        });
+      }
+      
+      return isActive;
     });
+    
+    console.log('🎯 RESERVAS FILTRADAS PARA HOY:', filtered.length);
+    return filtered;
   };
 
   const selectedDateReservations = getReservationsForDate(selectedDate);
@@ -32,7 +51,10 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
   const displayedReservations = useMemo(() => {
     const baseReservations = searchTerm.trim() ? reservations : selectedDateReservations;
     
-    if (!searchTerm.trim()) return baseReservations;
+    if (!searchTerm.trim()) {
+      console.log('📅 MOSTRANDO RESERVAS DEL DÍA:', baseReservations.length);
+      return baseReservations;
+    }
     
     const searchLower = searchTerm.toLowerCase().trim();
     
@@ -107,6 +129,15 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
     }
   };
 
+  // Log de debugging
+  console.log('🏠 DAILY RESERVATIONS CARD - Renderizando:', {
+    selectedDate: format(selectedDate, 'yyyy-MM-dd'),
+    totalReservations: reservations.length,
+    selectedDateReservations: selectedDateReservations.length,
+    displayedReservations: displayedReservations.length,
+    searchTerm
+  });
+
   return (
     <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader>
@@ -128,6 +159,11 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
           {searchTerm && (
             <div className="text-sm text-muted-foreground mt-2">
               {displayedReservations.length} reservas encontradas
+            </div>
+          )}
+          {!searchTerm && (
+            <div className="text-sm text-muted-foreground mt-2">
+              {displayedReservations.length} reservas activas para hoy
             </div>
           )}
         </div>
