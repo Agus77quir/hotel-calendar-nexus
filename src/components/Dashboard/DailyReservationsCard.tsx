@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -19,11 +18,37 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
   const [searchTerm, setSearchTerm] = useState('');
 
   const getReservationsForDate = (date: Date) => {
-    return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
-      return date >= checkIn && date <= checkOut;
+    const selectedDateStr = format(date, 'yyyy-MM-dd');
+    
+    console.log('🔍 FILTRAR RESERVAS PARA:', selectedDateStr);
+    console.log('📋 TODAS LAS RESERVAS:', reservations.map(r => ({
+      id: r.id,
+      checkIn: r.check_in,
+      checkOut: r.check_out,
+      guest: guests.find(g => g.id === r.guest_id)?.first_name
+    })));
+
+    const filtered = reservations.filter(reservation => {
+      const checkInDate = reservation.check_in;
+      const checkOutDate = reservation.check_out;
+      
+      // Una reserva está activa en una fecha si:
+      // 1. La fecha está entre check-in y check-out (inclusive check-in, exclusivo check-out)
+      // 2. O es el día de check-in
+      // 3. O es el día de check-out
+      const isActive = selectedDateStr >= checkInDate && selectedDateStr < checkOutDate;
+      const isCheckInDay = selectedDateStr === checkInDate;
+      const isCheckOutDay = selectedDateStr === checkOutDate;
+      
+      const shouldShow = isActive || isCheckInDay || isCheckOutDay;
+      
+      console.log(`📅 RESERVA ${reservation.id}: ${checkInDate} - ${checkOutDate} | Fecha: ${selectedDateStr} | Mostrar: ${shouldShow}`);
+      
+      return shouldShow;
     });
+
+    console.log('✅ RESERVAS FILTRADAS:', filtered.length);
+    return filtered;
   };
 
   const selectedDateReservations = getReservationsForDate(selectedDate);
