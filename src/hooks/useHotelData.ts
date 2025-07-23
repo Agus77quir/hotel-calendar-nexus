@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,11 +29,10 @@ export const useHotelData = () => {
     setUserContext();
   }, [user?.email]);
 
-  // Consultas optimizadas
+  // Consultas con refetch automático más agresivo
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO HUÉSPEDES');
       const { data, error } = await supabase
         .from('guests')
         .select('*')
@@ -42,24 +40,21 @@ export const useHotelData = () => {
       
       if (error) throw error;
       
-      const processedData = (data || []).map(guest => ({
+      return (data || []).map(guest => ({
         ...guest,
         is_associated: Boolean(guest.is_associated),
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
-
-      console.log('✅ HUÉSPEDES CARGADOS:', processedData.length);
-      return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0, // Datos siempre se consideran obsoletos
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refrescar cada 5 segundos
   });
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO HABITACIONES');
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -67,7 +62,7 @@ export const useHotelData = () => {
       
       if (error) throw error;
       
-      const processedData = (data || []).map(room => ({
+      return (data || []).map(room => ({
         ...room,
         type: room.type as Room['type'],
         status: room.status as Room['status'],
@@ -75,19 +70,16 @@ export const useHotelData = () => {
         capacity: Number(room.capacity),
         amenities: room.amenities || []
       })) as Room[];
-
-      console.log('✅ HABITACIONES CARGADAS:', processedData.length);
-      return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
   });
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO RESERVACIONES');
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
@@ -102,7 +94,7 @@ export const useHotelData = () => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
 
-      console.log('✅ RESERVACIONES CARGADAS:', {
+      console.log('🔄 RESERVACIONES RECARGADAS:', {
         total: processedData.length,
         confirmed: processedData.filter(r => r.status === 'confirmed').length,
         checkedIn: processedData.filter(r => r.status === 'checked-in').length,
@@ -112,9 +104,10 @@ export const useHotelData = () => {
 
       return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 3000, // Más frecuente para reservas
   });
 
   // Estadísticas calculadas
@@ -135,7 +128,7 @@ export const useHotelData = () => {
     revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
   };
 
-  // Mutación optimizada para check-in/check-out
+  // Mutación optimizada para check-in/check-out con invalidación más agresiva
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
@@ -183,13 +176,19 @@ export const useHotelData = () => {
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('✅ RESERVA ACTUALIZADA - REFRESCANDO DATOS');
+      console.log('✅ RESERVA ACTUALIZADA - INVALIDANDO TODAS LAS QUERIES');
       
-      // Invalidar las queries específicas de manera ordenada
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      // Invalidar TODAS las queries para forzar recarga completa
+      await queryClient.invalidateQueries();
       
-      console.log('🔄 DATOS REFRESCADOS CORRECTAMENTE');
+      // Refrescar específicamente las queries críticas
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['reservations'] }),
+        queryClient.refetchQueries({ queryKey: ['rooms'] }),
+        queryClient.refetchQueries({ queryKey: ['guests'] }),
+      ]);
+      
+      console.log('🔄 TODAS LAS QUERIES REFRESCADAS');
     },
     onError: (error) => {
       console.error('❌ ERROR EN MUTACIÓN:', error);
@@ -297,8 +296,6 @@ export const useHotelData = () => {
 
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
-      
       const { data, error } = await supabase
         .from('reservations')
         .insert([{
@@ -309,14 +306,10 @@ export const useHotelData = () => {
         .single();
       
       if (error) throw error;
-      
-      console.log('✅ RESERVA CREADA:', data);
       return data;
     },
     onSuccess: async () => {
-      console.log('✅ NUEVA RESERVA CREADA - REFRESCANDO DATOS');
-      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      await queryClient.invalidateQueries();
     },
   });
 
