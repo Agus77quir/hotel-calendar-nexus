@@ -6,6 +6,8 @@ import { useHotelDataWithContext } from '@/hooks/useHotelDataWithContext';
 import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { Reservation, Guest } from '@/types/hotel';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -39,6 +41,12 @@ export const ReservationModal = ({
 
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [isNewGuest, setIsNewGuest] = useState(false);
+
+  const { guests, rooms, isLoading } = useHotelDataWithContext();
+  const { submitReservation, isSubmitting } = useReservationForm();
+
+  // Check if all required data is loaded
+  const isDataLoaded = !isLoading && guests && rooms && guests.length > 0 && rooms.length > 0;
 
   useEffect(() => {
     if (reservation) {
@@ -88,13 +96,10 @@ export const ReservationModal = ({
       guestId: '',
     }));
   };
-  
-  const { guests, rooms } = useHotelDataWithContext();
-  const { submitReservation, isSubmitting } = useReservationForm();
 
   useEffect(() => {
-    if (formData.guestId && !isNewGuest) {
-      const guest = guests?.find(g => g.id === formData.guestId);
+    if (formData.guestId && !isNewGuest && guests) {
+      const guest = guests.find(g => g.id === formData.guestId);
       setSelectedGuest(guest || null);
     } else {
       setSelectedGuest(null);
@@ -104,7 +109,12 @@ export const ReservationModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Transform formData to match the expected format
+    // Validate that all required data is loaded
+    if (!isDataLoaded) {
+      return;
+    }
+    
+    // Transform formData to match the expected format with correct property names
     const transformedFormData = {
       guest_id: formData.guestId,
       room_id: formData.roomId,
@@ -137,27 +147,50 @@ export const ReservationModal = ({
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <ReservationFormFields
-            formData={formData}
-            handleInputChange={handleInputChange}
-            guests={guests || []}
-            rooms={rooms || []}
-            selectedGuest={selectedGuest}
-            handleGuestSelect={handleGuestSelect}
-            isNewGuest={isNewGuest}
-            handleNewGuestToggle={handleNewGuestToggle}
-          />
+        {isLoading && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Cargando datos del sistema...
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar Reserva'}
-            </Button>
-          </div>
-        </form>
+        {!isLoading && !isDataLoaded && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              No se pueden crear reservas. Asegúrate de que haya huéspedes y habitaciones registrados en el sistema.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isDataLoaded && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <ReservationFormFields
+              formData={formData}
+              handleInputChange={handleInputChange}
+              guests={guests || []}
+              rooms={rooms || []}
+              selectedGuest={selectedGuest}
+              handleGuestSelect={handleGuestSelect}
+              isNewGuest={isNewGuest}
+              handleNewGuestToggle={handleNewGuestToggle}
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || !isDataLoaded}
+              >
+                {isSubmitting ? 'Guardando...' : 'Guardar Reserva'}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

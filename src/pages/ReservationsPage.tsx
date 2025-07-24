@@ -203,11 +203,7 @@ const ReservationsPage = () => {
       <ReservationModal
         isOpen={reservationModal.isOpen}
         onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveReservation}
-        rooms={rooms}
-        guests={guests}
         reservation={reservationModal.reservation}
-        mode={reservationModal.mode}
         preselectedGuestId={reservationModal.preselectedGuestId}
       />
     </div>
