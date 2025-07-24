@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,21 +12,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useHotelDataWithContext } from '@/hooks/useHotelDataWithContext';
+import { useHotelData } from '@/hooks/useHotelData';
 import { GuestModal } from '@/components/Guests/GuestModal';
 import { Plus, Search, Edit, Trash2, Users, UserCheck, UserX, Percent } from 'lucide-react';
 import { Guest } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
 const GuestsPage = () => {
-  const { guests, isLoading } = useHotelDataWithContext();
+  const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{
     isOpen: boolean;
+    mode: 'create' | 'edit';
     guest?: Guest;
   }>({
     isOpen: false,
+    mode: 'create',
   });
 
   const filteredGuests = guests.filter(guest => {
@@ -43,24 +46,46 @@ const GuestsPage = () => {
   const associatedGuests = guests.filter(guest => guest.is_associated).length;
   const regularGuests = guests.length - associatedGuests;
 
-  const { deleteGuest } = useHotelDataWithContext();
-
-  const handleDeleteGuest = async (id: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
-      try {
-        await deleteGuest(id);
+  const handleSaveGuest = async (guestData: any) => {
+    try {
+      console.log('GuestsPage: Starting guest save operation', { mode: guestModal.mode, data: guestData });
+      
+      if (guestModal.mode === 'create') {
+        console.log('GuestsPage: Creating new guest');
+        const newGuest = await addGuest(guestData);
+        console.log('GuestsPage: Guest created successfully', newGuest);
+        
         toast({
-          title: "Huésped eliminado",
-          description: "El huésped ha sido eliminado exitosamente",
+          title: "Huésped creado",
+          description: `${guestData.first_name} ${guestData.last_name} ha sido creado exitosamente.`,
         });
-      } catch (error) {
-        console.error('Error deleting guest:', error);
+      } else if (guestModal.guest) {
+        console.log('GuestsPage: Updating existing guest', guestModal.guest.id);
+        const updatedGuest = await updateGuest({ id: guestModal.guest.id, ...guestData });
+        console.log('GuestsPage: Guest updated successfully', updatedGuest);
+        
         toast({
-          title: "Error",
-          description: "No se pudo eliminar el huésped",
-          variant: "destructive",
+          title: "Huésped actualizado",
+          description: `${guestData.first_name} ${guestData.last_name} ha sido actualizado exitosamente.`,
         });
       }
+      
+      setGuestModal({ isOpen: false, mode: 'create' });
+    } catch (error) {
+      console.error('GuestsPage: Error in guest save operation:', error);
+      
+      toast({
+        title: "Error",
+        description: `No se pudo ${guestModal.mode === 'create' ? 'crear' : 'actualizar'} el huésped. Por favor intenta nuevamente.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteGuest = (id: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
+      console.log('GuestsPage: Deleting guest', id);
+      deleteGuest(id);
     }
   };
 
@@ -81,7 +106,7 @@ const GuestsPage = () => {
           <p className="text-muted-foreground">Gestión de huéspedes del hotel</p>
         </div>
         <Button 
-          onClick={() => setGuestModal({ isOpen: true })}
+          onClick={() => setGuestModal({ isOpen: true, mode: 'create' })}
           className="w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -191,6 +216,7 @@ const GuestsPage = () => {
                             size="sm"
                             onClick={() => setGuestModal({
                               isOpen: true,
+                              mode: 'edit',
                               guest
                             })}
                             title="Editar huésped"
@@ -219,8 +245,10 @@ const GuestsPage = () => {
 
       <GuestModal
         isOpen={guestModal.isOpen}
-        onClose={() => setGuestModal({ isOpen: false })}
+        onClose={() => setGuestModal({ isOpen: false, mode: 'create' })}
+        onSave={handleSaveGuest}
         guest={guestModal.guest}
+        mode={guestModal.mode}
       />
     </div>
   );

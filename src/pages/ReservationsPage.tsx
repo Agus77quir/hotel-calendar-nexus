@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -204,7 +203,11 @@ const ReservationsPage = () => {
       <ReservationModal
         isOpen={reservationModal.isOpen}
         onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+        onSave={handleSaveReservation}
+        rooms={rooms}
+        guests={guests}
         reservation={reservationModal.reservation}
+        mode={reservationModal.mode}
         preselectedGuestId={reservationModal.preselectedGuestId}
       />
     </div>

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -309,6 +310,10 @@ const Index = () => {
       <ReservationModal
         isOpen={reservationModal.isOpen}
         onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+        onSave={handleSaveReservation}
+        rooms={rooms}
+        guests={guests}
+        mode={reservationModal.mode}
       />
     </div>
   );
