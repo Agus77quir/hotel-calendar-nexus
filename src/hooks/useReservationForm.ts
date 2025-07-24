@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -152,40 +151,47 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes
+  // Handle date changes with enhanced validation
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    if (field === 'check_in' && value < today) {
-      setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
-      return;
-    }
-
     setFormData(prev => {
       const newFormData = {
         ...prev,
         [field]: value,
       };
       
+      // Auto-suggest check-out when check-in changes and we're creating a new reservation
       if (field === 'check_in' && mode === 'create' && !prev.check_out) {
         newFormData.check_out = getDefaultCheckOut(value);
       }
       
-      if (newFormData.check_in && newFormData.check_out && newFormData.room_id) {
-        const hasOverlap = hasDateOverlap(
-          newFormData.room_id, 
-          newFormData.check_in, 
-          newFormData.check_out, 
-          reservations,
-          reservation?.id
-        );
-        if (hasOverlap) {
-          newFormData.room_id = '';
+      // Validate dates when both are present
+      if (newFormData.check_in && newFormData.check_out) {
+        const validation = validateReservationDates(newFormData.check_in, newFormData.check_out, today);
+        if (!validation.isValid) {
+          setAvailabilityError(validation.error || '');
+          return newFormData;
+        }
+        
+        // Check room availability if room is selected
+        if (newFormData.room_id) {
+          const hasOverlap = hasDateOverlap(
+            newFormData.room_id, 
+            newFormData.check_in, 
+            newFormData.check_out, 
+            reservations,
+            reservation?.id
+          );
+          if (hasOverlap) {
+            newFormData.room_id = '';
+            setAvailabilityError('Habitación ya reservada para estas fechas, seleccione otra');
+            return newFormData;
+          }
         }
       }
       
+      setAvailabilityError('');
       return newFormData;
     });
-    
-    setAvailabilityError('');
   };
 
   // Simple form change handler - NO MORE AUTOMATIC CHANGES
@@ -222,7 +228,12 @@ export const useReservationForm = ({
   };
 
   const validateDates = () => {
-    return validateReservationDates(formData.check_in, formData.check_out, today);
+    const validation = validateReservationDates(formData.check_in, formData.check_out, today);
+    if (!validation.isValid) {
+      setAvailabilityError(validation.error || '');
+      return false;
+    }
+    return true;
   };
 
   return {

@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -103,11 +102,6 @@ export const ReservationModal = ({
     e.preventDefault();
     
     if (!validateDates()) {
-      if (formData.check_in < today) {
-        setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
-      } else {
-        setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
-      }
       return;
     }
 

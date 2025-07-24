@@ -36,14 +36,21 @@ export const hasDateOverlap = (
 };
 
 export const validateReservationDates = (checkIn: string, checkOut: string, today: string) => {
-  if (!checkIn || !checkOut) return true;
+  if (!checkIn || !checkOut) return { isValid: false, error: 'Las fechas de entrada y salida son requeridas' };
   
   const checkInDate = new Date(checkIn);
   const checkOutDate = new Date(checkOut);
   const todayDate = new Date(today);
   
   // Validate that check-in is not before today
-  if (checkInDate < todayDate) return false;
+  if (checkInDate < todayDate) {
+    return { isValid: false, error: 'La fecha de entrada no puede ser anterior a hoy' };
+  }
   
-  return checkOutDate > checkInDate;
+  // Validate that check-out is after check-in
+  if (checkOutDate <= checkInDate) {
+    return { isValid: false, error: 'La fecha de salida debe ser posterior a la fecha de entrada' };
+  }
+  
+  return { isValid: true, error: null };
 };
