@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
 
@@ -83,8 +83,8 @@ export const useReservationForm = ({
   // Get selected guest details
   const selectedGuest = guests.find(g => g.id === formData.guest_id);
 
-  // Auto-suggest best available room when dates change
-  const getBestAvailableRoom = () => {
+  // Calculate available rooms using useMemo to prevent recalculation loops
+  const availableRooms = useMemo(() => {
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
@@ -109,19 +109,17 @@ export const useReservationForm = ({
       }
       return a.price - b.price;
     });
-  };
-
-  const availableRooms = getBestAvailableRoom();
+  }, [rooms, formData.check_in, formData.check_out, reservations, reservation?.id]);
 
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
     if (mode === 'create' && !formData.room_id && formData.check_in && formData.check_out && availableRooms.length > 0) {
       const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
       if (suitableRoom) {
-        handleRoomChange(suitableRoom.id);
+        setFormData(prev => ({ ...prev, room_id: suitableRoom.id }));
       }
     }
-  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
+  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms]);
 
   // Handle room change and adjust guest count if necessary
   const handleRoomChange = (roomId: string) => {
