@@ -1,204 +1,244 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useHotelDataWithContext } from '@/hooks/useHotelDataWithContext';
 import { Room } from '@/types/hotel';
+import { toast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 
 interface RoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (room: any) => void;
   room?: Room;
-  mode: 'create' | 'edit';
 }
 
-export const RoomModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  room,
-  mode
-}: RoomModalProps) => {
+export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
   const [formData, setFormData] = useState({
     number: '',
-    type: 'matrimonial' as Room['type'],
-    price: '',
-    capacity: '',
-    status: 'available' as Room['status'],
-    amenities: [] as string[],
+    type: 'single',
+    capacity: 1,
+    price: 0,
+    status: 'available',
+    amenities: [],
   });
-  const [newAmenity, setNewAmenity] = useState('');
 
   useEffect(() => {
-    if (room && mode === 'edit') {
+    if (room) {
       setFormData({
         number: room.number,
         type: room.type,
-        price: room.price.toString(),
-        capacity: room.capacity.toString(),
+        capacity: room.capacity,
+        price: room.price,
         status: room.status,
-        amenities: room.amenities || [],
+        amenities: room.amenities,
       });
     } else {
+      // Reset form when creating a new room
       setFormData({
         number: '',
-        type: 'matrimonial',
-        price: '',
-        capacity: '',
+        type: 'single',
+        capacity: 1,
+        price: 0,
         status: 'available',
         amenities: [],
       });
     }
-  }, [room, mode, isOpen]);
+  }, [room]);
+  
+  const { createRoom, updateRoom } = useHotelDataWithContext();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setFormData(prevData => {
+      let newAmenities = [...prevData.amenities];
+      if (checked) {
+        newAmenities.push(value);
+      } else {
+        newAmenities = newAmenities.filter(amenity => amenity !== value);
+      }
+      return {
+        ...prevData,
+        amenities: newAmenities,
+      };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      price: parseFloat(formData.price),
-      capacity: parseInt(formData.capacity),
-    });
-    onClose();
-  };
+    
+    try {
+      const roomData = {
+        number: formData.number,
+        type: formData.type,
+        capacity: parseInt(formData.capacity),
+        price: parseFloat(formData.price),
+        status: formData.status,
+        amenities: formData.amenities,
+      };
 
-  const addAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData({
-        ...formData,
-        amenities: [...formData.amenities, newAmenity.trim()]
+      if (room) {
+        await updateRoom(room.id, roomData);
+        toast({
+          title: "Habitación actualizada",
+          description: "La información de la habitación ha sido actualizada exitosamente",
+        });
+      } else {
+        await createRoom(roomData);
+        toast({
+          title: "Habitación creada",
+          description: "La habitación ha sido creada exitosamente",
+        });
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving room:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar la habitación",
+        variant: "destructive",
       });
-      setNewAmenity('');
-    }
-  };
-
-  const removeAmenity = (amenity: string) => {
-    setFormData({
-      ...formData,
-      amenities: formData.amenities.filter(a => a !== amenity)
-    });
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addAmenity();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? 'Nueva Habitación' : 'Editar Habitación'}
-          </DialogTitle>
+          <DialogTitle>{room ? 'Editar Habitación' : 'Nueva Habitación'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="number">Número de Habitación</Label>
-            <Input
-              id="number"
-              value={formData.number}
-              onChange={(e) => setFormData({...formData, number: e.target.value})}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="type">Tipo</Label>
-            <Select value={formData.type} onValueChange={(value: Room['type']) => setFormData({...formData, type: value})}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="matrimonial">Matrimonial</SelectItem>
-                <SelectItem value="triple-individual">Triple Individual</SelectItem>
-                <SelectItem value="triple-matrimonial">Triple Matrimonial</SelectItem>
-                <SelectItem value="doble-individual">Doble Individual</SelectItem>
-                <SelectItem value="suite-presidencial-doble">Suite Presidencial Doble</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Precio por noche</Label>
+              <Label htmlFor="number">Número de Habitación</Label>
               <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                type="text"
+                id="number"
+                name="number"
+                value={formData.number}
+                onChange={handleInputChange}
                 required
               />
             </div>
             <div>
+              <Label htmlFor="type">Tipo de Habitación</Label>
+              <Select value={formData.type} onValueChange={(value) => setFormData(prevData => ({ ...prevData, type: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Individual</SelectItem>
+                  <SelectItem value="double">Doble</SelectItem>
+                  <SelectItem value="suite">Suite</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Label htmlFor="capacity">Capacidad</Label>
               <Input
-                id="capacity"
                 type="number"
+                id="capacity"
+                name="capacity"
                 value={formData.capacity}
-                onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                onChange={handleInputChange}
                 required
+                min="1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="price">Precio por Noche</Label>
+              <Input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                required
+                min="0"
+                step="0.01"
               />
             </div>
           </div>
 
           <div>
             <Label htmlFor="status">Estado</Label>
-            <Select value={formData.status} onValueChange={(value: Room['status']) => setFormData({...formData, status: value})}>
+            <Select value={formData.status} onValueChange={(value) => setFormData(prevData => ({ ...prevData, status: value }))}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecciona un estado" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="available">Disponible</SelectItem>
                 <SelectItem value="occupied">Ocupada</SelectItem>
                 <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                <SelectItem value="cleaning">Limpieza</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="amenities">Comodidades</Label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newAmenity}
-                onChange={(e) => setNewAmenity(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Agregar comodidad..."
-              />
-              <Button type="button" onClick={addAmenity} variant="outline">
-                Agregar
-              </Button>
-            </div>
+            <Label>Servicios</Label>
             <div className="flex flex-wrap gap-2">
-              {formData.amenities.map((amenity, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {amenity}
-                  <X 
-                    className="h-3 w-3 cursor-pointer" 
-                    onClick={() => removeAmenity(amenity)}
-                  />
-                </Badge>
-              ))}
+              <div className="space-x-2">
+                <Checkbox
+                  id="wifi"
+                  value="wifi"
+                  checked={formData.amenities.includes('wifi')}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'wifi', checked } } as any)}
+                />
+                <Label htmlFor="wifi">WiFi</Label>
+              </div>
+              <div className="space-x-2">
+                <Checkbox
+                  id="tv"
+                  value="tv"
+                  checked={formData.amenities.includes('tv')}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'tv', checked } } as any)}
+                />
+                <Label htmlFor="tv">TV</Label>
+              </div>
+              <div className="space-x-2">
+                <Checkbox
+                  id="ac"
+                  value="ac"
+                  checked={formData.amenities.includes('ac')}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'ac', checked } } as any)}
+                />
+                <Label htmlFor="ac">Aire Acondicionado</Label>
+              </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit">
-              {mode === 'create' ? 'Crear Habitación' : 'Actualizar Habitación'}
+              {room ? 'Guardar Cambios' : 'Crear Habitación'}
             </Button>
           </div>
         </form>
+        <Button
+          variant="ghost"
+          className="absolute right-4 top-4 md:hidden"
+          onClick={onClose}
+        >
+          <X className="h-6 w-6" />
+          <span className="sr-only">Cerrar</span>
+        </Button>
       </DialogContent>
     </Dialog>
   );

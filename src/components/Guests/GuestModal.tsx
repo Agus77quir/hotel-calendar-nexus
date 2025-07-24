@@ -1,250 +1,223 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useHotelDataWithContext } from '@/hooks/useHotelDataWithContext';
 import { Guest } from '@/types/hotel';
+import { toast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 
 interface GuestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (guest: any) => void;
   guest?: Guest;
-  mode: 'create' | 'edit';
 }
 
-export const GuestModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  guest,
-  mode
-}: GuestModalProps) => {
+export const GuestModal = ({ isOpen, onClose, guest }: GuestModalProps) => {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     document: '',
     nationality: '',
+    isAssociated: false,
+    discountPercentage: 0,
   });
 
-  const [emailError, setEmailError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
-    if (guest && mode === 'edit') {
+    if (guest) {
       setFormData({
-        first_name: guest.first_name || '',
-        last_name: guest.last_name || '',
-        email: guest.email || '',
-        phone: guest.phone || '',
-        document: guest.document || '',
-        nationality: guest.nationality || '',
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        email: guest.email,
+        phone: guest.phone,
+        document: guest.document,
+        nationality: guest.nationality,
+        isAssociated: guest.isAssociated || false,
+        discountPercentage: guest.discountPercentage || 0,
       });
     } else {
+      // Reset form when creating a new guest
       setFormData({
-        first_name: '',
-        last_name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         phone: '',
         document: '',
         nationality: '',
+        isAssociated: false,
+        discountPercentage: 0,
       });
     }
-    setEmailError('');
-  }, [guest, mode, isOpen]);
+  }, [guest]);
+  
+  const { createGuest, updateGuest } = useHotelDataWithContext();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const email = e.target.value;
-    setFormData({...formData, email});
-    
-    if (email && !validateEmail(email)) {
-      setEmailError('Por favor ingrese un email válido');
-    } else {
-      setEmailError('');
-    }
-  };
-
-  const validateForm = () => {
-    if (!formData.first_name.trim()) {
-      console.error('Validation error: Nombre requerido');
-      return false;
-    }
-    if (!formData.last_name.trim()) {
-      console.error('Validation error: Apellido requerido');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      console.error('Validation error: Email requerido');
-      return false;
-    }
-    if (!validateEmail(formData.email)) {
-      setEmailError('Por favor ingrese un email válido');
-      console.error('Validation error: Email inválido');
-      return false;
-    }
-    if (!formData.phone.trim()) {
-      console.error('Validation error: Teléfono requerido');
-      return false;
-    }
-    if (!formData.document.trim()) {
-      console.error('Validation error: Documento requerido');
-      return false;
-    }
-    if (!formData.nationality.trim()) {
-      console.error('Validation error: Nacionalidad requerida');
-      return false;
-    }
-    console.log('Form validation passed');
-    return true;
+  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prevData => ({
+      ...prevData,
+      isAssociated: e.target.checked,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting guest creation/update process');
-    
-    if (!validateForm()) {
-      console.error('Form validation failed');
-      return;
-    }
-    
-    setIsSubmitting(true);
     
     try {
-      const guestPayload = {
-        ...formData,
-        is_associated: false,
-        discount_percentage: 0
+      const guestData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        document: formData.document,
+        nationality: formData.nationality,
+        isAssociated: formData.isAssociated,
+        discountPercentage: formData.discountPercentage,
       };
+
+      if (guest) {
+        await updateGuest(guest.id, guestData);
+        toast({
+          title: "Huésped actualizado",
+          description: "La información del huésped ha sido actualizada exitosamente",
+        });
+      } else {
+        await createGuest(guestData);
+        toast({
+          title: "Huésped creado",
+          description: "El huésped ha sido creado exitosamente",
+        });
+      }
       
-      console.log('Attempting to save guest with data:', guestPayload);
-      await onSave(guestPayload);
-      console.log('Guest saved successfully');
       onClose();
     } catch (error) {
       console.error('Error saving guest:', error);
-      // Let the parent component handle the error display
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar el huésped",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? 'Nuevo Huésped' : 'Editar Huésped'}
-          </DialogTitle>
+          <DialogTitle>{guest ? 'Editar Huésped' : 'Crear Nuevo Huésped'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="first_name">Nombre *</Label>
-              <Input
-                id="first_name"
-                value={formData.first_name}
-                onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+              <Label htmlFor="firstName">Nombre</Label>
+              <Input 
+                type="text" 
+                id="firstName" 
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
                 required
-                disabled={isSubmitting}
               />
             </div>
             <div>
-              <Label htmlFor="last_name">Apellido *</Label>
-              <Input
-                id="last_name"
-                value={formData.last_name}
-                onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+              <Label htmlFor="lastName">Apellido</Label>
+              <Input 
+                type="text" 
+                id="lastName" 
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
                 required
-                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                type="email" 
+                id="email" 
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input 
+                type="tel" 
+                id="phone" 
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={handleEmailChange}
-              required
-              disabled={isSubmitting}
-              className={emailError ? 'border-red-500' : ''}
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Teléfono *</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="document">Documento *</Label>
-            <Input
-              id="document"
+            <Label htmlFor="document">Documento</Label>
+            <Input 
+              type="text" 
+              id="document" 
+              name="document"
               value={formData.document}
-              onChange={(e) => setFormData({...formData, document: e.target.value})}
+              onChange={handleInputChange}
               required
-              disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <Label htmlFor="nationality">Nacionalidad *</Label>
-            <Input
-              id="nationality"
+            <Label htmlFor="nationality">Nacionalidad</Label>
+            <Input 
+              type="text" 
+              id="nationality" 
+              name="nationality"
               value={formData.nationality}
-              onChange={(e) => setFormData({...formData, nationality: e.target.value})}
+              onChange={handleInputChange}
               required
-              disabled={isSubmitting}
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="isAssociated">Asociado</Label>
+            <Switch
+              id="isAssociated"
+              checked={formData.isAssociated}
+              onCheckedChange={handleSwitchChange}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!!emailError || isSubmitting}
-            >
-              {isSubmitting 
-                ? 'Guardando...' 
-                : mode === 'create' 
-                  ? 'Crear Huésped' 
-                  : 'Actualizar Huésped'
-              }
+            <Button type="submit">
+              {guest ? 'Guardar Cambios' : 'Crear Huésped'}
             </Button>
           </div>
         </form>
+        <Button
+          variant="ghost"
+          className="absolute right-4 top-4 md:hidden"
+          onClick={onClose}
+        >
+          <X className="h-6 w-6" />
+        </Button>
       </DialogContent>
     </Dialog>
   );
