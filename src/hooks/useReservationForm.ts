@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
 
@@ -83,8 +83,8 @@ export const useReservationForm = ({
   // Get selected guest details
   const selectedGuest = guests.find(g => g.id === formData.guest_id);
 
-  // Calculate available rooms using useMemo to prevent recalculation loops
-  const availableRooms = useMemo(() => {
+  // Auto-suggest best available room when dates change
+  const getBestAvailableRoom = () => {
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
@@ -109,17 +109,19 @@ export const useReservationForm = ({
       }
       return a.price - b.price;
     });
-  }, [rooms, formData.check_in, formData.check_out, reservations, reservation?.id]);
+  };
+
+  const availableRooms = getBestAvailableRoom();
 
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
     if (mode === 'create' && !formData.room_id && formData.check_in && formData.check_out && availableRooms.length > 0) {
       const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
       if (suitableRoom) {
-        setFormData(prev => ({ ...prev, room_id: suitableRoom.id }));
+        handleRoomChange(suitableRoom.id);
       }
     }
-  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms]);
+  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
   // Handle room change and adjust guest count if necessary
   const handleRoomChange = (roomId: string) => {
@@ -150,10 +152,9 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes - SIMPLIFIED to prevent re-renders
+  // Handle date changes with enhanced validation - FIXED to prevent infinite re-renders
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    console.log(`Date change: ${field} = ${value}`);
-    
+    // First, update the form data
     setFormData(prev => {
       const newFormData = {
         ...prev,
@@ -167,9 +168,45 @@ export const useReservationForm = ({
       
       return newFormData;
     });
-    
-    // Clear availability error when dates change
-    setAvailabilityError('');
+
+    // Then, validate and handle errors in a separate effect-like pattern
+    setTimeout(() => {
+      const updatedFormData = {
+        ...formData,
+        [field]: value,
+      };
+      
+      if (field === 'check_in' && mode === 'create' && !formData.check_out) {
+        updatedFormData.check_out = getDefaultCheckOut(value);
+      }
+      
+      // Validate dates when both are present
+      if (updatedFormData.check_in && updatedFormData.check_out) {
+        const validation = validateReservationDates(updatedFormData.check_in, updatedFormData.check_out, today);
+        if (!validation.isValid) {
+          setAvailabilityError(validation.error || '');
+          return;
+        }
+        
+        // Check room availability if room is selected
+        if (updatedFormData.room_id) {
+          const hasOverlap = hasDateOverlap(
+            updatedFormData.room_id, 
+            updatedFormData.check_in, 
+            updatedFormData.check_out, 
+            reservations,
+            reservation?.id
+          );
+          if (hasOverlap) {
+            setFormData(prev => ({ ...prev, room_id: '' }));
+            setAvailabilityError('Habitación ya reservada para estas fechas, seleccione otra');
+            return;
+          }
+        }
+      }
+      
+      setAvailabilityError('');
+    }, 0);
   };
 
   // Simple form change handler - NO MORE AUTOMATIC CHANGES
