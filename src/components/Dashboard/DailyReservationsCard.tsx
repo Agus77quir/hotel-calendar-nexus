@@ -25,25 +25,24 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
       id: r.id,
       checkIn: r.check_in,
       checkOut: r.check_out,
-      guest: guests.find(g => g.id === r.guest_id)?.first_name,
-      status: r.status
+      guest: guests.find(g => g.id === r.guest_id)?.first_name
     })));
 
     const filtered = reservations.filter(reservation => {
       const checkInDate = reservation.check_in;
       const checkOutDate = reservation.check_out;
       
-      // Una reserva se muestra si:
-      // 1. Es el día de check-in
+      // Una reserva está activa en una fecha si:
+      // 1. La fecha está entre check-in y check-out (inclusive check-in, exclusivo check-out)
+      // 2. O es el día de check-in
+      // 3. O es el día de check-out
+      const isActive = selectedDateStr >= checkInDate && selectedDateStr < checkOutDate;
       const isCheckInDay = selectedDateStr === checkInDate;
-      // 2. Es el día de check-out
       const isCheckOutDay = selectedDateStr === checkOutDate;
-      // 3. La fecha está entre check-in y check-out (para huéspedes ya registrados)
-      const isStayingToday = selectedDateStr > checkInDate && selectedDateStr < checkOutDate;
       
-      const shouldShow = isCheckInDay || isCheckOutDay || isStayingToday;
+      const shouldShow = isActive || isCheckInDay || isCheckOutDay;
       
-      console.log(`📅 RESERVA ${reservation.id}: ${checkInDate} - ${checkOutDate} | Fecha: ${selectedDateStr} | Check-in: ${isCheckInDay} | Check-out: ${isCheckOutDay} | Hospedado: ${isStayingToday} | Mostrar: ${shouldShow}`);
+      console.log(`📅 RESERVA ${reservation.id}: ${checkInDate} - ${checkOutDate} | Fecha: ${selectedDateStr} | Mostrar: ${shouldShow}`);
       
       return shouldShow;
     });
