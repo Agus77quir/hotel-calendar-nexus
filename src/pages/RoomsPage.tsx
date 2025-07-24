@@ -4,22 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Search, Edit, Trash2, Bed, Users, Wrench } from 'lucide-react';
-import { useHotelData } from '@/hooks/useHotelData';
+import { useHotelDataWithContext } from '@/hooks/useHotelDataWithContext';
 import { RoomModal } from '@/components/Rooms/RoomModal';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { Room } from '@/types/hotel';
 import { Badge } from '@/components/ui/badge';
 
 const RoomsPage = () => {
-  const { rooms, addRoom, updateRoom, deleteRoom, isLoading } = useHotelData();
+  const { rooms, isLoading } = useHotelDataWithContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [roomModal, setRoomModal] = useState<{
     isOpen: boolean;
-    mode: 'create' | 'edit';
     room?: Room;
   }>({
     isOpen: false,
-    mode: 'create',
   });
 
   const filteredRooms = rooms.filter(room => {
@@ -30,23 +28,25 @@ const RoomsPage = () => {
     );
   });
 
-  const handleSaveRoom = (roomData: any) => {
-    if (roomModal.mode === 'create') {
-      addRoom(roomData);
-    } else if (roomModal.mode === 'edit' && roomModal.room) {
-      updateRoom({ id: roomModal.room.id, ...roomData });
-    }
-  };
+  const { deleteRoom, updateRoom } = useHotelDataWithContext();
 
-  const handleDeleteRoom = (id: string) => {
+  const handleDeleteRoom = async (id: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
-      deleteRoom(id);
+      try {
+        await deleteRoom(id);
+      } catch (error) {
+        console.error('Error deleting room:', error);
+      }
     }
   };
 
-  const handleMaintenanceToggle = (room: Room, isChecked: boolean) => {
+  const handleMaintenanceToggle = async (room: Room, isChecked: boolean) => {
     const newStatus = isChecked ? 'maintenance' : 'available';
-    updateRoom({ id: room.id, status: newStatus });
+    try {
+      await updateRoom(room.id, { status: newStatus });
+    } catch (error) {
+      console.error('Error updating room status:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -116,7 +116,7 @@ const RoomsPage = () => {
         <div className="flex gap-2">
           <BackToHomeButton />
           <Button
-            onClick={() => setRoomModal({ isOpen: true, mode: 'create' })}
+            onClick={() => setRoomModal({ isOpen: true })}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Habitación
@@ -209,7 +209,6 @@ const RoomsPage = () => {
                         size="icon"
                         onClick={() => setRoomModal({
                           isOpen: true,
-                          mode: 'edit',
                           room
                         })}
                       >
@@ -233,10 +232,8 @@ const RoomsPage = () => {
 
       <RoomModal
         isOpen={roomModal.isOpen}
-        onClose={() => setRoomModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveRoom}
+        onClose={() => setRoomModal({ isOpen: false })}
         room={roomModal.room}
-        mode={roomModal.mode}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,14 +31,14 @@ export const GuestModal = ({ isOpen, onClose, guest }: GuestModalProps) => {
   useEffect(() => {
     if (guest) {
       setFormData({
-        firstName: guest.firstName,
-        lastName: guest.lastName,
+        firstName: guest.first_name,
+        lastName: guest.last_name,
         email: guest.email,
         phone: guest.phone,
         document: guest.document,
         nationality: guest.nationality,
-        isAssociated: guest.isAssociated || false,
-        discountPercentage: guest.discountPercentage || 0,
+        isAssociated: guest.is_associated || false,
+        discountPercentage: guest.discount_percentage || 0,
       });
     } else {
       // Reset form when creating a new guest
@@ -64,10 +65,10 @@ export const GuestModal = ({ isOpen, onClose, guest }: GuestModalProps) => {
     }));
   };
 
-  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSwitchChange = (checked: boolean) => {
     setFormData(prevData => ({
       ...prevData,
-      isAssociated: e.target.checked,
+      isAssociated: checked,
     }));
   };
 
@@ -76,14 +77,14 @@ export const GuestModal = ({ isOpen, onClose, guest }: GuestModalProps) => {
     
     try {
       const guestData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         document: formData.document,
         nationality: formData.nationality,
-        isAssociated: formData.isAssociated,
-        discountPercentage: formData.discountPercentage,
+        is_associated: formData.isAssociated,
+        discount_percentage: formData.discountPercentage,
       };
 
       if (guest) {
