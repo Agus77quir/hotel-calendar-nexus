@@ -1,51 +1,46 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarDays, Users, MapPin, User, AlertCircle, Bed, DollarSign, CalendarIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CalendarIcon, User, Home, Users, CreditCard, FileText, AlertTriangle, Percent } from 'lucide-react';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { DiscountSection } from './DiscountSection';
-import { GuestSearchInput } from './GuestSearchInput';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useIsIOS } from '@/hooks/use-mobile';
+import { useState } from 'react';
 
 interface ReservationFormFieldsProps {
-  formData: {
-    guest_id: string;
-    room_id: string;
-    check_in: string;
-    check_out: string;
-    guests_count: number;
-    status: string;
-    special_requests: string;
-    discount_percentage: number;
-  };
-  availableRooms: Room[];
+  formData: any;
   guests: Guest[];
   reservations: Reservation[];
+  availableRooms: Room[];
   selectedRoom: Room | undefined;
   selectedGuest: Guest | undefined;
   maxCapacity: number;
   availabilityError: string;
   today: string;
-  totals: { subtotal: number; discount: number; total: number };
+  totals: {
+    subtotal: number;
+    discount: number;
+    total: number;
+  };
   onFormChange: (field: string, value: any) => void;
-  onRoomChange: (roomId: string) => void;
   onDateChange: (field: 'check_in' | 'check_out', value: string) => void;
+  onRoomChange: (roomId: string) => void;
 }
 
 export const ReservationFormFields = ({
   formData,
-  availableRooms,
   guests,
   reservations,
+  availableRooms,
   selectedRoom,
   selectedGuest,
   maxCapacity,
@@ -53,137 +48,86 @@ export const ReservationFormFields = ({
   today,
   totals,
   onFormChange,
-  onRoomChange,
-  onDateChange
+  onDateChange,
+  onRoomChange
 }: ReservationFormFieldsProps) => {
+  const [checkInCalendarOpen, setCheckInCalendarOpen] = useState(false);
+  const [checkOutCalendarOpen, setCheckOutCalendarOpen] = useState(false);
 
-  const isIOS = useIsIOS();
-
-  const formatRoomType = (type: string) => {
-    return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const formatRoomNumber = (number: string) => {
-    // Pad single digit room numbers with leading zero for better visual consistency
-    return number.length === 1 ? `0${number}` : number;
-  };
-
-  const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
+  const handleCheckInSelect = (date: Date | undefined) => {
     if (date) {
-      const dateString = date.toISOString().split('T')[0];
-      onDateChange(field, dateString);
+      onDateChange('check_in', date.toISOString().split('T')[0]);
+      setCheckInCalendarOpen(false);
     }
   };
 
-  // Get all rooms for search functionality
-  const allRooms = [...availableRooms];
+  const handleCheckOutSelect = (date: Date | undefined) => {
+    if (date) {
+      onDateChange('check_out', date.toISOString().split('T')[0]);
+      setCheckOutCalendarOpen(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       {/* Guest Selection */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-purple-600" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
             Información del Huésped
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="w-full">
-            <Label className="block mb-2">Buscar Huésped *</Label>
-            <GuestSearchInput
-              guests={guests}
-              rooms={allRooms}
-              reservations={reservations}
-              selectedGuestId={formData.guest_id}
-              onGuestSelect={(guestId) => onFormChange('guest_id', guestId)}
-              placeholder="Buscar huésped por nombre o habitación..."
-            />
+          <div>
+            <Label htmlFor="guest_id">Huésped *</Label>
+            <Select
+              value={formData.guest_id}
+              onValueChange={(value) => onFormChange('guest_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un huésped" />
+              </SelectTrigger>
+              <SelectContent>
+                {guests.map(guest => (
+                  <SelectItem key={guest.id} value={guest.id}>
+                    {guest.first_name} {guest.last_name} - {guest.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {!formData.guest_id && (
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground">
-                O selecciona un huésped de la lista tradicional:
-              </p>
-              <div className="mt-2">
-                <Select
-                  value={formData.guest_id}
-                  onValueChange={(value) => onFormChange('guest_id', value)}
-                >
-                  <SelectTrigger 
-                    className={cn(
-                      "w-full max-w-md mx-auto",
-                      isIOS && "min-h-[44px] touch-manipulation"
-                    )}
-                    style={isIOS ? {
-                      WebkitTouchCallout: 'none',
-                      WebkitUserSelect: 'none',
-                      touchAction: 'manipulation'
-                    } : {}}
-                  >
-                    <SelectValue placeholder="Seleccionar huésped" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {guests.map((guest) => (
-                      <SelectItem key={guest.id} value={guest.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{guest.first_name} {guest.last_name}</span>
-                          {guest.is_associated && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              Asociado
-                            </Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
           {selectedGuest && (
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                <div>
-                  <span className="font-medium">Email:</span> {selectedGuest.email}
-                </div>
-                <div>
-                  <span className="font-medium">Teléfono:</span> {selectedGuest.phone}
-                </div>
-                <div>
-                  <span className="font-medium">Documento:</span> {selectedGuest.document}
-                </div>
-                <div>
-                  <span className="font-medium">Nacionalidad:</span> {selectedGuest.nationality}
-                </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-blue-600" />
+                <span className="font-medium text-blue-900">
+                  {selectedGuest.first_name} {selectedGuest.last_name}
+                </span>
+              </div>
+              <div className="text-sm text-blue-700">
+                <p>Email: {selectedGuest.email}</p>
+                <p>Teléfono: {selectedGuest.phone}</p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Room Selection */}
+      {/* Room and Dates */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MapPin className="h-5 w-5 text-green-600" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Home className="h-5 w-5" />
             Habitación y Fechas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {availabilityError && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">{availabilityError}</span>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Fecha de entrada *</Label>
-              <Popover>
+              <Label htmlFor="check_in">Fecha de Entrada *</Label>
+              <Popover open={checkInCalendarOpen} onOpenChange={setCheckInCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -193,25 +137,30 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_in ? format(new Date(formData.check_in), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_in ? (
+                      format(new Date(formData.check_in), "PPP", { locale: es })
+                    ) : (
+                      <span>Selecciona fecha</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.check_in ? new Date(formData.check_in) : undefined}
-                    onSelect={(date) => handleDateSelect('check_in', date)}
+                    onSelect={handleCheckInSelect}
                     disabled={(date) => date < new Date(today)}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
                     locale={es}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
             </div>
+
             <div>
-              <Label>Fecha de salida *</Label>
-              <Popover>
+              <Label htmlFor="check_out">Fecha de Salida *</Label>
+              <Popover open={checkOutCalendarOpen} onOpenChange={setCheckOutCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -221,21 +170,25 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_out ? format(new Date(formData.check_out), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_out ? (
+                      format(new Date(formData.check_out), "PPP", { locale: es })
+                    ) : (
+                      <span>Selecciona fecha</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.check_out ? new Date(formData.check_out) : undefined}
-                    onSelect={(date) => handleDateSelect('check_out', date)}
+                    onSelect={handleCheckOutSelect}
                     disabled={(date) => {
-                      const minDate = formData.check_in ? new Date(formData.check_in) : new Date(today);
-                      return date <= minDate;
+                      const checkInDate = formData.check_in ? new Date(formData.check_in) : new Date(today);
+                      return date <= checkInDate;
                     }}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
                     locale={es}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -243,171 +196,92 @@ export const ReservationFormFields = ({
           </div>
 
           <div>
-            <Label htmlFor="room_id">Habitación *</Label>
-            <Select
-              value={formData.room_id}
-              onValueChange={onRoomChange}
-            >
-              <SelectTrigger 
-                className={cn(
-                  "h-12",
-                  isIOS && "min-h-[44px] touch-manipulation"
-                )}
-                style={isIOS ? {
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none',
-                  touchAction: 'manipulation'
-                } : {}}
+            <Label htmlFor="room_id">Habitación Disponible *</Label>
+            {availableRooms.length === 0 ? (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  No hay habitaciones disponibles para las fechas seleccionadas
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Select
+                value={formData.room_id}
+                onValueChange={onRoomChange}
               >
-                <SelectValue placeholder="Seleccionar habitación disponible" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {availableRooms
-                  .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-                  .map((room) => (
-                  <SelectItem key={room.id} value={room.id} className="py-3">
-                    <div className="flex items-center justify-between w-full min-w-0">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Bed className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          <span className="font-mono text-lg font-semibold text-blue-800">
-                            #{formatRoomNumber(room.number)}
-                          </span>
-                        </div>
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-medium text-gray-900 truncate">
-                            {formatRoomType(room.type)}
-                          </span>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              ${room.price}/noche
-                            </span>
-                          </div>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una habitación" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRooms.map(room => (
+                    <SelectItem key={room.id} value={room.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>Habitación {room.number}</span>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Badge variant="secondary">{room.type}</Badge>
+                          <Badge variant="outline">{room.capacity} personas</Badge>
+                          <span className="font-medium">${room.price}/noche</span>
                         </div>
                       </div>
-                      <Badge 
-                        variant="secondary" 
-                        className="ml-2 bg-green-100 text-green-800 border-green-200 flex-shrink-0"
-                      >
-                        Disponible
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {selectedRoom && (
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-900">Habitación:</span>
-                    <span className="font-mono text-lg font-bold text-blue-800">
-                      #{formatRoomNumber(selectedRoom.number)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-900">Tipo:</span>
-                    <span className="text-sm text-blue-800">{formatRoomType(selectedRoom.type)}</span>
-                  </div>
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-green-600" />
+                  <span className="font-medium text-green-900">
+                    Habitación {selectedRoom.number}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Capacidad:</span>
-                    <span className="text-sm text-blue-800">
-                      {selectedRoom.capacity} {selectedRoom.capacity === 1 ? 'persona' : 'personas'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Precio:</span>
-                    <span className="text-sm font-semibold text-blue-800">${selectedRoom.price}/noche</span>
-                  </div>
-                </div>
-                {selectedRoom.amenities && selectedRoom.amenities.length > 0 && (
-                  <div className="md:col-span-2 pt-2 border-t border-blue-200">
-                    <span className="text-sm font-medium text-blue-900">Amenidades:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedRoom.amenities.map((amenity, index) => (
-                        <Badge 
-                          key={index} 
-                          variant="outline" 
-                          className="text-xs bg-white text-blue-700 border-blue-300"
-                        >
-                          {amenity}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <Badge className="bg-green-100 text-green-800">{selectedRoom.type}</Badge>
+              </div>
+              <div className="text-sm text-green-700">
+                <p>Capacidad: {selectedRoom.capacity} personas</p>
+                <p>Precio: ${selectedRoom.price} por noche</p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Guest Details */}
+      {/* Guest Count and Status */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5 text-blue-600" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
             Detalles de la Reserva
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="guests_count">Número de huéspedes *</Label>
-              <Select
-                value={formData.guests_count.toString()}
-                onValueChange={(value) => onFormChange('guests_count', parseInt(value))}
-              >
-                <SelectTrigger 
-                  className={isIOS ? "min-h-[44px] touch-manipulation" : ""}
-                  style={isIOS ? {
-                    WebkitTouchCallout: 'none',
-                    WebkitUserSelect: 'none',
-                    touchAction: 'manipulation'
-                  } : {}}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} huésped{num > 1 ? 'es' : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedRoom && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Capacidad máxima de la habitación: {selectedRoom.capacity} huésped{selectedRoom.capacity > 1 ? 'es' : ''}
-                </p>
-              )}
+              <Label htmlFor="guests_count">Número de Huéspedes *</Label>
+              <Input
+                id="guests_count"
+                type="number"
+                min="1"
+                max={maxCapacity}
+                value={formData.guests_count}
+                onChange={(e) => onFormChange('guests_count', parseInt(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Máximo {maxCapacity} personas para esta habitación
+              </p>
             </div>
+
             <div>
-              <Label htmlFor="status">Estado</Label>
+              <Label htmlFor="status">Estado de la Reserva</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => onFormChange('status', value)}
               >
-                <SelectTrigger 
-                  className={isIOS ? "min-h-[44px] touch-manipulation" : ""}
-                  style={isIOS ? {
-                    WebkitTouchCallout: 'none',
-                    WebkitUserSelect: 'none',
-                    touchAction: 'manipulation'
-                  } : {}}
-                >
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -421,7 +295,24 @@ export const ReservationFormFields = ({
           </div>
 
           <div>
-            <Label htmlFor="special_requests">Solicitudes especiales</Label>
+            <Label htmlFor="discount_percentage">Descuento (%)</Label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                id="discount_percentage"
+                type="number"
+                min="0"
+                max="100"
+                value={formData.discount_percentage}
+                onChange={(e) => onFormChange('discount_percentage', parseFloat(e.target.value) || 0)}
+                className="pl-10"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="special_requests">Solicitudes Especiales</Label>
             <Textarea
               id="special_requests"
               value={formData.special_requests}
@@ -433,15 +324,40 @@ export const ReservationFormFields = ({
         </CardContent>
       </Card>
 
-      {/* Discount Section */}
-      <DiscountSection
-        selectedGuest={selectedGuest}
-        discountPercentage={formData.discount_percentage}
-        onDiscountChange={(percentage) => onFormChange('discount_percentage', percentage)}
-        subtotal={totals.subtotal}
-        discount={totals.discount}
-        total={totals.total}
-      />
+      {/* Pricing Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Resumen de Precios
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span>Subtotal:</span>
+              <span>${totals.subtotal.toFixed(2)}</span>
+            </div>
+            {formData.discount_percentage > 0 && (
+              <div className="flex justify-between text-sm text-red-600">
+                <span>Descuento ({formData.discount_percentage}%):</span>
+                <span>-${totals.discount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+              <span>Total:</span>
+              <span className="text-green-600">${totals.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {availabilityError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{availabilityError}</AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };
