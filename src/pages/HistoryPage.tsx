@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +17,10 @@ import { toast } from '@/hooks/use-toast';
 const HistoryPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOperation, setFilterOperation] = useState<'all' | 'INSERT' | 'UPDATE' | 'DELETE'>('all');
-  const [filterUser, setFilterUser] = useState<'all' | 'Admin' | 'Rec 1' | 'Rec 2'>('all');
+  const [filterUser, setFilterUser] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('');
   
-  const { auditRecords, isLoading, error } = useAuditData();
+  const { auditRecords, isLoading, error, getUniqueUsers } = useAuditData();
   const { exportHistoryToPDF } = useHistoryExport();
 
   console.log('HistoryPage render state:', {
@@ -29,6 +28,9 @@ const HistoryPage = () => {
     isLoading,
     hasError: !!error
   });
+
+  // Get unique users for the filter dropdown
+  const uniqueUsers = getUniqueUsers();
 
   // Filtrar registros
   const filteredRecords = auditRecords.filter(record => {
@@ -264,15 +266,17 @@ const HistoryPage = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Usuario</label>
-              <Select value={filterUser} onValueChange={(value: any) => setFilterUser(value)}>
+              <Select value={filterUser} onValueChange={(value: string) => setFilterUser(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los usuarios</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Rec 1">Rec 1</SelectItem>
-                  <SelectItem value="Rec 2">Rec 2</SelectItem>
+                  {uniqueUsers.map((user) => (
+                    <SelectItem key={user} value={user}>
+                      {user}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

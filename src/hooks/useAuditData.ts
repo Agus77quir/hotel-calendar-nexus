@@ -103,14 +103,22 @@ export const useAuditData = () => {
     });
   };
 
-  // Get unique users for filtering
+  // Get unique users for filtering - ensure Rec 1 and Rec 2 are always included
   const getUniqueUsers = () => {
     const users = new Set<string>();
+    
+    // Add default expected users
+    users.add('Admin');
+    users.add('Rec 1');
+    users.add('Rec 2');
+    
+    // Add users from actual records
     auditRecords.forEach(record => {
       if (record.changed_by) {
         users.add(record.changed_by);
       }
     });
+    
     return Array.from(users).sort();
   };
 
