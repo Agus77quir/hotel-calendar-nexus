@@ -8,7 +8,7 @@ import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStats
 import { RoomStatusChart } from '@/components/Dashboard/RoomStatusChart';
 import { OccupancyChart } from '@/components/Dashboard/OccupancyChart';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
-import { DailyReservations } from '@/components/Dashboard/DailyReservations';
+import { DailyReservationsCard } from '@/components/Dashboard/DailyReservationsCard';
 
 const Dashboard = () => {
   const { stats, rooms, reservations, guests, isLoading } = useHotelData();
@@ -23,6 +23,7 @@ const Dashboard = () => {
 
   // Calcular datos en tiempo real
   const today = new Date().toISOString().split('T')[0];
+  const todayDate = new Date();
   
   const currentGuests = reservations.filter(r => 
     r.status === 'checked-in' && 
@@ -79,11 +80,11 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueChart reservations={reservations} rooms={rooms} guests={guests} />
-        <DailyReservations 
+        <DailyReservationsCard 
           reservations={reservations} 
           rooms={rooms} 
           guests={guests} 
-          selectedDate={new Date()}
+          selectedDate={todayDate}
         />
       </div>
 

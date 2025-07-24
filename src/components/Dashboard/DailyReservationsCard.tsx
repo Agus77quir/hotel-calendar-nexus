@@ -17,37 +17,51 @@ interface DailyReservationsCardProps {
 export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDate }: DailyReservationsCardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Función mejorada para obtener reservas que están activas en una fecha específica
   const getReservationsForDate = (date: Date) => {
     const selectedDateStr = format(date, 'yyyy-MM-dd');
     
-    console.log('🔍 FILTRAR RESERVAS PARA:', selectedDateStr);
-    console.log('📋 TODAS LAS RESERVAS:', reservations.map(r => ({
+    console.log('🔍 BUSCANDO RESERVAS PARA:', selectedDateStr);
+    console.log('📋 TOTAL RESERVAS DISPONIBLES:', reservations.length);
+    console.log('📋 RESERVAS COMPLETAS:', reservations.map(r => ({
       id: r.id,
       checkIn: r.check_in,
       checkOut: r.check_out,
-      guest: guests.find(g => g.id === r.guest_id)?.first_name
+      status: r.status
     })));
-
+    
     const filtered = reservations.filter(reservation => {
-      const checkInDate = reservation.check_in;
-      const checkOutDate = reservation.check_out;
+      const checkIn = reservation.check_in;
+      const checkOut = reservation.check_out;
       
-      // Una reserva está activa en una fecha si:
-      // 1. La fecha está entre check-in y check-out (inclusive check-in, exclusivo check-out)
-      // 2. O es el día de check-in
-      // 3. O es el día de check-out
-      const isActive = selectedDateStr >= checkInDate && selectedDateStr < checkOutDate;
-      const isCheckInDay = selectedDateStr === checkInDate;
-      const isCheckOutDay = selectedDateStr === checkOutDate;
+      // Normalizar fechas para comparación
+      const checkInDate = new Date(checkIn + 'T00:00:00').toISOString().split('T')[0];
+      const checkOutDate = new Date(checkOut + 'T00:00:00').toISOString().split('T')[0];
+      const targetDate = selectedDateStr;
       
-      const shouldShow = isActive || isCheckInDay || isCheckOutDay;
+      // Una reserva está activa si la fecha seleccionada está entre check-in (inclusive) y check-out (inclusive)
+      const isActive = checkInDate <= targetDate && checkOutDate >= targetDate;
       
-      console.log(`📅 RESERVA ${reservation.id}: ${checkInDate} - ${checkOutDate} | Fecha: ${selectedDateStr} | Mostrar: ${shouldShow}`);
+      console.log('🔍 EVALUANDO RESERVA:', {
+        id: reservation.id,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        targetDate,
+        isActive,
+        status: reservation.status
+      });
       
-      return shouldShow;
+      return isActive;
     });
-
-    console.log('✅ RESERVAS FILTRADAS:', filtered.length);
+    
+    console.log('🎯 RESERVAS FILTRADAS PARA HOY:', filtered.length);
+    console.log('🎯 RESERVAS ENCONTRADAS:', filtered.map(r => ({
+      id: r.id,
+      status: r.status,
+      checkIn: r.check_in,
+      checkOut: r.check_out
+    })));
+    
     return filtered;
   };
 
@@ -56,7 +70,10 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
   const displayedReservations = useMemo(() => {
     const baseReservations = searchTerm.trim() ? reservations : selectedDateReservations;
     
-    if (!searchTerm.trim()) return baseReservations;
+    if (!searchTerm.trim()) {
+      console.log('📅 MOSTRANDO RESERVAS DEL DÍA:', baseReservations.length);
+      return baseReservations;
+    }
     
     const searchLower = searchTerm.toLowerCase().trim();
     
@@ -131,6 +148,21 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
     }
   };
 
+  // Log de debugging mejorado
+  console.log('🏠 DAILY RESERVATIONS CARD - Renderizando:', {
+    selectedDate: format(selectedDate, 'yyyy-MM-dd'),
+    totalReservations: reservations.length,
+    selectedDateReservations: selectedDateReservations.length,
+    displayedReservations: displayedReservations.length,
+    searchTerm,
+    reservationsWithDates: reservations.map(r => ({
+      id: r.id,
+      checkIn: r.check_in,
+      checkOut: r.check_out,
+      status: r.status
+    }))
+  });
+
   return (
     <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader>
@@ -154,6 +186,11 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
               {displayedReservations.length} reservas encontradas
             </div>
           )}
+          {!searchTerm && (
+            <div className="text-sm text-muted-foreground mt-2">
+              {displayedReservations.length} reservas activas para hoy
+            </div>
+          )}
         </div>
 
         {displayedReservations.length === 0 ? (
@@ -162,14 +199,17 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
             <p className="text-gray-500">
               {searchTerm ? 'No se encontraron reservas que coincidan con la búsqueda' : 'No hay reservas para esta fecha'}
             </p>
+            <p className="text-xs text-gray-400 mt-2">
+              Fecha seleccionada: {format(selectedDate, 'yyyy-MM-dd')}
+            </p>
           </div>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {displayedReservations.map((reservation) => {
               const guest = guests.find(g => g.id === reservation.guest_id);
               const room = rooms.find(r => r.id === reservation.room_id);
-              const isCheckIn = format(new Date(reservation.check_in), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
-              const isCheckOut = format(new Date(reservation.check_out), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+              const isCheckIn = reservation.check_in === format(selectedDate, 'yyyy-MM-dd');
+              const isCheckOut = reservation.check_out === format(selectedDate, 'yyyy-MM-dd');
               const guestColorClass = getGuestColor(reservation.guest_id);
 
               return (

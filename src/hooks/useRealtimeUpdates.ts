@@ -18,7 +18,7 @@ export const useRealtimeUpdates = () => {
     initialized.current = true;
     isRealtimeActive = true;
 
-    console.log('🚀 INICIANDO TIEMPO REAL MEJORADO');
+    console.log('🚀 INICIANDO TIEMPO REAL OPTIMIZADO');
 
     const channel = supabase
       .channel('hotel-updates-optimized')
@@ -26,16 +26,15 @@ export const useRealtimeUpdates = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
         async (payload) => {
-          console.log('📝 RESERVA ACTUALIZADA VIA TIEMPO REAL:', payload);
+          console.log('📝 RESERVA ACTUALIZADA VIA TIEMPO REAL:', payload.eventType);
           
-          // Invalidar TODAS las queries para asegurar sincronización
-          await queryClient.invalidateQueries();
+          // Invalidar solo las queries necesarias de manera eficiente
+          await queryClient.invalidateQueries({ queryKey: ['reservations'] });
           
-          // Refrescar específicamente las queries críticas
-          await Promise.all([
-            queryClient.refetchQueries({ queryKey: ['reservations'] }),
-            queryClient.refetchQueries({ queryKey: ['rooms'] }),
-          ]);
+          // Si es un cambio de estado, también actualizar habitaciones
+          if (payload.eventType === 'UPDATE') {
+            await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          }
           
           console.log('✅ DATOS SINCRONIZADOS VIA TIEMPO REAL');
         }
@@ -44,10 +43,18 @@ export const useRealtimeUpdates = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms' },
         async (payload) => {
-          console.log('🏠 HABITACIÓN ACTUALIZADA VIA TIEMPO REAL:', payload);
+          console.log('🏠 HABITACIÓN ACTUALIZADA VIA TIEMPO REAL:', payload.eventType);
           
           await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-          await queryClient.refetchQueries({ queryKey: ['rooms'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'guests' },
+        async (payload) => {
+          console.log('👤 HUÉSPED ACTUALIZADO VIA TIEMPO REAL:', payload.eventType);
+          
+          await queryClient.invalidateQueries({ queryKey: ['guests'] });
         }
       )
       .subscribe();
