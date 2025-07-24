@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,6 +59,8 @@ export const ReservationFormFields = ({
 }: ReservationFormFieldsProps) => {
 
   const isIOS = useIsIOS();
+  const [checkInCalendarOpen, setCheckInCalendarOpen] = useState(false);
+  const [checkOutCalendarOpen, setCheckOutCalendarOpen] = useState(false);
 
   const formatRoomType = (type: string) => {
     return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -68,10 +71,24 @@ export const ReservationFormFields = ({
     return number.length === 1 ? `0${number}` : number;
   };
 
+  // Fixed date handling function - ensures selected date is exactly what's shown
   const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
     if (date) {
-      const dateString = date.toISOString().split('T')[0];
+      // Create a new date in local timezone to avoid timezone shifts
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      console.log('Selected date:', date, 'Formatted as:', dateString);
       onDateChange(field, dateString);
+      
+      // Close the calendar after selection
+      if (field === 'check_in') {
+        setCheckInCalendarOpen(false);
+      } else {
+        setCheckOutCalendarOpen(false);
+      }
     }
   };
 
@@ -183,7 +200,7 @@ export const ReservationFormFields = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Fecha de entrada *</Label>
-              <Popover>
+              <Popover open={checkInCalendarOpen} onOpenChange={setCheckInCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -211,7 +228,7 @@ export const ReservationFormFields = ({
             </div>
             <div>
               <Label>Fecha de salida *</Label>
-              <Popover>
+              <Popover open={checkOutCalendarOpen} onOpenChange={setCheckOutCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
