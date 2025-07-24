@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ export const ReservationModal = ({
     checkOut: preSelectedDates?.checkOut || '',
     guestsCount: '1',
     totalAmount: '0',
-    status: 'pending',
+    status: 'confirmed',
     specialRequests: '',
     createdBy: 'Admin',
   });
@@ -42,15 +43,15 @@ export const ReservationModal = ({
   useEffect(() => {
     if (reservation) {
       setFormData({
-        roomId: reservation.roomId,
-        guestId: reservation.guestId,
-        checkIn: reservation.checkIn,
-        checkOut: reservation.checkOut,
-        guestsCount: reservation.guestsCount.toString(),
-        totalAmount: reservation.totalAmount.toString(),
+        roomId: reservation.room_id,
+        guestId: reservation.guest_id,
+        checkIn: reservation.check_in,
+        checkOut: reservation.check_out,
+        guestsCount: reservation.guests_count.toString(),
+        totalAmount: reservation.total_amount.toString(),
         status: reservation.status,
-        specialRequests: reservation.specialRequests || '',
-        createdBy: reservation.createdBy,
+        specialRequests: reservation.special_requests || '',
+        createdBy: reservation.created_by || 'Admin',
       });
     } else if (preSelectedRoomId && preSelectedDates) {
       setFormData(prev => ({
