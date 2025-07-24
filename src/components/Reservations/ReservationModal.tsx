@@ -104,8 +104,20 @@ export const ReservationModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Transform formData to match the expected format
+    const transformedFormData = {
+      guest_id: formData.guestId,
+      room_id: formData.roomId,
+      check_in: formData.checkIn,
+      check_out: formData.checkOut,
+      guests_count: parseInt(formData.guestsCount),
+      status: formData.status,
+      special_requests: formData.specialRequests,
+      discount_percentage: selectedGuest?.discount_percentage || 0,
+    };
+    
     const result = await submitReservation(
-      formData,
+      transformedFormData,
       selectedGuest,
       isNewGuest,
       reservation
