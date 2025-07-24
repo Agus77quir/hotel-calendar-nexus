@@ -152,9 +152,10 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes with enhanced validation - FIXED to prevent infinite re-renders
+  // Handle date changes - SIMPLIFIED to prevent re-renders
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    // First, update the form data
+    console.log(`Date change: ${field} = ${value}`);
+    
     setFormData(prev => {
       const newFormData = {
         ...prev,
@@ -168,45 +169,9 @@ export const useReservationForm = ({
       
       return newFormData;
     });
-
-    // Then, validate and handle errors in a separate effect-like pattern
-    setTimeout(() => {
-      const updatedFormData = {
-        ...formData,
-        [field]: value,
-      };
-      
-      if (field === 'check_in' && mode === 'create' && !formData.check_out) {
-        updatedFormData.check_out = getDefaultCheckOut(value);
-      }
-      
-      // Validate dates when both are present
-      if (updatedFormData.check_in && updatedFormData.check_out) {
-        const validation = validateReservationDates(updatedFormData.check_in, updatedFormData.check_out, today);
-        if (!validation.isValid) {
-          setAvailabilityError(validation.error || '');
-          return;
-        }
-        
-        // Check room availability if room is selected
-        if (updatedFormData.room_id) {
-          const hasOverlap = hasDateOverlap(
-            updatedFormData.room_id, 
-            updatedFormData.check_in, 
-            updatedFormData.check_out, 
-            reservations,
-            reservation?.id
-          );
-          if (hasOverlap) {
-            setFormData(prev => ({ ...prev, room_id: '' }));
-            setAvailabilityError('Habitación ya reservada para estas fechas, seleccione otra');
-            return;
-          }
-        }
-      }
-      
-      setAvailabilityError('');
-    }, 0);
+    
+    // Clear availability error when dates change
+    setAvailabilityError('');
   };
 
   // Simple form change handler - NO MORE AUTOMATIC CHANGES
