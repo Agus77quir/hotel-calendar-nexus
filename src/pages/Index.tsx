@@ -309,9 +309,6 @@ const Index = () => {
       <ReservationModal
         isOpen={reservationModal.isOpen}
         onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
-        rooms={rooms}
-        guests={guests}
-        mode={reservationModal.mode}
       />
     </div>
   );

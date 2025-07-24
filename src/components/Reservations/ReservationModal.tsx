@@ -18,6 +18,7 @@ interface ReservationModalProps {
     checkIn: string;
     checkOut: string;
   };
+  preselectedGuestId?: string;
 }
 
 export const ReservationModal = ({ 
@@ -25,11 +26,12 @@ export const ReservationModal = ({
   onClose, 
   reservation, 
   preSelectedRoomId,
-  preSelectedDates 
+  preSelectedDates,
+  preselectedGuestId 
 }: ReservationModalProps) => {
   const [formData, setFormData] = useState({
     roomId: preSelectedRoomId || '',
-    guestId: '',
+    guestId: preselectedGuestId || '',
     checkIn: preSelectedDates?.checkIn || '',
     checkOut: preSelectedDates?.checkOut || '',
     guestsCount: '1',
@@ -70,6 +72,20 @@ export const ReservationModal = ({
       }));
     }
   }, [reservation, preSelectedRoomId, preSelectedDates]);
+
+  // Set preselected guest if provided
+  useEffect(() => {
+    if (preselectedGuestId && guests) {
+      const guest = guests.find(g => g.id === preselectedGuestId);
+      if (guest) {
+        setSelectedGuest(guest);
+        setFormData(prev => ({
+          ...prev,
+          guestId: preselectedGuestId,
+        }));
+      }
+    }
+  }, [preselectedGuestId, guests]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
