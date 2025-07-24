@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -152,9 +151,8 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes with enhanced validation - FIXED to prevent infinite re-renders
+  // Handle date changes with enhanced validation
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    // First, update the form data
     setFormData(prev => {
       const newFormData = {
         ...prev,
@@ -166,47 +164,34 @@ export const useReservationForm = ({
         newFormData.check_out = getDefaultCheckOut(value);
       }
       
-      return newFormData;
-    });
-
-    // Then, validate and handle errors in a separate effect-like pattern
-    setTimeout(() => {
-      const updatedFormData = {
-        ...formData,
-        [field]: value,
-      };
-      
-      if (field === 'check_in' && mode === 'create' && !formData.check_out) {
-        updatedFormData.check_out = getDefaultCheckOut(value);
-      }
-      
       // Validate dates when both are present
-      if (updatedFormData.check_in && updatedFormData.check_out) {
-        const validation = validateReservationDates(updatedFormData.check_in, updatedFormData.check_out, today);
+      if (newFormData.check_in && newFormData.check_out) {
+        const validation = validateReservationDates(newFormData.check_in, newFormData.check_out, today);
         if (!validation.isValid) {
           setAvailabilityError(validation.error || '');
-          return;
+          return newFormData;
         }
         
         // Check room availability if room is selected
-        if (updatedFormData.room_id) {
+        if (newFormData.room_id) {
           const hasOverlap = hasDateOverlap(
-            updatedFormData.room_id, 
-            updatedFormData.check_in, 
-            updatedFormData.check_out, 
+            newFormData.room_id, 
+            newFormData.check_in, 
+            newFormData.check_out, 
             reservations,
             reservation?.id
           );
           if (hasOverlap) {
-            setFormData(prev => ({ ...prev, room_id: '' }));
+            newFormData.room_id = '';
             setAvailabilityError('Habitación ya reservada para estas fechas, seleccione otra');
-            return;
+            return newFormData;
           }
         }
       }
       
       setAvailabilityError('');
-    }, 0);
+      return newFormData;
+    });
   };
 
   // Simple form change handler - NO MORE AUTOMATIC CHANGES
