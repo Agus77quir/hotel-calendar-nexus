@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,11 +19,11 @@ interface RoomModalProps {
 export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
   const [formData, setFormData] = useState({
     number: '',
-    type: 'matrimonial' as Room['type'],
-    capacity: '1',
-    price: '0',
-    status: 'available' as Room['status'],
-    amenities: [] as string[],
+    type: 'single',
+    capacity: 1,
+    price: 0,
+    status: 'available',
+    amenities: [],
   });
 
   useEffect(() => {
@@ -32,18 +31,18 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
       setFormData({
         number: room.number,
         type: room.type,
-        capacity: room.capacity.toString(),
-        price: room.price.toString(),
+        capacity: room.capacity,
+        price: room.price,
         status: room.status,
-        amenities: room.amenities || [],
+        amenities: room.amenities,
       });
     } else {
       // Reset form when creating a new room
       setFormData({
         number: '',
-        type: 'matrimonial',
-        capacity: '1',
-        price: '0',
+        type: 'single',
+        capacity: 1,
+        price: 0,
         status: 'available',
         amenities: [],
       });
@@ -60,13 +59,14 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
     }));
   };
 
-  const handleCheckboxChange = (amenity: string, checked: boolean) => {
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
     setFormData(prevData => {
       let newAmenities = [...prevData.amenities];
       if (checked) {
-        newAmenities.push(amenity);
+        newAmenities.push(value);
       } else {
-        newAmenities = newAmenities.filter(a => a !== amenity);
+        newAmenities = newAmenities.filter(amenity => amenity !== value);
       }
       return {
         ...prevData,
@@ -134,16 +134,14 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
             </div>
             <div>
               <Label htmlFor="type">Tipo de Habitación</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData(prevData => ({ ...prevData, type: value as Room['type'] }))}>
+              <Select value={formData.type} onValueChange={(value) => setFormData(prevData => ({ ...prevData, type: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="matrimonial">Matrimonial</SelectItem>
-                  <SelectItem value="triple-individual">Triple Individual</SelectItem>
-                  <SelectItem value="triple-matrimonial">Triple Matrimonial</SelectItem>
-                  <SelectItem value="doble-individual">Doble Individual</SelectItem>
-                  <SelectItem value="suite-presidencial-doble">Suite Presidencial Doble</SelectItem>
+                  <SelectItem value="single">Individual</SelectItem>
+                  <SelectItem value="double">Doble</SelectItem>
+                  <SelectItem value="suite">Suite</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -179,7 +177,7 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
 
           <div>
             <Label htmlFor="status">Estado</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData(prevData => ({ ...prevData, status: value as Room['status'] }))}>
+            <Select value={formData.status} onValueChange={(value) => setFormData(prevData => ({ ...prevData, status: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona un estado" />
               </SelectTrigger>
@@ -187,7 +185,6 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
                 <SelectItem value="available">Disponible</SelectItem>
                 <SelectItem value="occupied">Ocupada</SelectItem>
                 <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                <SelectItem value="cleaning">Limpieza</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -195,27 +192,30 @@ export const RoomModal = ({ isOpen, onClose, room }: RoomModalProps) => {
           <div>
             <Label>Servicios</Label>
             <div className="flex flex-wrap gap-2">
-              <div className="flex items-center space-x-2">
+              <div className="space-x-2">
                 <Checkbox
                   id="wifi"
+                  value="wifi"
                   checked={formData.amenities.includes('wifi')}
-                  onCheckedChange={(checked) => handleCheckboxChange('wifi', checked as boolean)}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'wifi', checked } } as any)}
                 />
                 <Label htmlFor="wifi">WiFi</Label>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="space-x-2">
                 <Checkbox
                   id="tv"
+                  value="tv"
                   checked={formData.amenities.includes('tv')}
-                  onCheckedChange={(checked) => handleCheckboxChange('tv', checked as boolean)}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'tv', checked } } as any)}
                 />
                 <Label htmlFor="tv">TV</Label>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="space-x-2">
                 <Checkbox
                   id="ac"
+                  value="ac"
                   checked={formData.amenities.includes('ac')}
-                  onCheckedChange={(checked) => handleCheckboxChange('ac', checked as boolean)}
+                  onCheckedChange={(checked) => handleCheckboxChange({ target: { value: 'ac', checked } } as any)}
                 />
                 <Label htmlFor="ac">Aire Acondicionado</Label>
               </div>
