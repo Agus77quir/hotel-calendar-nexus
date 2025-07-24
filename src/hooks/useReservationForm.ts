@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
 
@@ -34,15 +34,23 @@ export const useReservationForm = ({
   const [availabilityError, setAvailabilityError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Función para convertir Date a string de fecha local (YYYY-MM-DD)
+  const dateToLocalString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Get today's date for validation
-  const today = new Date().toISOString().split('T')[0];
+  const today = dateToLocalString(new Date());
 
   // Auto-suggest check-out date (default to 1 night stay)
   const getDefaultCheckOut = (checkIn: string) => {
     if (!checkIn) return '';
     const checkInDate = new Date(checkIn);
     checkInDate.setDate(checkInDate.getDate() + 1);
-    return checkInDate.toISOString().split('T')[0];
+    return dateToLocalString(checkInDate);
   };
 
   useEffect(() => {
@@ -60,7 +68,7 @@ export const useReservationForm = ({
     } else {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const defaultCheckIn = tomorrow.toISOString().split('T')[0];
+      const defaultCheckIn = dateToLocalString(tomorrow);
       
       setFormData({
         guest_id: '',
@@ -84,7 +92,7 @@ export const useReservationForm = ({
   const selectedGuest = guests.find(g => g.id === formData.guest_id);
 
   // Auto-suggest best available room when dates change
-  const getBestAvailableRoom = () => {
+  const getBestAvailableRoom = useMemo(() => {
     if (!formData.check_in || !formData.check_out) {
       return rooms.filter(room => room.status === 'available');
     }
@@ -109,9 +117,9 @@ export const useReservationForm = ({
       }
       return a.price - b.price;
     });
-  };
+  }, [formData.check_in, formData.check_out, rooms, reservations, reservation?.id]);
 
-  const availableRooms = getBestAvailableRoom();
+  const availableRooms = getBestAvailableRoom;
 
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
