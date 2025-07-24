@@ -1,5 +1,6 @@
 
 import { Reservation } from '@/types/hotel';
+import { getTodayInBuenosAires } from '@/utils/dateUtils';
 
 export const hasDateOverlap = (
   roomId: string, 
@@ -35,15 +36,13 @@ export const hasDateOverlap = (
   });
 };
 
-export const validateReservationDates = (checkIn: string, checkOut: string, today: string) => {
+export const validateReservationDates = (checkIn: string, checkOut: string, today?: string) => {
   if (!checkIn || !checkOut) return true;
   
-  const checkInDate = new Date(checkIn);
-  const checkOutDate = new Date(checkOut);
-  const todayDate = new Date(today);
+  const todayDate = today || getTodayInBuenosAires();
   
   // Validate that check-in is not before today
-  if (checkInDate < todayDate) return false;
+  if (checkIn < todayDate) return false;
   
-  return checkOutDate > checkInDate;
+  return checkOut > checkIn;
 };

@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsIOS } from '@/hooks/use-mobile';
+import { formatSelectedDateForBuenosAires, parseStringToDate } from '@/utils/dateUtils';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -71,16 +72,13 @@ export const ReservationFormFields = ({
     return number.length === 1 ? `0${number}` : number;
   };
 
-  // Fixed date handling function - ensures selected date is exactly what's shown
+  // Manejo de fechas optimizado para zona horaria de Buenos Aires
   const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
     if (date) {
-      // Create a new date in local timezone to avoid timezone shifts
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Usar la nueva utilidad para formatear fechas en Buenos Aires
+      const dateString = formatSelectedDateForBuenosAires(date);
       
-      console.log('Selected date:', date, 'Formatted as:', dateString);
+      console.log('Selected date:', date, 'Formatted for Buenos Aires:', dateString);
       onDateChange(field, dateString);
       
       // Close the calendar after selection
@@ -210,15 +208,15 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_in ? format(new Date(formData.check_in), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_in ? format(parseStringToDate(formData.check_in), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={formData.check_in ? new Date(formData.check_in) : undefined}
+                    selected={formData.check_in ? parseStringToDate(formData.check_in) : undefined}
                     onSelect={(date) => handleDateSelect('check_in', date)}
-                    disabled={(date) => date < new Date(today)}
+                    disabled={(date) => date < parseStringToDate(today)}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                     locale={es}
@@ -238,16 +236,16 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_out ? format(new Date(formData.check_out), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_out ? format(parseStringToDate(formData.check_out), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={formData.check_out ? new Date(formData.check_out) : undefined}
+                    selected={formData.check_out ? parseStringToDate(formData.check_out) : undefined}
                     onSelect={(date) => handleDateSelect('check_out', date)}
                     disabled={(date) => {
-                      const minDate = formData.check_in ? new Date(formData.check_in) : new Date(today);
+                      const minDate = formData.check_in ? parseStringToDate(formData.check_in) : parseStringToDate(today);
                       return date <= minDate;
                     }}
                     initialFocus

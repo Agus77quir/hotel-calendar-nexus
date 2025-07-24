@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
+import { getTodayInBuenosAires, getTomorrowInBuenosAires, calculateDaysDifference } from '@/utils/dateUtils';
 
 interface UseReservationFormProps {
   rooms: Room[];
@@ -34,15 +34,21 @@ export const useReservationForm = ({
   const [availabilityError, setAvailabilityError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get today's date for validation
-  const today = new Date().toISOString().split('T')[0];
+  // Usar fecha actual en timezone de Buenos Aires
+  const today = getTodayInBuenosAires();
 
   // Auto-suggest check-out date (default to 1 night stay)
   const getDefaultCheckOut = (checkIn: string) => {
     if (!checkIn) return '';
-    const checkInDate = new Date(checkIn);
+    const [year, month, day] = checkIn.split('-').map(Number);
+    const checkInDate = new Date(year, month - 1, day);
     checkInDate.setDate(checkInDate.getDate() + 1);
-    return checkInDate.toISOString().split('T')[0];
+    
+    const nextYear = checkInDate.getFullYear();
+    const nextMonth = String(checkInDate.getMonth() + 1).padStart(2, '0');
+    const nextDay = String(checkInDate.getDate()).padStart(2, '0');
+    
+    return `${nextYear}-${nextMonth}-${nextDay}`;
   };
 
   useEffect(() => {
@@ -58,9 +64,8 @@ export const useReservationForm = ({
         discount_percentage: 0, // Reset discount for edit mode
       });
     } else {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const defaultCheckIn = tomorrow.toISOString().split('T')[0];
+      // Usar fechas en timezone de Buenos Aires para nuevas reservas
+      const defaultCheckIn = getTomorrowInBuenosAires();
       
       setFormData({
         guest_id: '',
@@ -152,8 +157,10 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes
+  // Handle date changes with Buenos Aires timezone
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
+    console.log(`Date change for ${field}:`, value, 'today:', today);
+    
     if (field === 'check_in' && value < today) {
       setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
       return;
@@ -198,21 +205,19 @@ export const useReservationForm = ({
     }));
   };
 
-  // Calculate total with discount
+  // Calculate total with proper date handling
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
     
     if (!selectedRoom || !formData.check_in || !formData.check_out) return { subtotal: 0, discount: 0, total: 0 };
     
-    const checkIn = new Date(formData.check_in);
-    const checkOut = new Date(formData.check_out);
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    const nights = calculateDaysDifference(formData.check_in, formData.check_out);
     
     const subtotal = selectedRoom.price * nights;
     const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
     const total = subtotal - discountAmount;
     
-    console.log('Calculate total - subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
+    console.log('Calculate total - nights:', nights, 'subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
     
     return {
       subtotal,
