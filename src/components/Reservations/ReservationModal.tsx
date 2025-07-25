@@ -230,7 +230,7 @@ export const ReservationModal = ({
         </div>
 
         {!showNewGuestForm && (
-          <div className="flex justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0 bg-white">
+          <div className="flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white">
             <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
               Cancelar
             </Button>
