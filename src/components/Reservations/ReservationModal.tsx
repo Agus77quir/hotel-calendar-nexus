@@ -175,7 +175,7 @@ export const ReservationModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '6rem' }}>
           <ReservationValidationAlert
             validationErrors={validationErrors}
             isFormValid={isFormValid()}
@@ -230,7 +230,7 @@ export const ReservationModal = ({
         </div>
 
         {!showNewGuestForm && (
-          <div className="flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white">
+          <div className="fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50">
             <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
               Cancelar
             </Button>
