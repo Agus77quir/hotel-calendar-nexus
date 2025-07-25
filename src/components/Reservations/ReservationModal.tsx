@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Room, Guest, Reservation } from '@/types/hotel';
@@ -176,7 +175,7 @@ export const ReservationModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '6rem' }}>
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '8rem' }}>
           <ReservationValidationAlert
             validationErrors={validationErrors}
             isFormValid={isFormValid()}
@@ -192,10 +191,10 @@ export const ReservationModal = ({
           ) : (
             <div className="space-y-4 sm:space-y-6">
               {!preselectedGuestId && (
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <div>
-                    <h3 className="font-medium text-blue-900">Crear Huésped Rápido</h3>
-                    <p className="text-sm text-blue-700">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 gap-3 sm:gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-blue-900 text-sm sm:text-base">Crear Huésped Rápido</h3>
+                    <p className="text-xs sm:text-sm text-blue-700 mt-1">
                       Se aplicarán automáticamente descuentos y configuraciones
                     </p>
                   </div>
@@ -203,10 +202,10 @@ export const ReservationModal = ({
                     type="button"
                     variant="outline"
                     onClick={() => setShowNewGuestForm(true)}
-                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100 touch-manipulation"
+                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100 touch-manipulation w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 min-h-[40px] sm:min-h-[44px] flex-shrink-0"
                   >
-                    <Plus className="h-4 w-4" />
-                    Nuevo Huésped
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">Nuevo Huésped</span>
                   </Button>
                 </div>
               )}
@@ -231,7 +230,7 @@ export const ReservationModal = ({
         </div>
 
         {!showNewGuestForm && (
-          <div className="fixed bottom-2 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-2 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-1 landscape:p-1" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)' }}>
+          <div className="fixed bottom-6 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-4 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}>
             <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
               Cancelar
             </Button>
