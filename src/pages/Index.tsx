@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
@@ -121,7 +120,7 @@ const Index = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-4">
           <div className="flex items-center gap-2 text-blue-700">
             <Smartphone className="h-4 w-4" />
-            <span className="text-sm font-medium">Optimizado para iPhone</span>
+            <span className="text-sm font-medium">Optimizado para smartphones</span>
           </div>
         </div>
       )}
@@ -298,7 +297,7 @@ const Index = () => {
               {isIPhone && (
                 <div className="flex items-center justify-between border-t pt-2">
                   <span className="text-muted-foreground text-sm">Dispositivo</span>
-                  <span className="font-medium text-blue-600 text-sm">iPhone Optimizado</span>
+                  <span className="font-medium text-blue-600 text-sm">Optimizado para smartphones</span>
                 </div>
               )}
             </div>
