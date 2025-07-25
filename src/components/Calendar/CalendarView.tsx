@@ -31,13 +31,17 @@ export const CalendarView = ({ reservations, onAddReservation, onDateSelect, sel
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <CardTitle className="flex items-center gap-2 text-gray-800">
           <CalendarDays className="h-5 w-5" />
           Calendario de Reservas
         </CardTitle>
         {onAddReservation && (
-          <Button onClick={onAddReservation} size="sm" className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            onClick={onAddReservation} 
+            size="sm" 
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-sm px-4 py-2 whitespace-nowrap flex-shrink-0"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Reserva
           </Button>
