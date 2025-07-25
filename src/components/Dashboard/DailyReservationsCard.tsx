@@ -19,11 +19,29 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
   const [searchTerm, setSearchTerm] = useState('');
 
   const getReservationsForDate = (date: Date) => {
-    return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
-      return date >= checkIn && date <= checkOut;
+    const dateStr = format(date, 'yyyy-MM-dd');
+    
+    console.log('📅 Buscando reservas para fecha:', dateStr);
+    console.log('📊 Total reservas disponibles:', reservations.length);
+    
+    const filtered = reservations.filter(reservation => {
+      const checkIn = reservation.check_in;
+      const checkOut = reservation.check_out;
+      
+      // Una reserva está activa si:
+      // - La fecha seleccionada es mayor o igual al check-in
+      // - La fecha seleccionada es menor al check-out
+      // - O si es el mismo día del check-out (para mostrar check-outs del día)
+      const isActive = (dateStr >= checkIn && dateStr < checkOut) || 
+                       (dateStr === checkOut);
+      
+      console.log(`Reserva ${reservation.id}: ${checkIn} - ${checkOut}, Activa: ${isActive}`);
+      
+      return isActive;
     });
+    
+    console.log('✅ Reservas encontradas para la fecha:', filtered.length);
+    return filtered;
   };
 
   const selectedDateReservations = getReservationsForDate(selectedDate);

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, User, Clock, MapPin } from 'lucide-react';
@@ -16,14 +15,27 @@ interface DailyReservationsProps {
 export const DailyReservations = ({ reservations, rooms, guests, selectedDate }: DailyReservationsProps) => {
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
   
+  console.log('📅 Fecha seleccionada:', selectedDateStr);
+  console.log('📊 Total reservas disponibles:', reservations.length);
+  
   const dayReservations = reservations.filter(reservation => {
     const checkIn = reservation.check_in;
     const checkOut = reservation.check_out;
-    return checkIn <= selectedDateStr && checkOut >= selectedDateStr;
+    
+    const isActive = (selectedDateStr >= checkIn && selectedDateStr < checkOut) || 
+                     (selectedDateStr === checkOut);
+    
+    console.log(`Reserva ${reservation.id}: ${checkIn} - ${checkOut}, Activa: ${isActive}`);
+    
+    return isActive;
   });
 
   const checkInsToday = reservations.filter(r => r.check_in === selectedDateStr);
   const checkOutsToday = reservations.filter(r => r.check_out === selectedDateStr);
+
+  console.log('✅ Reservas del día:', dayReservations.length);
+  console.log('🔵 Check-ins hoy:', checkInsToday.length);
+  console.log('🟠 Check-outs hoy:', checkOutsToday.length);
 
   const getStatusColor = (status: string) => {
     switch (status) {
