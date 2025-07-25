@@ -51,6 +51,62 @@ export const useReservationForm = ({
     return `${nextYear}-${nextMonth}-${nextDay}`;
   };
 
+  // Validate all required fields
+  const validateForm = () => {
+    const errors: string[] = [];
+    
+    if (!formData.guest_id) {
+      errors.push('Debe seleccionar un huésped');
+    }
+    
+    if (!formData.room_id) {
+      errors.push('Debe seleccionar una habitación');
+    }
+    
+    if (!formData.check_in) {
+      errors.push('Debe seleccionar fecha de check-in');
+    }
+    
+    if (!formData.check_out) {
+      errors.push('Debe seleccionar fecha de check-out');
+    }
+    
+    if (formData.guests_count < 1) {
+      errors.push('Debe especificar al menos 1 huésped');
+    }
+    
+    if (formData.check_in && formData.check_in < today) {
+      errors.push('La fecha de check-in no puede ser anterior a hoy');
+    }
+    
+    if (formData.check_in && formData.check_out && formData.check_out <= formData.check_in) {
+      errors.push('La fecha de check-out debe ser posterior a la fecha de check-in');
+    }
+    
+    if (formData.room_id && formData.check_in && formData.check_out) {
+      const hasOverlap = hasDateOverlap(
+        formData.room_id, 
+        formData.check_in, 
+        formData.check_out, 
+        reservations,
+        reservation?.id
+      );
+      if (hasOverlap) {
+        errors.push('La habitación ya está reservada para estas fechas');
+      }
+    }
+    
+    if (selectedRoom && formData.guests_count > selectedRoom.capacity) {
+      errors.push(`La habitación seleccionada tiene capacidad máxima de ${selectedRoom.capacity} huéspedes`);
+    }
+    
+    return errors;
+  };
+
+  const isFormValid = () => {
+    return validateForm().length === 0;
+  };
+
   useEffect(() => {
     if (reservation && mode === 'edit') {
       setFormData({
@@ -245,6 +301,8 @@ export const useReservationForm = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates
+    validateDates,
+    validateForm,
+    isFormValid
   };
 };

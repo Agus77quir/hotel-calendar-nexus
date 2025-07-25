@@ -1,14 +1,12 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { CalendarDays, AlertTriangle, Plus } from 'lucide-react';
+import { CalendarDays, Plus } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
+import { ReservationValidationAlert } from './ReservationValidationAlert';
 import { NewGuestForm } from './NewGuestForm';
-import { hasDateOverlap } from '@/utils/reservationValidation';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -53,7 +51,9 @@ export const ReservationModal = ({
     handleDateChange,
     handleFormChange,
     calculateTotal,
-    validateDates
+    validateDates,
+    validateForm,
+    isFormValid
   } = useReservationForm({
     rooms,
     guests,
@@ -66,7 +66,9 @@ export const ReservationModal = ({
   // Get totals
   const totals = calculateTotal();
 
-  // Set preselected guest when modal opens
+  // Get validation errors
+  const validationErrors = validateForm();
+
   useEffect(() => {
     if (preselectedGuestId && mode === 'create' && isOpen) {
       handleFormChange('guest_id', preselectedGuestId);
@@ -102,29 +104,10 @@ export const ReservationModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateDates()) {
-      if (formData.check_in < today) {
-        setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
-      } else {
-        setAvailabilityError('La fecha de check-out debe ser posterior a la fecha de check-in');
-      }
-      return;
-    }
-
-    if (!formData.room_id) {
-      setAvailabilityError('Debe seleccionar una habitación disponible para las fechas indicadas');
-      return;
-    }
-
-    const hasOverlap = hasDateOverlap(
-      formData.room_id, 
-      formData.check_in, 
-      formData.check_out, 
-      reservations,
-      reservation?.id
-    );
-    if (hasOverlap) {
-      setAvailabilityError('Habitación ya reservada, elija otra');
+    // Validate all form fields
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setAvailabilityError(validationErrors[0]); // Show first error
       return;
     }
     
@@ -140,7 +123,7 @@ export const ReservationModal = ({
         guests_count: formData.guests_count,
         status: formData.status,
         special_requests: formData.special_requests,
-        total_amount: totals.total, // Use calculated total with discount
+        total_amount: totals.total,
         created_by: 'current-user-id',
       };
 
@@ -193,12 +176,11 @@ export const ReservationModal = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white">
-          {availabilityError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{availabilityError}</AlertDescription>
-            </Alert>
-          )}
+          <ReservationValidationAlert
+            validationErrors={validationErrors}
+            isFormValid={isFormValid()}
+            availabilityError={availabilityError}
+          />
 
           {showNewGuestForm ? (
             <NewGuestForm
@@ -254,8 +236,8 @@ export const ReservationModal = ({
             </Button>
             <Button 
               onClick={handleSubmit}
-              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation"
-              disabled={!validateDates() || isSubmitting || !formData.room_id}
+              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isFormValid() || isSubmitting}
             >
               {isSubmitting 
                 ? 'Procesando...' 
