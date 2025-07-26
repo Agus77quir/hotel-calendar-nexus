@@ -171,7 +171,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               )}
             </div>
 
-            <div>
+            <div className="pb-2">
               <Label htmlFor="document" className="text-sm">Documento *</Label>
               <Input
                 id="document"
@@ -189,8 +189,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
         </CardContent>
       </Card>
 
-      {/* Botones fijos en la parte inferior para móviles */}
-      <div className="w-full bg-white border-t border-gray-200 p-4 mt-4 sticky bottom-0 z-50 shadow-lg rounded-t-lg">
+      {/* Botones con posición mejorada */}
+      <div className="w-full bg-white border-t border-gray-200 p-3 mt-2 sticky bottom-2 z-50 shadow-lg rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end max-w-full">
           <Button 
             type="button" 
