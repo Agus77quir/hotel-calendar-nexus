@@ -107,7 +107,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pb-4">
+        <CardContent className="pb-2">
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
@@ -160,6 +160,9 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               <Label htmlFor="phone" className="text-sm">Teléfono *</Label>
               <Input
                 id="phone"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 disabled={isSubmitting}
@@ -171,10 +174,13 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               )}
             </div>
 
-            <div className="pb-2">
+            <div>
               <Label htmlFor="document" className="text-sm">Documento *</Label>
               <Input
                 id="document"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.document}
                 onChange={(e) => handleInputChange('document', e.target.value)}
                 disabled={isSubmitting}
@@ -189,8 +195,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
         </CardContent>
       </Card>
 
-      {/* Botones con posición mejorada */}
-      <div className="w-full bg-white border-t border-gray-200 p-3 mt-2 sticky bottom-2 z-50 shadow-lg rounded-lg">
+      {/* Botones posicionados más alto para iPhone */}
+      <div className="w-full bg-white border-t border-gray-200 p-3 sticky bottom-8 z-50 shadow-lg rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end max-w-full">
           <Button 
             type="button" 

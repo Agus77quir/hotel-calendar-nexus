@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -194,6 +193,9 @@ export const GuestModal = ({
             <Label htmlFor="phone">Teléfono *</Label>
             <Input
               id="phone"
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               required
@@ -205,6 +207,9 @@ export const GuestModal = ({
             <Label htmlFor="document">Documento *</Label>
             <Input
               id="document"
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.document}
               onChange={(e) => setFormData({...formData, document: e.target.value})}
               required
