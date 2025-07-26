@@ -4,19 +4,18 @@ import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, LogOut, User, Clock, Shield, Smartphone } from 'lucide-react';
+import { Menu, LogOut, User, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useIsIPhone, useIsIOS } from '@/hooks/use-mobile';
+import { useIsIPhone } from '@/hooks/use-mobile';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const isIPhone = useIsIPhone();
-  const isIOS = useIsIOS();
 
   // Update current date and time every second
   useEffect(() => {
@@ -79,10 +78,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const getSystemStatus = () => {
-    return isIPhone ? 'iPhone Optimizado' : 'Sistema Operativo';
-  };
-
   if (!isAuthenticated) {
     return null;
   }
@@ -106,57 +101,36 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     <Menu className={`${isIPhone ? 'h-6 w-6' : 'h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6'} text-blue-700 drop-shadow-md`} />
                   </Button>
                 </SidebarTrigger>
-                <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 overflow-hidden flex-1">
-                  <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
-                    <img 
-                      src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
-                      alt="NARDINI SRL" 
-                      className={`${isIPhone ? 'h-8' : 'h-6 sm:h-8 md:h-12'} w-auto object-contain flex-shrink-0`}
-                    />
-                    <span className={`font-bold text-blue-600 truncate ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm md:text-lg'}`}>
-                      <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Gestión de Hoteles</span>
-                      <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Hotel</span>
-                    </span>
-                  </div>
-                  <div className={`flex items-center gap-1 sm:gap-2 md:gap-3 ${isIPhone ? 'text-sm' : 'text-xs'} flex-wrap`}>
-                    <div className="flex items-center gap-1 text-green-600 font-medium">
-                      <div className={`${isIPhone ? 'w-2 h-2' : 'w-1.5 h-1.5 sm:w-2 sm:h-2'} bg-green-500 rounded-full animate-pulse`}></div>
-                      <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>{getSystemStatus()}</span>
-                      <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Online</span>
-                    </div>
-                    {isIPhone && (
-                      <div className="flex items-center gap-1 text-blue-600">
-                        <Smartphone className="h-3 w-3" />
-                        <span className="font-medium text-xs">iOS</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1 text-blue-600">
-                      <Shield className={`${isIPhone ? 'h-3 w-3' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'}`} />
-                      <span className={`font-medium ${isIPhone ? 'text-sm' : 'text-xs'} truncate`}>{getRoleDisplayName(user?.role || '')}</span>
-                    </div>
-                    <div className={`${isIPhone ? 'flex' : 'hidden sm:flex'} items-center gap-1 text-gray-600`}>
-                      <Clock className={`${isIPhone ? 'h-3 w-3' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'}`} />
-                      <span className={`font-mono ${isIPhone ? 'text-sm' : 'text-xs'}`}>
-                        <span className={isIPhone ? 'inline' : 'hidden md:inline'}>
-                          {format(currentDateTime, isIPhone ? 'dd/MM - HH:mm' : 'dd/MM/yyyy - HH:mm:ss', { locale: es })}
-                        </span>
-                        <span className={isIPhone ? 'hidden' : 'md:hidden'}>
-                          {format(currentDateTime, 'dd/MM - HH:mm', { locale: es })}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 overflow-hidden flex-1">
+                  <img 
+                    src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
+                    alt="NARDINI SRL" 
+                    className={`${isIPhone ? 'h-8' : 'h-6 sm:h-8 md:h-12'} w-auto object-contain flex-shrink-0`}
+                  />
+                  <span className={`font-bold text-blue-600 truncate ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm md:text-lg'}`}>
+                    <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Gestión de Hoteles</span>
+                    <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Hotel</span>
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-                {/* Enhanced User info for iPhone */}
-                <div className={`${isIPhone ? 'flex' : 'hidden lg:flex'} items-center gap-2 bg-white/80 rounded-lg px-2 sm:px-3 py-1 sm:py-2`}>
-                  <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'} text-blue-600`} />
-                  <div className={isIPhone ? 'text-sm' : 'text-xs sm:text-sm'}>
-                    <div className="font-medium text-gray-900 truncate max-w-20">{user?.firstName}</div>
-                    <div className={`${isIPhone ? 'text-sm' : 'text-xs'} text-gray-600 truncate`}>{getRoleDisplayName(user?.role || '')}</div>
-                  </div>
+
+              {/* Simplified info section - only role and date */}
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 mr-2 sm:mr-3">
+                <div className="flex items-center gap-1 text-blue-600">
+                  <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
+                  <span className={`font-medium ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm'} truncate`}>
+                    {getRoleDisplayName(user?.role || '')}
+                  </span>
                 </div>
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Clock className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
+                  <span className={`font-mono ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm'}`}>
+                    {format(currentDateTime, isIPhone ? 'dd/MM HH:mm' : 'dd/MM/yyyy HH:mm', { locale: es })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center flex-shrink-0">
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
