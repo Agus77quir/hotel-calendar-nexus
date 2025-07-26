@@ -295,7 +295,7 @@
   }
 }
 
-/* Enhanced iPhone font size optimizations to prevent zoom */
+/* Mejoradas optimizaciones de tamaño de fuente para iPhone para prevenir zoom */
 @media screen and (max-width: 768px) {
   input, 
   textarea, 
@@ -306,12 +306,12 @@
     min-height: 44px;
   }
   
-  /* Smaller elements get appropriate sizing */
+  /* Elementos más pequeños obtienen el tamaño apropiado */
   .text-xs input,
   .text-sm input,
   .small-input {
-    font-size: 14px !important;
-    min-height: 40px;
+    font-size: 16px !important; /* Cambio de 14px a 16px para evitar zoom */
+    min-height: 44px; /* Cambio de 40px a 44px */
   }
 }
 
@@ -349,15 +349,33 @@
   }
 }
 
-/* Enhanced iPhone landscape optimizations */
+/* Mejoradas optimizaciones para iPhone en modo landscape */
 @media screen and (max-width: 896px) and (orientation: landscape) {
   .landscape-optimize {
-    /* Optimize for iPhone landscape mode */
-    padding: 8px;
+    /* Optimizar para modo landscape de iPhone */
+    padding: 4px 8px; /* Reducir padding vertical */
   }
   
   .landscape-hide {
     display: none;
+  }
+  
+  /* Hacer los elementos más compactos en landscape */
+  .card {
+    margin: 2px 0;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 8px !important;
+  }
+  
+  .space-y-3 > * + * {
+    margin-top: 6px !important;
+  }
+  
+  /* Reducir altura de inputs en landscape */
+  input, button {
+    min-height: 40px !important;
   }
 }
 

@@ -21,7 +21,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     email: '',
     phone: '',
     document: '',
-    nationality: 'No especificado', // Default value since it's still required in the database
+    nationality: 'No especificado',
     is_associated: false,
     discount_percentage: 0,
   });
@@ -65,7 +65,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
-        // Always set these values since we removed the UI controls
         is_associated: false,
         discount_percentage: 0
       };
@@ -81,7 +80,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -92,150 +90,111 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <User className="h-5 w-5 text-blue-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
             </div>
-            <CardTitle className="text-lg">Nuevo Huésped</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Nuevo Huésped</CardTitle>
           </div>
           <Button 
             variant="ghost" 
-            size="icon" 
+            size="sm" 
             onClick={onCancel} 
             disabled={isSubmitting}
-            className={isIOS ? "min-h-[44px] min-w-[44px] touch-manipulation" : ""}
-            style={isIOS ? {
-              WebkitTouchCallout: 'none',
-              WebkitUserSelect: 'none',
-              touchAction: 'manipulation'
-            } : {}}
+            className="h-8 w-8 sm:h-10 sm:w-10 touch-manipulation"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <CardContent className="pb-6">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <Label htmlFor="first_name">Nombre *</Label>
+              <Label htmlFor="first_name" className="text-sm">Nombre *</Label>
               <Input
                 id="first_name"
                 value={formData.first_name}
                 onChange={(e) => handleInputChange('first_name', e.target.value)}
                 disabled={isSubmitting}
-                className={`${errors.first_name ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-                style={isIOS ? {
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none',
-                  touchAction: 'manipulation'
-                } : {}}
+                className={`${errors.first_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
               />
               {errors.first_name && (
-                <p className="text-red-500 text-sm mt-1">{errors.first_name}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="last_name">Apellido *</Label>
+              <Label htmlFor="last_name" className="text-sm">Apellido *</Label>
               <Input
                 id="last_name"
                 value={formData.last_name}
                 onChange={(e) => handleInputChange('last_name', e.target.value)}
                 disabled={isSubmitting}
-                className={`${errors.last_name ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-                style={isIOS ? {
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none',
-                  touchAction: 'manipulation'
-                } : {}}
+                className={`${errors.last_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
               />
               {errors.last_name && (
-                <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
               )}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email" className="text-sm">Email *</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               disabled={isSubmitting}
-              className={`${errors.email ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
+              className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="phone">Teléfono *</Label>
+            <Label htmlFor="phone" className="text-sm">Teléfono *</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               disabled={isSubmitting}
-              className={`${errors.phone ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
+              className={`${errors.phone ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
             />
             {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="document">Documento *</Label>
+            <Label htmlFor="document" className="text-sm">Documento *</Label>
             <Input
               id="document"
               value={formData.document}
               onChange={(e) => handleInputChange('document', e.target.value)}
               disabled={isSubmitting}
-              className={`${errors.document ? 'border-red-500' : ''} ${isIOS ? 'min-h-[44px] touch-manipulation' : ''}`}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
+              className={`${errors.document ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
             />
             {errors.document && (
-              <p className="text-red-500 text-sm mt-1">{errors.document}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.document}</p>
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          {/* Botones siempre visibles con espaciado adecuado */}
+          <div className="flex justify-end gap-2 pt-4 pb-2 sticky bottom-0 bg-white z-10">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onCancel}
               disabled={isSubmitting}
-              className={isIOS ? "min-h-[44px] touch-manipulation px-6" : ""}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
+              className="h-11 px-4 touch-manipulation text-sm font-medium"
             >
               Cancelar
             </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className={isIOS ? "min-h-[44px] touch-manipulation px-6" : ""}
-              style={isIOS ? {
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
-              } : {}}
+              className="h-11 px-4 touch-manipulation text-sm font-medium bg-primary hover:bg-primary/90"
             >
               {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
             </Button>
