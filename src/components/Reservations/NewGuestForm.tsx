@@ -86,121 +86,130 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+    <div className="w-full">
+      <Card className="w-full">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              </div>
+              <CardTitle className="text-base sm:text-lg">Nuevo Huésped</CardTitle>
             </div>
-            <CardTitle className="text-base sm:text-lg">Nuevo Huésped</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onCancel} 
+              disabled={isSubmitting}
+              className="h-8 w-8 sm:h-10 sm:w-10 touch-manipulation"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <Label htmlFor="first_name" className="text-sm">Nombre *</Label>
+                <Input
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange('first_name', e.target.value)}
+                  disabled={isSubmitting}
+                  className={`${errors.first_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                  style={{ fontSize: '16px' }}
+                />
+                {errors.first_name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="last_name" className="text-sm">Apellido *</Label>
+                <Input
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  disabled={isSubmitting}
+                  className={`${errors.last_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                  style={{ fontSize: '16px' }}
+                />
+                {errors.last_name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="email" className="text-sm">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                disabled={isSubmitting}
+                className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="phone" className="text-sm">Teléfono *</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                disabled={isSubmitting}
+                className={`${errors.phone ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="document" className="text-sm">Documento *</Label>
+              <Input
+                id="document"
+                value={formData.document}
+                onChange={(e) => handleInputChange('document', e.target.value)}
+                disabled={isSubmitting}
+                className={`${errors.document ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
+              />
+              {errors.document && (
+                <p className="text-red-500 text-xs mt-1">{errors.document}</p>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Botones fijos en la parte inferior para móviles */}
+      <div className="w-full bg-white border-t border-gray-200 p-4 mt-4 sticky bottom-0 z-50 shadow-lg rounded-t-lg">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end max-w-full">
           <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onCancel} 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
             disabled={isSubmitting}
-            className="h-8 w-8 sm:h-10 sm:w-10 touch-manipulation"
+            className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium order-2 sm:order-1"
           >
-            <X className="h-4 w-4" />
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium bg-primary hover:bg-primary/90 order-1 sm:order-2"
+          >
+            {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="pb-6">
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <Label htmlFor="first_name" className="text-sm">Nombre *</Label>
-              <Input
-                id="first_name"
-                value={formData.first_name}
-                onChange={(e) => handleInputChange('first_name', e.target.value)}
-                disabled={isSubmitting}
-                className={`${errors.first_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
-              />
-              {errors.first_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="last_name" className="text-sm">Apellido *</Label>
-              <Input
-                id="last_name"
-                value={formData.last_name}
-                onChange={(e) => handleInputChange('last_name', e.target.value)}
-                disabled={isSubmitting}
-                className={`${errors.last_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
-              />
-              {errors.last_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="email" className="text-sm">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              disabled={isSubmitting}
-              className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phone" className="text-sm">Teléfono *</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              disabled={isSubmitting}
-              className={`${errors.phone ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="document" className="text-sm">Documento *</Label>
-            <Input
-              id="document"
-              value={formData.document}
-              onChange={(e) => handleInputChange('document', e.target.value)}
-              disabled={isSubmitting}
-              className={`${errors.document ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
-            />
-            {errors.document && (
-              <p className="text-red-500 text-xs mt-1">{errors.document}</p>
-            )}
-          </div>
-
-          {/* Botones siempre visibles con espaciado adecuado */}
-          <div className="flex justify-end gap-2 pt-4 pb-2 sticky bottom-0 bg-white z-10">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="h-11 px-4 touch-manipulation text-sm font-medium"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="h-11 px-4 touch-manipulation text-sm font-medium bg-primary hover:bg-primary/90"
-            >
-              {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

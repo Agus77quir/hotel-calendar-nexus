@@ -23,24 +23,7 @@ export const ReservationValidationAlert = ({
     );
   }
 
-  // Show validation errors
-  if (validationErrors.length > 0) {
-    return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          <div className="space-y-1">
-            <p className="font-medium">Complete los siguientes campos:</p>
-            <ul className="list-disc list-inside space-y-1">
-              {validationErrors.map((error, index) => (
-                <li key={index} className="text-sm">{error}</li>
-              ))}
-            </ul>
-          </div>
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Don't show validation errors list - removed the validation errors display
 
   // Show success message when form is valid
   if (isFormValid) {
