@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -91,27 +92,29 @@ export const RoomModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto my-auto max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="w-[95vw] max-w-md mx-auto fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto p-4 sm:p-6 touch-manipulation">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg sm:text-xl">
             {mode === 'create' ? 'Nueva Habitación' : 'Editar Habitación'}
           </DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="number">Número de Habitación</Label>
+            <Label htmlFor="number" className="text-sm font-medium">Número de Habitación</Label>
             <Input
               id="number"
               value={formData.number}
               onChange={(e) => setFormData({...formData, number: e.target.value})}
               required
+              className="mt-1 iphone-input"
             />
           </div>
 
           <div>
-            <Label htmlFor="type">Tipo</Label>
+            <Label htmlFor="type" className="text-sm font-medium">Tipo</Label>
             <Select value={formData.type} onValueChange={(value: Room['type']) => setFormData({...formData, type: value})}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-1 iphone-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -126,7 +129,7 @@ export const RoomModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Precio por noche</Label>
+              <Label htmlFor="price" className="text-sm font-medium">Precio por noche</Label>
               <Input
                 id="price"
                 type="number"
@@ -134,24 +137,26 @@ export const RoomModal = ({
                 value={formData.price}
                 onChange={(e) => setFormData({...formData, price: e.target.value})}
                 required
+                className="mt-1 iphone-input"
               />
             </div>
             <div>
-              <Label htmlFor="capacity">Capacidad</Label>
+              <Label htmlFor="capacity" className="text-sm font-medium">Capacidad</Label>
               <Input
                 id="capacity"
                 type="number"
                 value={formData.capacity}
                 onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                 required
+                className="mt-1 iphone-input"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="status">Estado</Label>
+            <Label htmlFor="status" className="text-sm font-medium">Estado</Label>
             <Select value={formData.status} onValueChange={(value: Room['status']) => setFormData({...formData, status: value})}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-1 iphone-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -164,24 +169,30 @@ export const RoomModal = ({
           </div>
 
           <div>
-            <Label htmlFor="amenities">Comodidades</Label>
-            <div className="flex gap-2 mb-2">
+            <Label htmlFor="amenities" className="text-sm font-medium">Comodidades</Label>
+            <div className="flex gap-2 mb-2 mt-1">
               <Input
                 value={newAmenity}
                 onChange={(e) => setNewAmenity(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Agregar comodidad..."
+                className="flex-1 iphone-input"
               />
-              <Button type="button" onClick={addAmenity} variant="outline">
+              <Button 
+                type="button" 
+                onClick={addAmenity} 
+                variant="outline"
+                className="iphone-button px-3"
+              >
                 Agregar
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.amenities.map((amenity, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {amenity}
+                <Badge key={index} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                  <span className="text-xs">{amenity}</span>
                   <X 
-                    className="h-3 w-3 cursor-pointer" 
+                    className="h-3 w-3 cursor-pointer hover:text-destructive" 
                     onClick={() => removeAmenity(amenity)}
                   />
                 </Badge>
@@ -189,11 +200,19 @@ export const RoomModal = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="iphone-button"
+            >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button 
+              type="submit"
+              className="iphone-button bg-primary hover:bg-primary/90"
+            >
               {mode === 'create' ? 'Crear Habitación' : 'Actualizar Habitación'}
             </Button>
           </div>
