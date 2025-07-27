@@ -13,7 +13,7 @@ import CheckInOutPage from "./pages/CheckInOutPage";
 import CalendarPage from "./pages/CalendarPage";
 import AuditPage from "./pages/AuditPage";
 import HistoryPage from "./pages/HistoryPage";
-import Login from "./pages/Login";
+import { AuthPage } from "./components/Auth/AuthPage";
 import NotFound from "./pages/NotFound";
 import { AppLayout } from "@/components/Layout/AppLayout";
 
@@ -27,7 +27,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={<AppLayout><Outlet /></AppLayout>}>
               <Route index element={<Index />} />
               <Route path="guests" element={<GuestsPage />} />

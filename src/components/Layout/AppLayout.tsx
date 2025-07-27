@@ -4,7 +4,7 @@ import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, LogOut, User, Clock } from 'lucide-react';
+import { Menu, LogOut, User, Clock, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
 import { useIsIPhone } from '@/hooks/use-mobile';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const isIPhone = useIsIPhone();
@@ -35,10 +35,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
       }
       
-      // Add iPhone-specific styles
       document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
       
-      // Handle orientation changes
       const handleOrientationChange = () => {
         setTimeout(() => {
           document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -55,16 +53,16 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isIPhone]);
 
-  // Redirect to login if not authenticated
+  // Redirect to auth if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/auth');
     }
   }, [isAuthenticated, navigate]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -76,6 +74,13 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       default:
         return role;
     }
+  };
+
+  const getRoleIcon = (role: string) => {
+    if (role === 'admin') {
+      return <Shield className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'} text-red-500`} />;
+    }
+    return <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'} text-blue-500`} />;
   };
 
   if (!isAuthenticated) {
@@ -114,12 +119,12 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
 
-              {/* Simplified info section - only role and date */}
+              {/* User info and role */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 mr-2 sm:mr-3">
                 <div className="flex items-center gap-1 text-blue-600">
-                  <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
+                  {profile && getRoleIcon(profile.role)}
                   <span className={`font-medium ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm'} truncate`}>
-                    {getRoleDisplayName(user?.role || '')}
+                    {profile ? getRoleDisplayName(profile.role) : 'Usuario'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-gray-600">
