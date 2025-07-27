@@ -1,31 +1,46 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-
-interface UserProfile {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: 'admin' | 'receptionist';
-  created_at: string;
-  updated_at: string;
-}
+import { User } from '@/types/hotel';
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
-  profile: UserProfile | null;
-  login: (email: string, password: string) => Promise<{ error?: string }>;
-  logout: () => Promise<void>;
-  signUp: (email: string, password: string, userData: { first_name: string; last_name: string; role: 'admin' | 'receptionist' }) => Promise<{ error?: string }>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => void;
   isAuthenticated: boolean;
-  isAdmin: boolean;
-  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Demo users with original credentials
+const demoUsers: (User & { password: string })[] = [
+  {
+    id: '1',
+    email: 'admin',
+    firstName: 'Administrador',
+    lastName: 'Sistema',
+    role: 'admin',
+    password: 'admin@123',
+    createdAt: new Date(),
+  },
+  {
+    id: '2',
+    email: 'rec1',
+    firstName: 'Recepcionista',
+    lastName: 'Uno',
+    role: 'receptionist',
+    password: 'rec1@123',
+    createdAt: new Date(),
+  },
+  {
+    id: '3',
+    email: 'rec2',
+    firstName: 'Recepcionista',
+    lastName: 'Dos',
+    role: 'receptionist',
+    password: 'rec2@123',
+    createdAt: new Date(),
+  },
+];
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -37,157 +52,92 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch user profile from database
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return null;
-      }
-
-      return data as UserProfile;
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      return null;
-    }
-  };
-
-  // Set user context for database operations
-  const setUserContext = async (email: string) => {
-    try {
-      await supabase.rpc('set_current_user', { user_name: email });
-    } catch (error) {
-      console.error('Error setting user context:', error);
-    }
-  };
-
-  // Handle auth state changes
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user profile and set context
-          setTimeout(async () => {
-            const userProfile = await fetchProfile(session.user.id);
-            setProfile(userProfile);
-            
-            if (userProfile) {
-              await setUserContext(userProfile.email);
+    // Safari-compatible initialization
+    const initAuth = () => {
+      try {
+        // Use requestAnimationFrame for better Safari compatibility
+        requestAnimationFrame(() => {
+          try {
+            const savedUser = localStorage.getItem('hotelUser');
+            if (savedUser) {
+              const parsedUser = JSON.parse(savedUser);
+              setUser(parsedUser);
             }
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).then(profile => {
-          setProfile(profile);
-          if (profile) {
-            setUserContext(profile.email);
+          } catch (error) {
+            console.error('Error parsing saved user:', error);
+            // Safari-safe localStorage cleanup
+            try {
+              localStorage.removeItem('hotelUser');
+            } catch (storageError) {
+              console.error('Error cleaning localStorage:', storageError);
+            }
+          } finally {
+            setIsInitialized(true);
           }
-          setIsLoading(false);
         });
-      } else {
-        setIsLoading(false);
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
+        setIsInitialized(true);
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return {};
-    } catch (error: any) {
-      return { error: error.message || 'Error al iniciar sesión' };
-    }
-  };
-
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error logging out:', error);
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  const signUp = async (
-    email: string, 
-    password: string, 
-    userData: { first_name: string; last_name: string; role: 'admin' | 'receptionist' }
-  ) => {
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: userData
+  const login = async (email: string, password: string): Promise<boolean> => {
+    console.log('Attempting login with:', { email, password });
+    
+    // Safari-compatible Promise handling
+    return new Promise((resolve) => {
+      try {
+        const foundUser = demoUsers.find(u => u.email === email && u.password === password);
+        console.log('Found user:', foundUser);
+        
+        if (foundUser) {
+          const { password: _, ...userWithoutPassword } = foundUser;
+          setUser(userWithoutPassword);
+          
+          // Safari-safe localStorage handling
+          try {
+            localStorage.setItem('hotelUser', JSON.stringify(userWithoutPassword));
+          } catch (error) {
+            console.error('Error saving user to localStorage:', error);
+          }
+          
+          console.log('Login successful for user:', userWithoutPassword.email);
+          resolve(true);
+        } else {
+          console.log('Login failed - user not found or wrong credentials');
+          resolve(false);
         }
-      });
-
-      if (error) {
-        return { error: error.message };
+      } catch (error) {
+        console.error('Login error:', error);
+        resolve(false);
       }
+    });
+  };
 
-      return {};
-    } catch (error: any) {
-      return { error: error.message || 'Error al registrar usuario' };
+  const logout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem('hotelUser');
+    } catch (error) {
+      console.error('Error removing user from localStorage:', error);
     }
   };
 
   const value = {
     user,
-    session,
-    profile,
     login,
     logout,
-    signUp,
-    isAuthenticated: !!user && !!profile,
-    isAdmin: profile?.role === 'admin',
-    isLoading,
+    isAuthenticated: !!user,
   };
 
-  if (isLoading) {
+  // Safari-compatible loading state
+  if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="text-center">

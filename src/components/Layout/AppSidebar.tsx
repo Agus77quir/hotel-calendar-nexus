@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -50,7 +49,7 @@ const allMenuItems = [
 export function AppSidebar() {
   const location = useLocation()
   const { setOpenMobile, isMobile } = useSidebar()
-  const { profile } = useAuth()
+  const { user } = useAuth()
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -60,7 +59,7 @@ export function AppSidebar() {
 
   // Filter menu items based on user role
   const menuItems = allMenuItems.filter(item => 
-    profile && item.roles.includes(profile.role)
+    user && item.roles.includes(user.role)
   )
 
   return (

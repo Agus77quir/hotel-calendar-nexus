@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ import { useRealtimeUpdates } from './useRealtimeUpdates';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   // Activar tiempo real
@@ -17,17 +18,17 @@ export const useHotelData = () => {
   // Configurar contexto de usuario
   useEffect(() => {
     const setUserContext = async () => {
-      if (profile?.email) {
+      if (user?.email) {
         try {
-          await supabase.rpc('set_current_user', { user_name: profile.email });
-          console.log('✅ Usuario configurado:', profile.email);
+          await supabase.rpc('set_current_user', { user_name: user.email });
+          console.log('✅ Usuario configurado:', user.email);
         } catch (error) {
           console.error('❌ Error configurando usuario:', error);
         }
       }
     };
     setUserContext();
-  }, [profile?.email]);
+  }, [user?.email]);
 
   // Consultas optimizadas
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
@@ -50,8 +51,7 @@ export const useHotelData = () => {
       console.log('✅ HUÉSPEDES CARGADOS:', processedData.length);
       return processedData;
     },
-    enabled: !!profile,
-    staleTime: 30000,
+    staleTime: 30000, // 30 segundos
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -79,8 +79,7 @@ export const useHotelData = () => {
       console.log('✅ HABITACIONES CARGADAS:', processedData.length);
       return processedData;
     },
-    enabled: !!profile,
-    staleTime: 30000,
+    staleTime: 30000, // 30 segundos
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -113,8 +112,7 @@ export const useHotelData = () => {
 
       return processedData;
     },
-    enabled: !!profile,
-    staleTime: 30000,
+    staleTime: 30000, // 30 segundos
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -142,6 +140,7 @@ export const useHotelData = () => {
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
       console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
       
+      // Obtener reserva actual
       const { data: currentReservation, error: fetchError } = await supabase
         .from('reservations')
         .select('room_id, status')
@@ -150,6 +149,7 @@ export const useHotelData = () => {
 
       if (fetchError) throw fetchError;
 
+      // Actualizar reserva
       const { data: updatedReservation, error } = await supabase
         .from('reservations')
         .update({ 
@@ -162,6 +162,7 @@ export const useHotelData = () => {
       
       if (error) throw error;
 
+      // Actualizar estado de habitación
       if (data.status && currentReservation?.room_id) {
         let roomStatus: Room['status'] = 'available';
         
@@ -183,8 +184,11 @@ export const useHotelData = () => {
     },
     onSuccess: async () => {
       console.log('✅ RESERVA ACTUALIZADA - REFRESCANDO DATOS');
+      
+      // Invalidar las queries específicas de manera ordenada
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      
       console.log('🔄 DATOS REFRESCADOS CORRECTAMENTE');
     },
     onError: (error) => {
@@ -299,7 +303,7 @@ export const useHotelData = () => {
         .from('reservations')
         .insert([{
           ...reservationData,
-          created_by: profile?.email || 'sistema'
+          created_by: user?.email || 'sistema'
         }])
         .select()
         .single();
