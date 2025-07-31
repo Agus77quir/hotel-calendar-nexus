@@ -22,9 +22,9 @@ const RoomsPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleUpdateRoom = async (roomData: Room) => {
+  const handleUpdateRoom = async (roomData: Room, updateGroupPrice?: boolean) => {
     if (selectedRoom) {
-      await updateRoom({ id: selectedRoom.id, ...roomData });
+      await updateRoom({ id: selectedRoom.id, updateGroupPrice, ...roomData });
       setIsModalOpen(false);
       setSelectedRoom(undefined);
     }

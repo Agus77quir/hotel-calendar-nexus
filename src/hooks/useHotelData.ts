@@ -264,11 +264,11 @@ export const useHotelData = () => {
   });
 
   const updateRoomMutation = useMutation({
-    mutationFn: async ({ id, ...roomData }: { id: string } & Partial<Omit<Room, 'id'>>) => {
-      console.log('🔄 ACTUALIZANDO HABITACIÓN:', id, roomData);
+    mutationFn: async ({ id, updateGroupPrice = true, ...roomData }: { id: string; updateGroupPrice?: boolean } & Partial<Omit<Room, 'id'>>) => {
+      console.log('🔄 ACTUALIZANDO HABITACIÓN:', id, roomData, 'Actualizar grupo:', updateGroupPrice);
       
-      // If price is being updated, we need to update all rooms of the same type
-      if (roomData.price !== undefined) {
+      // If price is being updated and updateGroupPrice is true, update all rooms of the same type
+      if (roomData.price !== undefined && updateGroupPrice) {
         // First get the current room to know its type
         const { data: currentRoom, error: fetchError } = await supabase
           .from('rooms')
@@ -300,12 +300,19 @@ export const useHotelData = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast({
-        title: "Habitación actualizada",
-        description: "Los precios se han sincronizado para todas las habitaciones del mismo tipo",
-      });
+      if (variables.updateGroupPrice && variables.price !== undefined) {
+        toast({
+          title: "Habitación actualizada",
+          description: "Los precios se han sincronizado para todas las habitaciones del mismo tipo",
+        });
+      } else {
+        toast({
+          title: "Habitación actualizada",
+          description: "La habitación se ha actualizado correctamente",
+        });
+      }
     },
     onError: (error) => {
       console.error('❌ Error actualizando habitación:', error);

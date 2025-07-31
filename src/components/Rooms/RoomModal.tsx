@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -5,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X } from 'lucide-react';
 import { Room } from '@/types/hotel';
 
 interface RoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (room: any) => void;
+  onSave: (room: any, updateGroupPrice?: boolean) => void;
   room?: Room;
   mode: 'create' | 'edit';
   rooms?: Room[];
@@ -34,6 +36,7 @@ export const RoomModal = ({
     amenities: [] as string[],
   });
   const [newAmenity, setNewAmenity] = useState('');
+  const [updateGroupPrice, setUpdateGroupPrice] = useState(true);
 
   useEffect(() => {
     if (room && mode === 'edit') {
@@ -70,7 +73,7 @@ export const RoomModal = ({
       ...formData,
       price: parseFloat(formData.price),
       capacity: parseInt(formData.capacity),
-    });
+    }, updateGroupPrice);
     onClose();
   };
 
@@ -100,7 +103,7 @@ export const RoomModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-none max-h-none m-0 p-0 fixed inset-0 md:w-[95vw] md:max-w-md md:mx-auto md:fixed md:left-1/2 md:top-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:max-h-[90vh] md:h-auto md:rounded-lg md:p-6 overflow-y-auto touch-manipulation">
+      <DialogContent className="fixed inset-0 w-full h-full max-w-none max-h-none m-0 p-0 md:w-[95vw] md:max-w-md md:mx-auto md:fixed md:left-1/2 md:top-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:max-h-[90vh] md:h-auto md:rounded-lg md:p-6 overflow-y-auto touch-manipulation">
         <div className="p-4 sm:p-6 h-full flex flex-col">
           <DialogHeader className="pb-4 flex-shrink-0">
             <DialogTitle className="text-lg sm:text-xl">
@@ -139,16 +142,39 @@ export const RoomModal = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <Label htmlFor="price" className="text-sm font-medium">Precio por noche</Label>
+                
+                {/* Checkbox para precio grupal */}
                 {mode === 'edit' && sameTypeRoomsCount > 1 && (
+                  <div className="flex items-center space-x-2 mt-2 mb-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                    <Checkbox 
+                      id="updateGroupPrice" 
+                      checked={updateGroupPrice}
+                      onCheckedChange={(checked) => setUpdateGroupPrice(checked as boolean)}
+                    />
+                    <Label htmlFor="updateGroupPrice" className="text-sm font-medium text-blue-800">
+                      Actualizar precio para todas las habitaciones tipo "{formData.type}" ({sameTypeRoomsCount} habitaciones)
+                    </Label>
+                  </div>
+                )}
+
+                {mode === 'edit' && sameTypeRoomsCount > 1 && updateGroupPrice && (
                   <p className="text-xs text-orange-600 mt-1 mb-2 p-2 bg-orange-50 rounded-md border border-orange-200">
                     ⚠️ Este precio se aplicará a todas las {sameTypeRoomsCount} habitaciones tipo "{formData.type}"
                   </p>
                 )}
-                {isPriceChanged && (
+
+                {mode === 'edit' && sameTypeRoomsCount > 1 && !updateGroupPrice && (
+                  <p className="text-xs text-green-600 mt-1 mb-2 p-2 bg-green-50 rounded-md border border-green-200">
+                    ✓ El precio se aplicará solo a esta habitación
+                  </p>
+                )}
+
+                {isPriceChanged && updateGroupPrice && (
                   <p className="text-xs text-blue-600 mt-1 mb-2 p-2 bg-blue-50 rounded-md border border-blue-200">
                     💡 El precio cambiará de ${room?.price} a ${formData.price} para todas las habitaciones de este tipo
                   </p>
                 )}
+
                 <Input
                   id="price"
                   type="number"
