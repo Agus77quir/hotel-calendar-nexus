@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -266,6 +265,31 @@ export const useHotelData = () => {
 
   const updateRoomMutation = useMutation({
     mutationFn: async ({ id, ...roomData }: { id: string } & Partial<Omit<Room, 'id'>>) => {
+      console.log('🔄 ACTUALIZANDO HABITACIÓN:', id, roomData);
+      
+      // If price is being updated, we need to update all rooms of the same type
+      if (roomData.price !== undefined) {
+        // First get the current room to know its type
+        const { data: currentRoom, error: fetchError } = await supabase
+          .from('rooms')
+          .select('type')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Update all rooms of the same type with the new price
+        const { error: bulkUpdateError } = await supabase
+          .from('rooms')
+          .update({ price: roomData.price })
+          .eq('type', currentRoom.type);
+
+        if (bulkUpdateError) throw bulkUpdateError;
+
+        console.log(`✅ PRECIO ACTUALIZADO para todas las habitaciones tipo: ${currentRoom.type}`);
+      }
+
+      // Then update the specific room with all the provided data
       const { data, error } = await supabase
         .from('rooms')
         .update(roomData)
@@ -278,7 +302,19 @@ export const useHotelData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Habitación actualizada",
+        description: "Los precios se han sincronizado para todas las habitaciones del mismo tipo",
+      });
     },
+    onError: (error) => {
+      console.error('❌ Error actualizando habitación:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la habitación",
+        variant: "destructive",
+      });
+    }
   });
 
   const deleteRoomMutation = useMutation({

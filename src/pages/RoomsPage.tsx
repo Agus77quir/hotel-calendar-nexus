@@ -1,242 +1,143 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search, Edit, Trash2, Bed, Users, Wrench } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { RoomModal } from '@/components/Rooms/RoomModal';
-import { BackToHomeButton } from '@/components/ui/back-to-home-button';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { Room } from '@/types/hotel';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
 const RoomsPage = () => {
   const { rooms, addRoom, updateRoom, deleteRoom, isLoading } = useHotelData();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [searchTerm, setSearchTerm] = useState('');
-  const [roomModal, setRoomModal] = useState<{
-    isOpen: boolean;
-    mode: 'create' | 'edit';
-    room?: Room;
-  }>({
-    isOpen: false,
-    mode: 'create',
-  });
+  const [selectedType, setSelectedType] = useState<Room['type'] | 'all'>('all');
+
+  const handleAddRoom = async (roomData: Omit<Room, 'id' | 'created_at'>) => {
+    await addRoom(roomData);
+    setIsModalOpen(false);
+  };
+
+  const handleUpdateRoom = async (roomData: Room) => {
+    if (selectedRoom) {
+      await updateRoom({ id: selectedRoom.id, ...roomData });
+      setIsModalOpen(false);
+      setSelectedRoom(undefined);
+    }
+  };
+
+  const handleDeleteRoom = async (id: string) => {
+    await deleteRoom(id);
+  };
 
   const filteredRooms = rooms.filter(room => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      room.number.toLowerCase().includes(searchLower) ||
-      room.type.toLowerCase().includes(searchLower)
-    );
+    const searchMatch = room.number.toLowerCase().includes(searchTerm.toLowerCase());
+    const typeMatch = selectedType === 'all' || room.type === selectedType;
+    return searchMatch && typeMatch;
   });
 
-  const handleSaveRoom = (roomData: any) => {
-    if (roomModal.mode === 'create') {
-      addRoom(roomData);
-    } else if (roomModal.mode === 'edit' && roomModal.room) {
-      updateRoom({ id: roomModal.room.id, ...roomData });
-    }
-  };
-
-  const handleDeleteRoom = (id: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta habitación?')) {
-      deleteRoom(id);
-    }
-  };
-
-  const handleMaintenanceToggle = (room: Room, isChecked: boolean) => {
-    const newStatus = isChecked ? 'maintenance' : 'available';
-    updateRoom({ id: room.id, status: newStatus });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'occupied':
-        return 'bg-red-100 text-red-800';
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cleaning':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'Disponible';
-      case 'occupied':
-        return 'Ocupada';
-      case 'maintenance':
-        return 'Mantenimiento';
-      case 'cleaning':
-        return 'Limpieza';
-      default:
-        return status;
-    }
-  };
-
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'matrimonial':
-        return 'Matrimonial';
-      case 'triple-individual':
-        return 'Triple Individual';
-      case 'triple-matrimonial':
-        return 'Triple Matrimonial';
-      case 'doble-individual':
-        return 'Doble Individual';
-      case 'suite-presidencial-doble':
-        return 'Suite Presidencial Doble';
-      default:
-        return type;
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Habitaciones</h1>
-          <p className="text-muted-foreground">
-            Gestiona todas las habitaciones del hotel
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <BackToHomeButton />
-          <Button
-            onClick={() => setRoomModal({ isOpen: true, mode: 'create' })}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Habitación
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4 md:p-6 lg:p-8">
+      <div className="container mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-800">Habitaciones</h1>
+          <Button onClick={() => {
+            setIsModalOpen(true);
+            setModalMode('create');
+          }} className="bg-primary text-white hover:bg-primary/80">
+            <Plus className="mr-2 h-4 w-4" />
+            Agregar Habitación
           </Button>
         </div>
+
+        <div className="mb-4 flex items-center space-x-4">
+          <div>
+            <Label htmlFor="search" className="text-sm text-gray-600">Buscar por número:</Label>
+            <Input
+              type="search"
+              id="search"
+              placeholder="Buscar..."
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="typeFilter" className="text-sm text-gray-600">Filtrar por tipo:</Label>
+            <select
+              id="typeFilter"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as Room['type'] | 'all')}
+            >
+              <option value="all">Todos los tipos</option>
+              <option value="matrimonial">Matrimonial</option>
+              <option value="triple-individual">Triple Individual</option>
+              <option value="triple-matrimonial">Triple Matrimonial</option>
+              <option value="doble-individual">Doble Individual</option>
+              <option value="suite-presidencial-doble">Suite Presidencial Doble</option>
+            </select>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="text-center text-gray-500">Cargando habitaciones...</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRooms.map(room => (
+              <div key={room.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
+                <h2 className="text-lg font-semibold text-gray-800 mb-2">{room.number}</h2>
+                <p className="text-gray-600">Tipo: {room.type}</p>
+                <p className="text-gray-600">Precio: ${room.price}</p>
+                <p className="text-gray-600">Capacidad: {room.capacity} personas</p>
+                <p className="text-gray-600">Estado: {room.status}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {room.amenities?.map((amenity, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">{amenity}</Badge>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end space-x-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRoom(room);
+                      setIsModalOpen(true);
+                      setModalMode('edit');
+                    }}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteRoom(room.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar habitaciones..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredRooms.length} habitaciones encontradas
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredRooms.length === 0 ? (
-              <div className="col-span-full py-8 text-center text-muted-foreground">
-                No se encontraron habitaciones
-              </div>
-            ) : (
-              filteredRooms.map((room) => (
-                <Card key={room.id} className="border-2">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Habitación {room.number}
-                      </CardTitle>
-                      <Badge className={getStatusColor(room.status)}>
-                        {getStatusText(room.status)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Bed className="h-4 w-4" />
-                      <span>{getTypeText(room.type)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>Capacidad: {room.capacity} personas</span>
-                    </div>
-                    <div className="text-lg font-semibold text-green-600">
-                      ${room.price}/noche
-                    </div>
-                    
-                    {/* Maintenance Checkbox */}
-                    <div className="flex items-center space-x-2 p-2 bg-orange-50 rounded-md border">
-                      <Checkbox
-                        id={`maintenance-${room.id}`}
-                        checked={room.status === 'maintenance'}
-                        onCheckedChange={(checked) => handleMaintenanceToggle(room, checked as boolean)}
-                      />
-                      <label
-                        htmlFor={`maintenance-${room.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
-                      >
-                        <Wrench className="h-4 w-4 text-orange-600" />
-                        En mantenimiento
-                      </label>
-                    </div>
-
-                    {room.amenities && room.amenities.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {room.amenities.slice(0, 3).map((amenity, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {amenity}
-                          </Badge>
-                        ))}
-                        {room.amenities.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{room.amenities.length - 3} más
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex justify-end gap-2 pt-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setRoomModal({
-                          isOpen: true,
-                          mode: 'edit',
-                          room
-                        })}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDeleteRoom(room.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <RoomModal
-        isOpen={roomModal.isOpen}
-        onClose={() => setRoomModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveRoom}
-        room={roomModal.room}
-        mode={roomModal.mode}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedRoom(undefined);
+          setModalMode('create');
+        }}
+        onSave={modalMode === 'create' ? handleAddRoom : handleUpdateRoom}
+        room={selectedRoom}
+        mode={modalMode}
+        rooms={rooms}
       />
     </div>
   );

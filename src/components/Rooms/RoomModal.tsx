@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ interface RoomModalProps {
   onSave: (room: any) => void;
   room?: Room;
   mode: 'create' | 'edit';
+  rooms?: Room[];
 }
 
 export const RoomModal = ({
@@ -22,7 +22,8 @@ export const RoomModal = ({
   onClose,
   onSave,
   room,
-  mode
+  mode,
+  rooms = []
 }: RoomModalProps) => {
   const [formData, setFormData] = useState({
     number: '',
@@ -55,6 +56,13 @@ export const RoomModal = ({
       });
     }
   }, [room, mode, isOpen]);
+
+  // Calculate how many rooms of the same type will be affected by price changes
+  const sameTypeRoomsCount = rooms.filter(r => 
+    r.type === formData.type && (mode === 'create' || r.id !== room?.id)
+  ).length + 1; // +1 for the current room
+
+  const isPriceChanged = mode === 'edit' && room && parseFloat(formData.price) !== room.price;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,8 +137,18 @@ export const RoomModal = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="col-span-2">
                 <Label htmlFor="price" className="text-sm font-medium">Precio por noche</Label>
+                {mode === 'edit' && sameTypeRoomsCount > 1 && (
+                  <p className="text-xs text-orange-600 mt-1 mb-2 p-2 bg-orange-50 rounded-md border border-orange-200">
+                    ⚠️ Este precio se aplicará a todas las {sameTypeRoomsCount} habitaciones tipo "{formData.type}"
+                  </p>
+                )}
+                {isPriceChanged && (
+                  <p className="text-xs text-blue-600 mt-1 mb-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+                    💡 El precio cambiará de ${room?.price} a ${formData.price} para todas las habitaciones de este tipo
+                  </p>
+                )}
                 <Input
                   id="price"
                   type="number"
@@ -138,7 +156,7 @@ export const RoomModal = ({
                   value={formData.price}
                   onChange={(e) => setFormData({...formData, price: e.target.value})}
                   required
-                  className="mt-1 iphone-input"
+                  className="mt-1 iphone-input col-span-2"
                 />
               </div>
               <div>
