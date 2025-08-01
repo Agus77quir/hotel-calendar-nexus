@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { X } from 'lucide-react';
 import { Room } from '@/types/hotel';
+import { PriceAdjustmentSection } from './PriceAdjustmentSection';
 
 interface RoomModalProps {
   isOpen: boolean;
@@ -59,13 +59,6 @@ export const RoomModal = ({
       });
     }
   }, [room, mode, isOpen]);
-
-  // Calculate how many rooms of the same type will be affected by price changes
-  const sameTypeRoomsCount = rooms.filter(r => 
-    r.type === formData.type && (mode === 'create' || r.id !== room?.id)
-  ).length + 1; // +1 for the current room
-
-  const isPriceChanged = mode === 'edit' && room && parseFloat(formData.price) !== room.price;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,63 +132,26 @@ export const RoomModal = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="price" className="text-sm font-medium">Precio por noche</Label>
-                
-                {/* Checkbox para precio grupal */}
-                {mode === 'edit' && sameTypeRoomsCount > 1 && (
-                  <div className="flex items-center space-x-2 mt-2 mb-3 p-3 bg-blue-50 rounded-md border border-blue-200">
-                    <Checkbox 
-                      id="updateGroupPrice" 
-                      checked={updateGroupPrice}
-                      onCheckedChange={(checked) => setUpdateGroupPrice(checked as boolean)}
-                    />
-                    <Label htmlFor="updateGroupPrice" className="text-sm font-medium text-blue-800">
-                      Actualizar precio para todas las habitaciones tipo "{formData.type}" ({sameTypeRoomsCount} habitaciones)
-                    </Label>
-                  </div>
-                )}
+            <PriceAdjustmentSection
+              formData={formData}
+              rooms={rooms}
+              updateGroupPrice={updateGroupPrice}
+              onPriceChange={(price) => setFormData({...formData, price})}
+              onUpdateGroupPriceChange={setUpdateGroupPrice}
+              mode={mode}
+              room={room}
+            />
 
-                {mode === 'edit' && sameTypeRoomsCount > 1 && updateGroupPrice && (
-                  <p className="text-xs text-orange-600 mt-1 mb-2 p-2 bg-orange-50 rounded-md border border-orange-200">
-                    ⚠️ Este precio se aplicará a todas las {sameTypeRoomsCount} habitaciones tipo "{formData.type}"
-                  </p>
-                )}
-
-                {mode === 'edit' && sameTypeRoomsCount > 1 && !updateGroupPrice && (
-                  <p className="text-xs text-green-600 mt-1 mb-2 p-2 bg-green-50 rounded-md border border-green-200">
-                    ✓ El precio se aplicará solo a esta habitación
-                  </p>
-                )}
-
-                {isPriceChanged && updateGroupPrice && (
-                  <p className="text-xs text-blue-600 mt-1 mb-2 p-2 bg-blue-50 rounded-md border border-blue-200">
-                    💡 El precio cambiará de ${room?.price} a ${formData.price} para todas las habitaciones de este tipo
-                  </p>
-                )}
-
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
-                  required
-                  className="mt-1 iphone-input col-span-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="capacity" className="text-sm font-medium">Capacidad</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-                  required
-                  className="mt-1 iphone-input"
-                />
-              </div>
+            <div>
+              <Label htmlFor="capacity" className="text-sm font-medium">Capacidad</Label>
+              <Input
+                id="capacity"
+                type="number"
+                value={formData.capacity}
+                onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                required
+                className="mt-1 iphone-input"
+              />
             </div>
 
             <div>
