@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -91,6 +90,21 @@ export const RoomModal = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       addAmenity();
+    }
+  };
+
+  const getStatusText = (status: Room['status']) => {
+    switch (status) {
+      case 'available':
+        return 'Disponible';
+      case 'occupied':
+        return 'Ocupada';
+      case 'maintenance':
+        return 'Mantenimiento';
+      case 'cleaning':
+        return 'Limpieza';
+      default:
+        return status;
     }
   };
 

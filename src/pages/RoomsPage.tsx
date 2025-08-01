@@ -34,6 +34,38 @@ const RoomsPage = () => {
     await deleteRoom(id);
   };
 
+  const getStatusText = (status: Room['status']) => {
+    switch (status) {
+      case 'available':
+        return 'Disponible';
+      case 'occupied':
+        return 'Ocupada';
+      case 'maintenance':
+        return 'Mantenimiento';
+      case 'cleaning':
+        return 'Limpieza';
+      default:
+        return status;
+    }
+  };
+
+  const getRoomTypeText = (type: Room['type']) => {
+    switch (type) {
+      case 'matrimonial':
+        return 'Matrimonial';
+      case 'triple-individual':
+        return 'Triple Individual';
+      case 'triple-matrimonial':
+        return 'Triple Matrimonial';
+      case 'doble-individual':
+        return 'Doble Individual';
+      case 'suite-presidencial-doble':
+        return 'Suite Presidencial Doble';
+      default:
+        return type;
+    }
+  };
+
   const filteredRooms = rooms.filter(room => {
     const searchMatch = room.number.toLowerCase().includes(searchTerm.toLowerCase());
     const typeMatch = selectedType === 'all' || room.type === selectedType;
@@ -92,10 +124,10 @@ const RoomsPage = () => {
             {filteredRooms.map(room => (
               <div key={room.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">{room.number}</h2>
-                <p className="text-gray-600">Tipo: {room.type}</p>
+                <p className="text-gray-600">Tipo: {getRoomTypeText(room.type)}</p>
                 <p className="text-gray-600">Precio: ${room.price}</p>
                 <p className="text-gray-600">Capacidad: {room.capacity} personas</p>
-                <p className="text-gray-600">Estado: {room.status}</p>
+                <p className="text-gray-600">Estado: {getStatusText(room.status)}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {room.amenities?.map((amenity, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">{amenity}</Badge>
