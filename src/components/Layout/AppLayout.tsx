@@ -101,7 +101,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     size="sm" 
                     className={`
                       group relative overflow-hidden
-                      ${isIPhone ? 'p-4 min-h-16 min-w-16' : 'p-4 sm:p-5 md:p-6 min-h-14 min-w-14 sm:min-h-16 sm:min-w-16 md:min-h-20 md:min-w-20'} 
+                      ${isIPhone ? 'p-6 min-h-20 min-w-20' : 'p-6 sm:p-7 md:p-8 min-h-16 min-w-16 sm:min-h-20 sm:min-w-20 md:min-h-24 md:min-w-24'} 
                       flex-shrink-0 touch-manipulation
                       bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800
                       hover:from-purple-700 hover:via-pink-600 hover:to-red-600
@@ -113,7 +113,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                       border-3 border-white/40
                       hover:border-white/60 active:border-white/80
                       transition-all duration-300 ease-out
-                      transform hover:scale-110 active:scale-95
+                      transform hover:scale-115 active:scale-100
                       hover:rotate-6 active:rotate-[-6deg]
                       animate-pulse hover:animate-none
                       rounded-2xl
@@ -127,30 +127,31 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     `}
                   >
                     <Menu className={`
-                      ${isIPhone ? 'h-12 w-12' : 'h-8 w-8 sm:h-10 sm:w-10 md:h-16 md:w-16'} 
+                      ${isIPhone ? 'h-16 w-16' : 'h-10 w-10 sm:h-12 sm:w-12 md:h-20 md:w-20'} 
                       drop-shadow-2xl
                       transition-all duration-300 ease-out
                       group-hover:rotate-90 group-active:rotate-180
-                      group-hover:scale-125 group-active:scale-110
-                      filter group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,1.2)]
-                      group-active:drop-shadow-[0_0_25px_rgba(255,255,255,1.5)]
-                      stroke-[4] group-hover:stroke-[5] group-active:stroke-[4.5]
+                      group-hover:scale-130 group-active:scale-115
+                      filter group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,1.5)]
+                      group-active:drop-shadow-[0_0_30px_rgba(255,255,255,1.8)]
+                      stroke-[5] group-hover:stroke-[6] group-active:stroke-[5.5]
                       text-white group-hover:text-yellow-100 group-active:text-green-100
                     `} />
                     
                     {/* Enhanced glow effect */}
-                    <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 rounded-2xl blur-lg opacity-40 group-hover:opacity-80 group-active:opacity-90 transition-opacity duration-300 -z-10 animate-pulse"></div>
+                    <div className="absolute -inset-3 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-90 group-active:opacity-100 transition-opacity duration-300 -z-10 animate-pulse"></div>
                     
                     {/* Secondary glow */}
-                    <div className="absolute -inset-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-50 group-active:opacity-60 transition-opacity duration-300 -z-20"></div>
+                    <div className="absolute -inset-5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-30 group-hover:opacity-60 group-active:opacity-70 transition-opacity duration-300 -z-20"></div>
                     
                     {/* Ripple effect on click */}
-                    <div className="absolute inset-0 bg-white/15 rounded-2xl opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
+                    <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
                     
                     {/* Enhanced sparkle effects */}
-                    <div className="absolute top-1 right-1 h-3 w-3 bg-yellow-300 rounded-full opacity-60 group-hover:opacity-100 group-hover:animate-ping"></div>
-                    <div className="absolute bottom-2 left-2 h-2 w-2 bg-white rounded-full opacity-40 group-hover:opacity-80 group-hover:animate-pulse"></div>
-                    <div className="absolute top-3 left-3 h-1 w-1 bg-cyan-300 rounded-full opacity-50 group-hover:opacity-90 group-hover:animate-bounce"></div>
+                    <div className="absolute top-2 right-2 h-4 w-4 bg-yellow-300 rounded-full opacity-70 group-hover:opacity-100 group-hover:animate-ping"></div>
+                    <div className="absolute bottom-3 left-3 h-3 w-3 bg-white rounded-full opacity-50 group-hover:opacity-90 group-hover:animate-pulse"></div>
+                    <div className="absolute top-4 left-4 h-2 w-2 bg-cyan-300 rounded-full opacity-60 group-hover:opacity-100 group-hover:animate-bounce"></div>
+                    <div className="absolute bottom-1 right-4 h-2 w-2 bg-pink-300 rounded-full opacity-40 group-hover:opacity-80 group-hover:animate-pulse"></div>
                   </Button>
                 </SidebarTrigger>
                 
