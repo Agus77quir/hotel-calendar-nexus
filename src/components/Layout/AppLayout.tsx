@@ -1,4 +1,3 @@
-
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Footer } from './Footer';
@@ -102,52 +101,45 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     size="sm" 
                     className={`
                       group relative overflow-hidden
-                      ${isIPhone ? 'p-6 min-h-16 min-w-16' : 'p-4 sm:p-5 md:p-6 min-h-14 min-w-14 sm:min-h-16 sm:min-w-16 md:min-h-20 md:min-w-20'} 
+                      ${isIPhone ? 'p-4 min-h-14 min-w-14' : 'p-3 sm:p-4 md:p-5 min-h-12 min-w-12 sm:min-h-14 sm:min-w-14 md:min-h-16 md:min-w-16'} 
                       flex-shrink-0 touch-manipulation
-                      bg-gradient-to-br from-violet-500 via-purple-600 via-fuchsia-500 via-pink-500 via-rose-500 to-orange-500
-                      hover:from-cyan-500 hover:via-blue-600 hover:via-violet-600 hover:via-purple-600 hover:to-fuchsia-600
-                      active:from-emerald-500 active:via-teal-600 active:via-cyan-600 active:via-blue-600 active:to-violet-600
-                      text-white font-black text-lg
-                      shadow-2xl shadow-purple-500/60
-                      hover:shadow-[0_0_40px_rgba(168,85,247,0.8),_0_0_80px_rgba(236,72,153,0.6)]
-                      active:shadow-[0_0_60px_rgba(59,130,246,0.9),_0_0_120px_rgba(139,92,246,0.7)]
-                      border-4 border-white/40
-                      hover:border-white/60 active:border-white/80
-                      transition-all duration-500 ease-out
-                      transform hover:scale-125 active:scale-105
-                      hover:rotate-12 active:rotate-[-12deg]
-                      animate-pulse hover:animate-bounce active:animate-spin
+                      bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700
+                      hover:from-purple-600 hover:via-pink-500 hover:to-red-500
+                      active:from-green-500 active:via-cyan-500 active:to-blue-600
+                      text-white font-bold
+                      shadow-xl shadow-blue-500/40
+                      hover:shadow-2xl hover:shadow-purple-500/60
+                      active:shadow-xl active:shadow-green-500/50
+                      border-2 border-white/30
+                      hover:border-white/50 active:border-white/70
+                      transition-all duration-300 ease-out
+                      transform hover:scale-110 active:scale-95
+                      hover:rotate-6 active:rotate-[-6deg]
+                      animate-pulse hover:animate-none
                       before:absolute before:inset-0 
-                      before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent
-                      before:translate-x-[-300%] hover:before:translate-x-[300%]
-                      before:transition-transform before:duration-1000
-                      after:absolute after:inset-0 after:rounded-lg
-                      after:shadow-[inset_0_2px_0_rgba(255,255,255,0.5),_inset_0_-2px_0_rgba(0,0,0,0.2)]
-                      hover:after:shadow-[inset_0_4px_8px_rgba(255,255,255,0.6),_inset_0_-4px_8px_rgba(0,0,0,0.3)]
+                      before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent
+                      before:translate-x-[-100%] hover:before:translate-x-[100%]
+                      before:transition-transform before:duration-700
+                      after:absolute after:inset-0 after:rounded-md
+                      after:shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]
                       backdrop-blur-sm
                     `}
                   >
                     <Menu className={`
-                      ${isIPhone ? 'h-8 w-8' : 'h-6 w-6 sm:h-7 sm:w-7 md:h-10 md:w-10'} 
-                      drop-shadow-2xl
-                      transition-all duration-500 ease-out
-                      group-hover:rotate-180 group-active:rotate-360
-                      group-hover:scale-150 group-active:scale-125
-                      filter group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,1)]
-                      group-active:drop-shadow-[0_0_30px_rgba(255,255,255,1)]
+                      ${isIPhone ? 'h-7 w-7' : 'h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'} 
+                      drop-shadow-lg
+                      transition-all duration-300 ease-out
+                      group-hover:rotate-90 group-active:rotate-180
+                      group-hover:scale-125 group-active:scale-110
+                      filter group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]
+                      group-active:drop-shadow-[0_0_15px_rgba(255,255,255,1)]
                     `} />
                     
-                    {/* Multi-layer glow effect */}
-                    <div className="absolute -inset-2 bg-gradient-conic from-violet-500 via-purple-500 via-fuchsia-500 via-pink-500 to-violet-500 rounded-xl blur-lg opacity-40 group-hover:opacity-80 group-active:opacity-100 transition-opacity duration-500 -z-10 animate-spin"></div>
-                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-lg blur-md opacity-30 group-hover:opacity-60 group-active:opacity-80 transition-opacity duration-300 -z-10"></div>
+                    {/* Enhanced glow effect */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-lg blur opacity-30 group-hover:opacity-60 group-active:opacity-80 transition-opacity duration-300 -z-10 animate-pulse"></div>
                     
-                    {/* Enhanced ripple effect */}
-                    <div className="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
-                    
-                    {/* Sparkle effect */}
-                    <div className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full opacity-60 group-hover:animate-ping"></div>
-                    <div className="absolute bottom-1 left-1 h-1.5 w-1.5 bg-yellow-300 rounded-full opacity-40 group-hover:animate-bounce group-hover:delay-100"></div>
-                    <div className="absolute top-1/2 left-0 h-1 w-1 bg-cyan-300 rounded-full opacity-50 group-hover:animate-pulse group-hover:delay-200"></div>
+                    {/* Ripple effect on click */}
+                    <div className="absolute inset-0 bg-white/10 rounded-md opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
                   </Button>
                 </SidebarTrigger>
                 
