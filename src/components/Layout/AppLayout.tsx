@@ -127,14 +127,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     `}
                   >
                     <Menu className={`
-                      ${isIPhone ? 'h-10 w-10' : 'h-7 w-7 sm:h-8 sm:w-8 md:h-12 md:w-12'} 
+                      ${isIPhone ? 'h-12 w-12' : 'h-8 w-8 sm:h-10 sm:w-10 md:h-16 md:w-16'} 
                       drop-shadow-2xl
                       transition-all duration-300 ease-out
                       group-hover:rotate-90 group-active:rotate-180
                       group-hover:scale-125 group-active:scale-110
-                      filter group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,1)]
-                      group-active:drop-shadow-[0_0_20px_rgba(255,255,255,1.2)]
-                      stroke-[3] group-hover:stroke-[4] group-active:stroke-[3.5]
+                      filter group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,1.2)]
+                      group-active:drop-shadow-[0_0_25px_rgba(255,255,255,1.5)]
+                      stroke-[4] group-hover:stroke-[5] group-active:stroke-[4.5]
                       text-white group-hover:text-yellow-100 group-active:text-green-100
                     `} />
                     
@@ -147,9 +147,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     {/* Ripple effect on click */}
                     <div className="absolute inset-0 bg-white/15 rounded-2xl opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
                     
-                    {/* Sparkle effect */}
-                    <div className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full opacity-60 group-hover:opacity-100 group-hover:animate-ping"></div>
-                    <div className="absolute bottom-2 left-2 h-1 w-1 bg-yellow-300 rounded-full opacity-40 group-hover:opacity-80 group-hover:animate-pulse"></div>
+                    {/* Enhanced sparkle effects */}
+                    <div className="absolute top-1 right-1 h-3 w-3 bg-yellow-300 rounded-full opacity-60 group-hover:opacity-100 group-hover:animate-ping"></div>
+                    <div className="absolute bottom-2 left-2 h-2 w-2 bg-white rounded-full opacity-40 group-hover:opacity-80 group-hover:animate-pulse"></div>
+                    <div className="absolute top-3 left-3 h-1 w-1 bg-cyan-300 rounded-full opacity-50 group-hover:opacity-90 group-hover:animate-bounce"></div>
                   </Button>
                 </SidebarTrigger>
                 
