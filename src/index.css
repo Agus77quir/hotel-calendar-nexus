@@ -1,80 +1,92 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Definition of the design system for the hotel management app */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 217 91.2% 59.8%; /* Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 100% 45%; /* Gold/Brown */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 217 10% 95%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 217 91.2% 90%;
+    --accent-foreground: 217 91.2% 30%;
+
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91.2% 59.8%; /* Blue */
+
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 10.6% 64.9%;
+
+    --sidebar-background: 217 91.2% 15%; /* Dark blue */
+    --sidebar-foreground: 0 0% 100%;
+
+    --sidebar-primary: 30 100% 45%; /* Gold/Brown */
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 217 91.2% 25%; /* Darker blue */
+    --sidebar-accent-foreground: 0 0% 100%;
+
+    --sidebar-border: 217 91.2% 20%;
+    --sidebar-ring: 217 91.2% 59.8%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91.2% 59.8%; /* Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 100% 45%; /* Gold/Brown */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 222.2 47.4% 18%;
+    --muted-foreground: 210 40% 80%;
+
+    --accent: 222.2 47.4% 18%;
+    --accent-foreground: 210 40% 98%;
+
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 94.1%;
-    --sidebar-primary-foreground: 240 5.9% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 10.6% 64.9%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222.2 47.4% 20%;
+    --input: 222.2 47.4% 20%;
+    --ring: 217 91.2% 59.8%; /* Blue */
+
+    --sidebar-background: 217 91.2% 15%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 30 100% 45%; /* Gold/Brown */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91.2% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 91.2% 20%;
+    --sidebar-ring: 217 91.2% 59.8%;
   }
 }
 
@@ -82,12 +94,228 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    /* Enhanced iOS Safari optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Prevent rubber band scrolling on iOS */
+    overscroll-behavior: none;
+    /* Enhanced touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  /* iPhone-specific optimizations */
+  .iphone-optimized * {
+    /* Prevent text selection issues */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Allow selection for inputs and content areas */
+  }
+
+  .iphone-optimized input,
+  .iphone-optimized textarea,
+  .iphone-optimized [contenteditable],
+  .iphone-optimized .selectable-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
   }
 }
 
-/* Custom iPhone optimizations */
+/* Enhanced iPhone Safari scrollbar styles */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Enhanced glass effect for iPhone */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* iPhone-specific enhancements */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* iPhone Safari specific fixes */
+@supports (-webkit-appearance: none) {
+  /* Enhanced form element styling for iPhone */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="search"],
+  textarea,
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+    /* Prevent zoom on focus - iPhone specific */
+    font-size: 16px;
+    /* Enhanced touch targets */
+    min-height: 44px;
+  }
+  
+  button {
+    -webkit-appearance: none;
+    appearance: none;
+    /* Enhanced touch targets for iPhone */
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Enhanced iPhone touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* iPhone-specific button interactions */
+  button, 
+  .cursor-pointer,
+  [role="button"] {
+    cursor: default;
+    /* Enhanced active states for iPhone */
+  }
+  
+  button:active,
+  .cursor-pointer:active,
+  [role="button"]:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
+  }
+  
+  /* Enhanced card interactions for iPhone */
+  .card:active,
+  [role="card"]:active {
+    transform: scale(0.99);
+    transition: all 0.1s ease;
+  }
+}
+
+/* Enhanced iPhone Safari specific optimizations for fixed positioning */
+@supports (-webkit-touch-callout: none) {
+  /* iPhone Safari detection and fixes */
+  .fixed {
+    /* Ensure fixed positioning works correctly on iPhone Safari */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Prevent position shifting on scroll */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Enhanced header positioning for iPhone Safari */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* iPhone-specific optimizations */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Enhanced touch action optimization for better iPhone performance */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Enhanced for iPhone */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Enhanced line clamp utility for iPhone text truncation */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Enhanced smooth scrolling for iPhone */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Enhanced iPhone-specific modal and panel styles */
+@media (max-width: 768px) {
+  .modal-panel,
+  .notification-panel,
+  .drawer-panel {
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* iPhone notch and home indicator support */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mejoradas optimizaciones de tamaño de fuente para iPhone para prevenir zoom */
+@media screen and (max-width: 768px) {
+  input, 
+  textarea, 
+  select,
+  button {
+    font-size: 16px !important;
+    /* Enhanced touch targets */
+    min-height: 44px;
+  }
+  
+  /* Elementos más pequeños obtienen el tamaño apropiado */
+  .text-xs input,
+  .text-sm input,
+  .small-input {
+    font-size: 16px !important; /* Cambio de 14px a 16px para evitar zoom */
+    min-height: 44px; /* Cambio de 40px a 44px */
+  }
+}
+
+/* Enhanced iPhone-specific utility classes */
 .iphone-safe-area {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -96,43 +324,97 @@
 }
 
 .iphone-full-height {
-  height: calc(var(--vh, 1vh) * 100);
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
-.sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
+/* Enhanced iPhone keyboard handling */
 .keyboard-adjust {
+  /* Adjust for iPhone virtual keyboard */
   padding-bottom: env(keyboard-inset-height, 0px);
 }
 
-.smooth-scroll {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+/* Enhanced iPhone-specific animations */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-bounce-gentle {
+    animation: bounce-gentle 1s infinite;
+  }
+  
+  @keyframes bounce-gentle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
 }
 
-/* Enhanced floating animation for particles */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-    opacity: 0.6;
+/* Mejoradas optimizaciones para iPhone en modo landscape */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+  .landscape-optimize {
+    /* Optimizar para modo landscape de iPhone */
+    padding: 4px 8px; /* Reducir padding vertical */
   }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-    opacity: 1;
+  
+  .landscape-hide {
+    display: none;
+  }
+  
+  /* Hacer los elementos más compactos en landscape */
+  .card {
+    margin: 2px 0;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 8px !important;
+  }
+  
+  .space-y-3 > * + * {
+    margin-top: 6px !important;
+  }
+  
+  /* Reducir altura de inputs en landscape */
+  input, button {
+    min-height: 40px !important;
   }
 }
 
-/* Animation delay utilities */
-.animation-delay-1000 {
-  animation-delay: 1s;
+/* Enhanced iPhone-specific component optimizations */
+.iphone-button {
+  /* Optimal button sizing for iPhone */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  /* Enhanced touch feedback */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
-.animation-delay-1500 {
-  animation-delay: 1.5s;
+
+.iphone-input {
+  /* Optimal input styling for iPhone */
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--background));
+  /* Prevent zoom on focus */
+  transform: translateZ(0);
 }
-.animation-delay-2000 {
-  animation-delay: 2s;
+
+.iphone-card {
+  /* Enhanced card styling for iPhone */
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--card));
+  /* Enhanced touch feedback */
+  transition: transform 0.1s ease;
+}
+
+.iphone-card:active {
+  transform: scale(0.99);
 }

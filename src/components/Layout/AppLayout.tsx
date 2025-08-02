@@ -102,66 +102,52 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     size="sm" 
                     className={`
                       group relative overflow-hidden
-                      ${isIPhone ? 'p-8 min-h-20 min-w-20' : 'p-6 sm:p-7 md:p-8 min-h-16 min-w-16 sm:min-h-18 sm:min-w-18 md:min-h-24 md:min-w-24'} 
-                      flex-shrink-0 touch-manipulation rounded-2xl
-                      bg-gradient-to-br from-violet-600 via-purple-700 via-fuchsia-600 via-pink-600 via-rose-600 to-orange-600
-                      hover:from-cyan-600 hover:via-blue-700 hover:via-violet-700 hover:via-purple-700 hover:to-fuchsia-700
-                      active:from-emerald-600 active:via-teal-700 active:via-cyan-700 active:via-blue-700 active:to-violet-700
-                      text-white font-black text-xl
-                      shadow-[0_20px_40px_rgba(168,85,247,0.6),_0_10px_20px_rgba(236,72,153,0.4),_inset_0_1px_0_rgba(255,255,255,0.4)]
-                      hover:shadow-[0_0_60px_rgba(168,85,247,0.9),_0_0_120px_rgba(236,72,153,0.7),_0_30px_60px_rgba(59,130,246,0.5)]
-                      active:shadow-[0_0_80px_rgba(59,130,246,0.95),_0_0_160px_rgba(139,92,246,0.8),_0_40px_80px_rgba(16,185,129,0.6)]
-                      border-4 border-white/60
-                      hover:border-white/80 active:border-white/90
-                      transition-all duration-700 ease-out
-                      transform hover:scale-150 active:scale-125
-                      hover:rotate-[18deg] active:rotate-[-18deg]
-                      animate-[pulse_3s_ease-in-out_infinite] hover:animate-[bounce_0.6s_ease-in-out_infinite] active:animate-[spin_0.8s_ease-in-out_1]
+                      ${isIPhone ? 'p-6 min-h-16 min-w-16' : 'p-4 sm:p-5 md:p-6 min-h-14 min-w-14 sm:min-h-16 sm:min-w-16 md:min-h-20 md:min-w-20'} 
+                      flex-shrink-0 touch-manipulation
+                      bg-gradient-to-br from-violet-500 via-purple-600 via-fuchsia-500 via-pink-500 via-rose-500 to-orange-500
+                      hover:from-cyan-500 hover:via-blue-600 hover:via-violet-600 hover:via-purple-600 hover:to-fuchsia-600
+                      active:from-emerald-500 active:via-teal-600 active:via-cyan-600 active:via-blue-600 active:to-violet-600
+                      text-white font-black text-lg
+                      shadow-2xl shadow-purple-500/60
+                      hover:shadow-[0_0_40px_rgba(168,85,247,0.8),_0_0_80px_rgba(236,72,153,0.6)]
+                      active:shadow-[0_0_60px_rgba(59,130,246,0.9),_0_0_120px_rgba(139,92,246,0.7)]
+                      border-4 border-white/40
+                      hover:border-white/60 active:border-white/80
+                      transition-all duration-500 ease-out
+                      transform hover:scale-125 active:scale-105
+                      hover:rotate-12 active:rotate-[-12deg]
+                      animate-pulse hover:animate-bounce active:animate-spin
                       before:absolute before:inset-0 
-                      before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent
-                      before:translate-x-[-400%] hover:before:translate-x-[400%]
-                      before:transition-transform before:duration-1200 before:ease-out
-                      after:absolute after:inset-0 after:rounded-2xl
-                      after:shadow-[inset_0_4px_8px_rgba(255,255,255,0.6),_inset_0_-4px_8px_rgba(0,0,0,0.2)]
-                      hover:after:shadow-[inset_0_6px_12px_rgba(255,255,255,0.7),_inset_0_-6px_12px_rgba(0,0,0,0.3)]
+                      before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent
+                      before:translate-x-[-300%] hover:before:translate-x-[300%]
+                      before:transition-transform before:duration-1000
+                      after:absolute after:inset-0 after:rounded-lg
+                      after:shadow-[inset_0_2px_0_rgba(255,255,255,0.5),_inset_0_-2px_0_rgba(0,0,0,0.2)]
+                      hover:after:shadow-[inset_0_4px_8px_rgba(255,255,255,0.6),_inset_0_-4px_8px_rgba(0,0,0,0.3)]
                       backdrop-blur-sm
-                      hover:backdrop-blur-md
                     `}
                   >
                     <Menu className={`
-                      ${isIPhone ? 'h-10 w-10' : 'h-8 w-8 sm:h-9 sm:w-9 md:h-12 md:w-12'} 
-                      drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]
-                      transition-all duration-700 ease-out
-                      group-hover:rotate-[360deg] group-active:rotate-[720deg]
-                      group-hover:scale-175 group-active:scale-150
-                      filter group-hover:drop-shadow-[0_0_30px_rgba(255,255,255,1)]
-                      group-active:drop-shadow-[0_0_40px_rgba(255,255,255,1)]
-                      group-hover:brightness-150 group-active:brightness-200
+                      ${isIPhone ? 'h-8 w-8' : 'h-6 w-6 sm:h-7 sm:w-7 md:h-10 md:w-10'} 
+                      drop-shadow-2xl
+                      transition-all duration-500 ease-out
+                      group-hover:rotate-180 group-active:rotate-360
+                      group-hover:scale-150 group-active:scale-125
+                      filter group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,1)]
+                      group-active:drop-shadow-[0_0_30px_rgba(255,255,255,1)]
                     `} />
                     
-                    {/* Enhanced multi-layer glow effects */}
-                    <div className="absolute -inset-4 bg-gradient-conic from-violet-600 via-purple-600 via-fuchsia-600 via-pink-600 to-violet-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-90 group-active:opacity-100 transition-opacity duration-700 -z-10 animate-[spin_8s_linear_infinite]"></div>
-                    <div className="absolute -inset-3 bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 group-active:opacity-90 transition-opacity duration-500 -z-10"></div>
-                    <div className="absolute -inset-2 bg-gradient-to-r from-blue-400 via-violet-500 to-fuchsia-500 rounded-xl blur-md opacity-30 group-hover:opacity-60 group-active:opacity-80 transition-opacity duration-400 -z-10"></div>
+                    {/* Multi-layer glow effect */}
+                    <div className="absolute -inset-2 bg-gradient-conic from-violet-500 via-purple-500 via-fuchsia-500 via-pink-500 to-violet-500 rounded-xl blur-lg opacity-40 group-hover:opacity-80 group-active:opacity-100 transition-opacity duration-500 -z-10 animate-spin"></div>
+                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-lg blur-md opacity-30 group-hover:opacity-60 group-active:opacity-80 transition-opacity duration-300 -z-10"></div>
                     
-                    {/* Enhanced ripple effects */}
-                    <div className="absolute inset-0 bg-white/30 rounded-2xl opacity-0 group-active:opacity-100 group-active:animate-[ping_0.8s_ease-out_1] transition-opacity duration-200"></div>
-                    <div className="absolute inset-2 bg-gradient-to-r from-cyan-300/50 to-pink-300/50 rounded-xl opacity-0 group-active:opacity-100 group-active:animate-[ping_1s_ease-out_1] transition-opacity duration-300"></div>
+                    {/* Enhanced ripple effect */}
+                    <div className="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
                     
-                    {/* Enhanced sparkle effects */}
-                    <div className="absolute top-2 right-2 h-3 w-3 bg-white rounded-full opacity-70 group-hover:animate-[ping_1s_ease-in-out_infinite] group-hover:bg-yellow-300"></div>
-                    <div className="absolute bottom-2 left-2 h-2.5 w-2.5 bg-yellow-300 rounded-full opacity-50 group-hover:animate-[bounce_1s_ease-in-out_infinite] group-hover:delay-150 group-hover:bg-cyan-300"></div>
-                    <div className="absolute top-1/2 left-1 h-2 w-2 bg-cyan-300 rounded-full opacity-60 group-hover:animate-[pulse_1.5s_ease-in-out_infinite] group-hover:delay-300 group-hover:bg-pink-300"></div>
-                    <div className="absolute top-3 left-1/2 h-1.5 w-1.5 bg-pink-300 rounded-full opacity-40 group-hover:animate-[spin_2s_linear_infinite] group-hover:bg-violet-300"></div>
-                    <div className="absolute bottom-3 right-1/3 h-2 w-2 bg-violet-300 rounded-full opacity-50 group-hover:animate-[bounce_1.2s_ease-in-out_infinite] group-hover:delay-500 group-hover:bg-emerald-300"></div>
-                    
-                    {/* Floating particles effect */}
-                    <div className="absolute -inset-6 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                      <div className="absolute top-0 left-1/4 h-1 w-1 bg-white rounded-full animate-[float_3s_ease-in-out_infinite]"></div>
-                      <div className="absolute top-1/4 right-0 h-1.5 w-1.5 bg-cyan-300 rounded-full animate-[float_4s_ease-in-out_infinite] animation-delay-1000"></div>
-                      <div className="absolute bottom-1/4 left-0 h-1 w-1 bg-pink-300 rounded-full animate-[float_3.5s_ease-in-out_infinite] animation-delay-2000"></div>
-                      <div className="absolute bottom-0 right-1/4 h-1.5 w-1.5 bg-violet-300 rounded-full animate-[float_4.5s_ease-in-out_infinite] animation-delay-1500"></div>
-                    </div>
+                    {/* Sparkle effect */}
+                    <div className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full opacity-60 group-hover:animate-ping"></div>
+                    <div className="absolute bottom-1 left-1 h-1.5 w-1.5 bg-yellow-300 rounded-full opacity-40 group-hover:animate-bounce group-hover:delay-100"></div>
+                    <div className="absolute top-1/2 left-0 h-1 w-1 bg-cyan-300 rounded-full opacity-50 group-hover:animate-pulse group-hover:delay-200"></div>
                   </Button>
                 </SidebarTrigger>
                 
