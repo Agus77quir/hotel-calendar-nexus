@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -142,7 +141,7 @@ export const PriceAdjustmentSection = ({
                   max="100"
                   value={percentageValue}
                   onChange={(e) => setPercentageValue(e.target.value)}
-                  placeholder="10.5"
+                  placeholder=""
                   className="mt-1 h-9"
                 />
               </div>

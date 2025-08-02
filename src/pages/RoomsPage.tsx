@@ -80,9 +80,9 @@ const RoomsPage = () => {
           <Button onClick={() => {
             setIsModalOpen(true);
             setModalMode('create');
-          }} className="bg-primary text-white hover:bg-primary/80">
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar Habitación
+          }} className="bg-primary text-white hover:bg-primary/80 px-4 py-3 h-auto min-h-[48px] text-sm md:text-base whitespace-normal text-center leading-tight">
+            <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span>Agregar Habitación</span>
           </Button>
         </div>
 
