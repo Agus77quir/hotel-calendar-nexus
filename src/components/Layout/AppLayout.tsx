@@ -97,8 +97,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <header className={`${isIPhone ? 'h-16 sticky-header' : 'h-14 sm:h-16 md:h-20'} flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-3 md:px-6 shadow-lg touch-manipulation`}>
               <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
                 <SidebarTrigger>
-                  <Button variant="ghost" size="sm" className={`${isIPhone ? 'p-3 min-h-14 min-w-14' : 'p-2 sm:p-3 md:p-4 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16'} flex-shrink-0 touch-manipulation bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 hover:from-purple-600 hover:via-blue-600 hover:to-cyan-600 border-3 border-white/30 hover:border-white/50 shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 transform hover:scale-125 active:scale-110 rounded-xl animate-pulse hover:animate-bounce`}>
-                    <Menu className={`${isIPhone ? 'h-7 w-7' : 'h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'} text-white drop-shadow-2xl filter brightness-110 transition-all duration-300 hover:rotate-180`} />
+                  <Button variant="ghost" size="sm" className={`${isIPhone ? 'p-2 min-h-11 min-w-11' : 'p-1 sm:p-2 md:p-3'} flex-shrink-0 touch-manipulation bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-2 border-blue-400 hover:border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95`}>
+                    <Menu className={`${isIPhone ? 'h-6 w-6' : 'h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6'} text-white drop-shadow-md animate-pulse hover:animate-none transition-all duration-300`} />
                   </Button>
                 </SidebarTrigger>
                 <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 overflow-hidden flex-1">
