@@ -8,6 +8,7 @@ import { Room } from '@/types/hotel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 
 const RoomsPage = () => {
   const { rooms, addRoom, updateRoom, deleteRoom, isLoading } = useHotelData();
@@ -74,15 +75,23 @@ const RoomsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-800">Habitaciones</h1>
-        <Button onClick={() => {
-          setIsModalOpen(true);
-          setModalMode('create');
-        }} className="bg-primary text-white hover:bg-primary/80 px-4 py-3 h-auto min-h-[48px] text-sm md:text-base whitespace-normal text-center leading-tight">
-          <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
-          <span>Agregar Habitación</span>
-        </Button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Habitaciones</h1>
+          <p className="text-muted-foreground">
+            Gestión completa de habitaciones del hotel
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <BackToHomeButton />
+          <Button onClick={() => {
+            setIsModalOpen(true);
+            setModalMode('create');
+          }} className="bg-primary text-white hover:bg-primary/80 px-4 py-3 h-auto min-h-[48px] text-sm md:text-base whitespace-normal text-center leading-tight">
+            <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span>Agregar Habitación</span>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex items-center space-x-4">
