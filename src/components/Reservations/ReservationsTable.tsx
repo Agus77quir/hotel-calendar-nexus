@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   Table,
@@ -43,6 +42,7 @@ interface ReservationsTableProps {
   onDelete: (id: string) => void;
   onNewReservationForGuest: (guestId: string) => void;
   onStatusChange: (reservationId: string, newStatus: Reservation['status']) => void;
+  onSaveGuest: (guestData: any) => void;
 }
 
 export const ReservationsTable = ({
@@ -53,6 +53,7 @@ export const ReservationsTable = ({
   onDelete,
   onNewReservationForGuest,
   onStatusChange,
+  onSaveGuest,
 }: ReservationsTableProps) => {
   const [viewModal, setViewModal] = useState<{
     isOpen: boolean;
@@ -120,9 +121,12 @@ export const ReservationsTable = ({
   };
 
   const handleSaveGuest = async (guestData: any) => {
-    // This will be handled by the parent component
-    setGuestModal({ isOpen: false });
-    // You might want to add a callback here to refresh the guest data
+    try {
+      await onSaveGuest(guestData);
+      setGuestModal({ isOpen: false });
+    } catch (error) {
+      console.error('Error saving guest:', error);
+    }
   };
 
   if (reservations.length === 0) {
