@@ -108,7 +108,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pb-2">
+        <CardContent className="pb-4">
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
@@ -193,31 +193,28 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 <p className="text-red-500 text-xs mt-1">{errors.document}</p>
               )}
             </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium order-2 sm:order-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium bg-primary hover:bg-primary/90 order-1 sm:order-2"
+              >
+                {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
-
-      {/* Botones posicionados más alto para iPhone */}
-      <div className="w-full bg-white border-t border-gray-200 p-3 sticky bottom-8 z-50 shadow-lg rounded-lg">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end max-w-full">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium order-2 sm:order-1"
-          >
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium bg-primary hover:bg-primary/90 order-1 sm:order-2"
-          >
-            {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
