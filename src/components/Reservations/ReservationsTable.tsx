@@ -79,8 +79,10 @@ export const ReservationsTable = ({
   };
 
   const handleView = (reservation: Reservation) => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
+    if (!reservation?.id) return;
+    
+    const guest = guests.find(g => g?.id === reservation.guest_id);
+    const room = rooms.find(r => r?.id === reservation.room_id);
     
     if (guest && room) {
       setViewModal({
@@ -93,7 +95,7 @@ export const ReservationsTable = ({
   };
 
   const handleGuestUpdate = async (updatedGuestData: any) => {
-    if (onGuestUpdate && viewModal.guest) {
+    if (onGuestUpdate && viewModal.guest?.id) {
       const updatedGuest = await onGuestUpdate(viewModal.guest.id, updatedGuestData);
       
       // Update the modal state with the updated guest
@@ -106,6 +108,8 @@ export const ReservationsTable = ({
 
   const getStatusActions = (reservation: Reservation) => {
     const actions = [];
+    
+    if (!reservation?.status) return actions;
     
     switch (reservation.status) {
       case 'confirmed':
@@ -136,7 +140,12 @@ export const ReservationsTable = ({
     return actions;
   };
 
-  if (reservations.length === 0) {
+  // Filter out any null/undefined reservations
+  const validReservations = reservations.filter(reservation => 
+    reservation && reservation.id
+  );
+
+  if (validReservations.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -176,9 +185,11 @@ export const ReservationsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservations.map((reservation) => {
-              const guest = guests.find(g => g.id === reservation.guest_id);
-              const room = rooms.find(r => r.id === reservation.room_id);
+            {validReservations.map((reservation) => {
+              if (!reservation?.id) return null;
+              
+              const guest = guests.find(g => g?.id === reservation.guest_id);
+              const room = rooms.find(r => r?.id === reservation.room_id);
               const statusActions = getStatusActions(reservation);
 
               return (
@@ -187,10 +198,10 @@ export const ReservationsTable = ({
                     {guest ? (
                       <div className="space-y-1">
                         <div className="font-medium">
-                          {guest.first_name} {guest.last_name}
+                          {guest.first_name || ''} {guest.last_name || ''}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {guest.email || guest.phone}
+                          {guest.email || guest.phone || ''}
                         </div>
                       </div>
                     ) : (
@@ -200,9 +211,9 @@ export const ReservationsTable = ({
                   <TableCell>
                     {room ? (
                       <div className="space-y-1">
-                        <div className="font-medium">#{room.number}</div>
+                        <div className="font-medium">#{room.number || ''}</div>
                         <div className="text-sm text-muted-foreground capitalize">
-                          {room.type.replace('-', ' ')}
+                          {room.type?.replace('-', ' ') || ''}
                         </div>
                       </div>
                     ) : (
@@ -211,21 +222,25 @@ export const ReservationsTable = ({
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div className="text-sm">
-                        <span className="text-green-600">Entrada: </span>
-                        {format(new Date(reservation.check_in), 'dd/MM/yy', { locale: es })}
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-red-600">Salida: </span>
-                        {format(new Date(reservation.check_out), 'dd/MM/yy', { locale: es })}
-                      </div>
+                      {reservation.check_in && (
+                        <div className="text-sm">
+                          <span className="text-green-600">Entrada: </span>
+                          {format(new Date(reservation.check_in), 'dd/MM/yy', { locale: es })}
+                        </div>
+                      )}
+                      {reservation.check_out && (
+                        <div className="text-sm">
+                          <span className="text-red-600">Salida: </span>
+                          {format(new Date(reservation.check_out), 'dd/MM/yy', { locale: es })}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {reservation.guests_count}
+                    {reservation.guests_count || 0}
                   </TableCell>
                   <TableCell className="font-medium text-green-600">
-                    ${Number(reservation.total_amount).toFixed(2)}
+                    ${Number(reservation.total_amount || 0).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(reservation.status)}
@@ -262,7 +277,7 @@ export const ReservationsTable = ({
                               className="flex items-center gap-2"
                             >
                               <UserPlus className="h-4 w-4" />
-                              Nueva Reserva para {guest.first_name}
+                              Nueva Reserva para {guest.first_name || 'Huésped'}
                             </DropdownMenuItem>
                           )}
                           
@@ -290,20 +305,22 @@ export const ReservationsTable = ({
                   </TableCell>
                 </TableRow>
               );
-            })}
+            }).filter(Boolean)}
           </TableBody>
         </Table>
       </div>
 
       {/* View Modal */}
-      <ReservationViewModal
-        isOpen={viewModal.isOpen}
-        onClose={() => setViewModal({ isOpen: false })}
-        reservation={viewModal.reservation!}
-        guest={viewModal.guest!}
-        room={viewModal.room!}
-        onGuestUpdate={handleGuestUpdate}
-      />
+      {viewModal.isOpen && viewModal.reservation && viewModal.guest && viewModal.room && (
+        <ReservationViewModal
+          isOpen={viewModal.isOpen}
+          onClose={() => setViewModal({ isOpen: false })}
+          reservation={viewModal.reservation}
+          guest={viewModal.guest}
+          room={viewModal.room}
+          onGuestUpdate={handleGuestUpdate}
+        />
+      )}
     </>
   );
 };
