@@ -37,9 +37,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
     }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Removed email validation - now optional
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido';
     }
     if (!formData.phone.trim()) {
@@ -141,7 +140,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </div>
 
             <div>
-              <Label htmlFor="email" className="text-sm">Email *</Label>
+              <Label htmlFor="email" className="text-sm">Email</Label>
               <Input
                 id="email"
                 type="email"
