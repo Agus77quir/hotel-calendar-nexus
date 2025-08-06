@@ -73,6 +73,11 @@ export const ReservationViewModal = ({
     }
   };
 
+  const handleEditClick = () => {
+    console.log('Edit button clicked, guest data:', guest);
+    setIsEditingGuest(true);
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -96,7 +101,7 @@ export const ReservationViewModal = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingGuest(true)}
+                    onClick={handleEditClick}
                     className="flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
@@ -235,13 +240,15 @@ export const ReservationViewModal = ({
       </Dialog>
 
       {/* Modal para editar huésped */}
-      <GuestModal
-        isOpen={isEditingGuest}
-        onClose={() => setIsEditingGuest(false)}
-        onSave={handleUpdateGuest}
-        guest={guest}
-        mode="edit"
-      />
+      {isEditingGuest && (
+        <GuestModal
+          isOpen={isEditingGuest}
+          onClose={() => setIsEditingGuest(false)}
+          onSave={handleUpdateGuest}
+          guest={guest}
+          mode="edit"
+        />
+      )}
     </>
   );
 };
