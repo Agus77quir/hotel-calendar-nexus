@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const ReservationsPage = () => {
   // Real-time updates are handled automatically in useHotelData
-  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
+  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, updateGuest, isLoading } = useHotelData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
@@ -38,7 +39,7 @@ const ReservationsPage = () => {
     const matchesSearch = (
       guest?.first_name.toLowerCase().includes(searchLower) ||
       guest?.last_name.toLowerCase().includes(searchLower) ||
-      guest?.email.toLowerCase().includes(searchLower) ||
+      guest?.email?.toLowerCase().includes(searchLower) ||
       room?.number.includes(searchLower) ||
       reservation.id.includes(searchLower)
     );

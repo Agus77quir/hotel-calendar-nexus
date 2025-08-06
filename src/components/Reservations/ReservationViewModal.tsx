@@ -1,15 +1,11 @@
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, MapPin, DollarSign, FileText, Users } from 'lucide-react';
-import { Reservation, Guest, Room } from '@/types/hotel';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Room, Guest, Reservation } from '@/types/hotel';
+import { CalendarDays, User, MapPin, Phone, Mail, CreditCard, Users, Clock, DollarSign, MessageSquare, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -19,6 +15,7 @@ interface ReservationViewModalProps {
   reservation: Reservation;
   guest: Guest;
   room: Room;
+  onEditGuest: (guest: Guest) => void;
 }
 
 export const ReservationViewModal = ({
@@ -26,169 +23,227 @@ export const ReservationViewModal = ({
   onClose,
   reservation,
   guest,
-  room
+  room,
+  onEditGuest
 }: ReservationViewModalProps) => {
-  const getStatusBadge = (status: Reservation['status']) => {
-    switch (status) {
-      case 'confirmed':
-        return <Badge variant="default">Confirmada</Badge>;
-      case 'checked-in':
-        return <Badge className="bg-green-500">Registrado</Badge>;
-      case 'checked-out':
-        return <Badge variant="secondary">Check-out</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive">Cancelada</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const formatDate = (dateStr: string) => {
+    return format(new Date(dateStr), 'dd \'de\' MMMM \'de\' yyyy', { locale: es });
+  };
+
+  const statusColors = {
+    'confirmed': 'bg-blue-100 text-blue-800 border-blue-200',
+    'checked-in': 'bg-green-100 text-green-800 border-green-200',
+    'checked-out': 'bg-gray-100 text-gray-800 border-gray-200',
+    'cancelled': 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  const statusLabels = {
+    'confirmed': 'Confirmada',
+    'checked-in': 'Check-in',
+    'checked-out': 'Check-out',
+    'cancelled': 'Cancelada'
+  };
+
+  const roomTypeLabels = {
+    'matrimonial': 'Matrimonial',
+    'triple-individual': 'Triple Individual',
+    'triple-matrimonial': 'Triple Matrimonial',
+    'doble-individual': 'Doble Individual',
+    'suite-presidencial-doble': 'Suite Presidencial Doble'
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Detalles de Reserva #{reservation.id.slice(0, 8)}</span>
-            {getStatusBadge(reservation.status)}
+          <DialogTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-blue-600" />
+            Detalles de la Reserva #{reservation.id}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Información del Huésped */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5 text-purple-600" />
-                Información del Huésped
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nombre Completo</p>
-                  <p className="font-medium">{guest.first_name} {guest.last_name}</p>
+        <ScrollArea className="max-h-[calc(90vh-8rem)] pr-4">
+          <div className="space-y-6">
+            {/* Estado de la reserva */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-muted-foreground">Estado</h3>
+              <Badge className={statusColors[reservation.status]}>
+                {statusLabels[reservation.status]}
+              </Badge>
+            </div>
+
+            <Separator />
+
+            {/* Información del huésped */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-medium">
+                  <User className="h-4 w-4 text-blue-600" />
+                  Información del Huésped
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEditGuest(guest)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-3 w-3" />
+                  Editar
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <div>
+                    <span className="font-medium">Nombre:</span>
+                    <p className="text-muted-foreground">{guest.first_name} {guest.last_name}</p>
+                  </div>
+                  
+                  {guest.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{guest.email}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{guest.phone}</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{guest.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Teléfono</p>
-                  <p className="font-medium">{guest.phone}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Documento</p>
-                  <p className="font-medium">{guest.document}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-muted-foreground">Estado</p>
-                  {guest.is_associated ? (
-                    <Badge variant="outline" className="text-green-600">
-                      Huésped Asociado
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline">Huésped Regular</Badge>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <span>Doc: {guest.document}</span>
+                  </div>
+                  
+                  {guest.is_associated && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Huésped Asociado
+                      </Badge>
+                      {guest.discount_percentage > 0 && (
+                        <span className="text-sm text-green-600">
+                          {guest.discount_percentage}% descuento
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Información de la Habitación */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-5 w-5 text-green-600" />
+            <Separator />
+
+            {/* Información de la habitación */}
+            <div className="space-y-4">
+              <h3 className="flex items-center gap-2 font-medium">
+                <MapPin className="h-4 w-4 text-blue-600" />
                 Información de la Habitación
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Número</p>
-                  <p className="font-medium">#{room.number}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipo</p>
-                  <p className="font-medium capitalize">{room.type.replace('-', ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Capacidad</p>
-                  <p className="font-medium">{room.capacity} personas</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Precio por Noche</p>
-                  <p className="font-medium">${Number(room.price).toFixed(2)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Información de la Reserva */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                Información de la Reserva
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Check-in</p>
-                  <p className="font-medium">
-                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Check-out</p>
-                  <p className="font-medium">
-                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Número de Huéspedes</p>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <p className="font-medium">{reservation.guests_count}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <p className="font-medium text-lg">${Number(reservation.total_amount).toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {reservation.special_requests && (
-                <>
-                  <Separator />
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
                   <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Solicitudes Especiales
-                    </p>
-                    <p className="font-medium mt-1 p-3 bg-muted rounded-md">
-                      {reservation.special_requests}
-                    </p>
+                    <span className="font-medium">Habitación:</span>
+                    <p className="text-muted-foreground">#{room.number}</p>
                   </div>
-                </>
-              )}
-
-              <Separator />
-              <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                <div>
-                  <p>Creada el: {format(new Date(reservation.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+                  
+                  <div>
+                    <span className="font-medium">Tipo:</span>
+                    <p className="text-muted-foreground">{roomTypeLabels[room.type]}</p>
+                  </div>
                 </div>
-                <div>
-                  <p>Actualizada el: {format(new Date(reservation.updated_at), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span>Capacidad: {room.capacity} personas</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span>Precio: ${room.price}</span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              
+              {room.amenities && room.amenities.length > 0 && (
+                <div>
+                  <span className="font-medium">Servicios:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {room.amenities.map((amenity, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {amenity}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Detalles de la reserva */}
+            <div className="space-y-4">
+              <h3 className="flex items-center gap-2 font-medium">
+                <CalendarDays className="h-4 w-4 text-blue-600" />
+                Detalles de la Reserva
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <div>
+                    <span className="font-medium">Check-in:</span>
+                    <p className="text-muted-foreground">{formatDate(reservation.check_in)}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium">Check-out:</span>
+                    <p className="text-muted-foreground">{formatDate(reservation.check_out)}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span>Huéspedes: {reservation.guests_count}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-lg">Total: ${reservation.total_amount}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>Creada: {format(new Date(reservation.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                {reservation.created_by && (
+                  <span>por {reservation.created_by}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Solicitudes especiales */}
+            {reservation.special_requests && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="flex items-center gap-2 font-medium">
+                    <MessageSquare className="h-4 w-4 text-blue-600" />
+                    Solicitudes Especiales
+                  </h3>
+                  <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-lg">
+                    {reservation.special_requests}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
