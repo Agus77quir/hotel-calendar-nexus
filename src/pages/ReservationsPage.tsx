@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
@@ -30,24 +31,22 @@ const ReservationsPage = () => {
   });
 
   const filteredReservations = reservations.filter(reservation => {
-    if (!reservation) return false;
-    
-    const guest = guests.find(g => g?.id === reservation.guest_id);
-    const room = rooms.find(r => r?.id === reservation.room_id);
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
-    // Text search filter - add comprehensive null checks
-    const matchesSearch = !searchTerm || (
+    // Text search filter - add null checks before calling toLowerCase()
+    const matchesSearch = (
       (guest?.first_name && guest.first_name.toLowerCase().includes(searchLower)) ||
       (guest?.last_name && guest.last_name.toLowerCase().includes(searchLower)) ||
       (guest?.email && guest.email.toLowerCase().includes(searchLower)) ||
-      (room?.number && room.number.toLowerCase().includes(searchLower)) ||
-      (reservation?.id && reservation.id.includes(searchLower))
+      (room?.number && room.number.includes(searchLower)) ||
+      reservation.id.includes(searchLower)
     );
 
     // Date filter
     let matchesDate = true;
-    if (dateFilters.dateFrom && dateFilters.dateTo && reservation.check_in && reservation.check_out) {
+    if (dateFilters.dateFrom && dateFilters.dateTo) {
       const checkIn = reservation.check_in;
       const checkOut = reservation.check_out;
       matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
@@ -91,8 +90,8 @@ const ReservationsPage = () => {
   };
 
   const handleDeleteReservation = async (id: string) => {
-    const reservation = reservations.find(r => r?.id === id);
-    const guest = reservation ? guests.find(g => g?.id === reservation.guest_id) : null;
+    const reservation = reservations.find(r => r.id === id);
+    const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
     
     const confirmMessage = guest 
       ? `¿Estás seguro de que quieres eliminar la reserva de ${guest.first_name} ${guest.last_name}?`
@@ -140,7 +139,7 @@ const ReservationsPage = () => {
   };
 
   const handleNewReservationForGuest = (guestId: string) => {
-    const guest = guests.find(g => g?.id === guestId);
+    const guest = guests.find(g => g.id === guestId);
     if (guest) {
       toast({
         title: "Nueva reserva",
