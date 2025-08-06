@@ -6,7 +6,7 @@ import { ReservationFilters } from '@/components/Reservations/ReservationFilters
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
-import { Reservation } from '@/types/hotel';
+import { Reservation, Guest } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
 const ReservationsPage = () => {
