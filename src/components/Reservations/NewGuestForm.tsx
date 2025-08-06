@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,14 +37,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
     }
-    // Email is completely optional - no validation needed
-    // Only validate email format if user actually entered something
-    const emailValue = formData.email.trim();
-    if (emailValue && emailValue.length > 0) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-        newErrors.email = 'Formato de email inválido';
-      }
-    }
+    // Email is completely optional - NO validation whatsoever
     if (!formData.phone.trim()) {
       newErrors.phone = 'Teléfono es requerido';
     }
@@ -67,7 +61,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
-        email: formData.email.trim(), // Just send the trimmed email, empty or not
+        email: formData.email || '', // Send empty string if no email provided
         is_associated: false,
         discount_percentage: 0
       };
@@ -147,17 +141,14 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
               <Label htmlFor="email" className="text-sm">Email (opcional)</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isSubmitting}
                 placeholder="Opcional - puede dejarse en blanco"
-                className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                className="h-11 sm:h-10 text-base touch-manipulation"
                 style={{ fontSize: '16px' }}
               />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
             </div>
 
             <div>
