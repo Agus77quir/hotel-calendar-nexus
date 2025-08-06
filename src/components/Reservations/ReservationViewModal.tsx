@@ -54,18 +54,40 @@ export const ReservationViewModal = ({
   };
 
   const handleEditGuest = () => {
+    console.log('Opening guest edit modal with data:', guest);
+    
+    // Ensure all required fields are present with defaults for optional fields
+    const guestWithDefaults = {
+      ...guest,
+      nationality: guest.nationality || '',
+      email: guest.email || ''
+    };
+    
     setGuestModal({
       isOpen: true,
-      guest: guest,
+      guest: guestWithDefaults,
       mode: 'edit'
     });
   };
 
   const handleSaveGuest = async (updatedGuestData: any) => {
+    console.log('Saving guest data:', updatedGuestData);
+    
     if (onUpdateGuest && guest) {
-      await onUpdateGuest({ ...guest, ...updatedGuestData });
-      setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' });
+      try {
+        const updatedGuest = { ...guest, ...updatedGuestData };
+        await onUpdateGuest(updatedGuest);
+        setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' });
+        console.log('Guest updated successfully');
+      } catch (error) {
+        console.error('Error updating guest:', error);
+        throw error; // Let the GuestModal handle the error display
+      }
     }
+  };
+
+  const handleCloseGuestModal = () => {
+    setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' });
   };
 
   return (
@@ -119,6 +141,12 @@ export const ReservationViewModal = ({
                     <p className="text-sm text-muted-foreground">Documento</p>
                     <p className="font-medium">{guest.document}</p>
                   </div>
+                  {guest.nationality && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nacionalidad</p>
+                      <p className="font-medium">{guest.nationality}</p>
+                    </div>
+                  )}
                   <div className="col-span-2">
                     <p className="text-sm text-muted-foreground">Estado</p>
                     {guest.is_associated ? (
@@ -234,7 +262,7 @@ export const ReservationViewModal = ({
       {/* Guest Edit Modal */}
       <GuestModal
         isOpen={guestModal.isOpen}
-        onClose={() => setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' })}
+        onClose={handleCloseGuestModal}
         onSave={handleSaveGuest}
         guest={guestModal.guest}
         mode={guestModal.mode}
