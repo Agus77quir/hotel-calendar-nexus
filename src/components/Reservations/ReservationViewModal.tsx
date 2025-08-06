@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,7 @@ export const ReservationViewModal = ({
                   <p className="text-sm text-muted-foreground">Documento</p>
                   <p className="font-medium">{guest.document}</p>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <p className="text-sm text-muted-foreground">Estado</p>
                   {guest.is_associated ? (
                     <Badge variant="outline" className="text-green-600">
