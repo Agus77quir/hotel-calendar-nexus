@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -80,11 +81,7 @@ export const GuestModal = ({
       console.error('Validation error: Apellido requerido');
       return false;
     }
-    if (!formData.email.trim()) {
-      console.error('Validation error: Email requerido');
-      return false;
-    }
-    if (!validateEmail(formData.email)) {
+    if (formData.email && !validateEmail(formData.email)) {
       setEmailError('Por favor ingrese un email válido');
       console.error('Validation error: Email inválido');
       return false;
@@ -93,14 +90,12 @@ export const GuestModal = ({
       console.error('Validation error: Teléfono requerido');
       return false;
     }
-    if (!formData.document.trim()) {
-      console.error('Validation error: Documento requerido');
+    // Document is not required for updates, only for creation
+    if (mode === 'create' && !formData.document.trim()) {
+      console.error('Validation error: Documento requerido para nuevos huéspedes');
       return false;
     }
-    if (!formData.nationality.trim()) {
-      console.error('Validation error: Nacionalidad requerida');
-      return false;
-    }
+    
     console.log('Form validation passed');
     return true;
   };
@@ -119,8 +114,10 @@ export const GuestModal = ({
     try {
       const guestPayload = {
         ...formData,
-        is_associated: false,
-        discount_percentage: 0
+        email: formData.email || null, // Convert empty string to null for database
+        nationality: formData.nationality || null,
+        is_associated: guest?.is_associated || false,
+        discount_percentage: guest?.discount_percentage || 0
       };
       
       console.log('Attempting to save guest with data:', guestPayload);
@@ -174,15 +171,15 @@ export const GuestModal = ({
           </div>
 
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={handleEmailChange}
-              required
               disabled={isSubmitting}
               className={emailError ? 'border-red-500' : ''}
+              placeholder="ejemplo@correo.com (opcional)"
             />
             {emailError && (
               <p className="text-red-500 text-sm mt-1">{emailError}</p>
@@ -204,7 +201,9 @@ export const GuestModal = ({
           </div>
 
           <div>
-            <Label htmlFor="document">Documento *</Label>
+            <Label htmlFor="document">
+              Documento {mode === 'create' ? '*' : '(opcional)'}
+            </Label>
             <Input
               id="document"
               type="tel"
@@ -212,19 +211,20 @@ export const GuestModal = ({
               pattern="[0-9]*"
               value={formData.document}
               onChange={(e) => setFormData({...formData, document: e.target.value})}
-              required
+              required={mode === 'create'}
               disabled={isSubmitting}
+              placeholder={mode === 'edit' ? 'Opcional al editar' : ''}
             />
           </div>
 
           <div>
-            <Label htmlFor="nationality">Nacionalidad *</Label>
+            <Label htmlFor="nationality">Nacionalidad</Label>
             <Input
               id="nationality"
               value={formData.nationality}
               onChange={(e) => setFormData({...formData, nationality: e.target.value})}
-              required
               disabled={isSubmitting}
+              placeholder="Opcional"
             />
           </div>
 
