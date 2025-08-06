@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,34 +30,45 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
+    console.log('🔍 Validating form with data:', formData);
     const newErrors: Record<string, string> = {};
     
     if (!formData.first_name.trim()) {
       newErrors.first_name = 'Nombre es requerido';
+      console.log('❌ Validation error: first_name is required');
     }
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
+      console.log('❌ Validation error: last_name is required');
     }
     // Email is completely optional - NO validation whatsoever
+    console.log('✅ Email validation skipped - field is optional');
+    
     if (!formData.phone.trim()) {
       newErrors.phone = 'Teléfono es requerido';
+      console.log('❌ Validation error: phone is required');
     }
     if (!formData.document.trim()) {
       newErrors.document = 'Documento es requerido';
+      console.log('❌ Validation error: document is required');
     }
 
+    console.log('🔍 Validation result - errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting guest creation process from NewGuestForm');
+    console.log('🚀 Starting guest creation process from NewGuestForm');
+    console.log('📝 Form data before validation:', formData);
     
     if (!validateForm()) {
-      console.error('Form validation failed');
+      console.error('❌ Form validation failed - stopping submission');
       return;
     }
+    
+    console.log('✅ Form validation passed - proceeding with guest creation');
     
     try {
       const guestPayload = {
@@ -66,18 +78,28 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
         discount_percentage: 0
       };
       
-      console.log('Attempting to create guest with data:', guestPayload);
+      console.log('📦 Guest payload prepared:', guestPayload);
+      console.log('🔄 Calling onSave function...');
+      
       await onSave(guestPayload);
-      console.log('Guest created successfully from NewGuestForm');
+      
+      console.log('✅ Guest created successfully from NewGuestForm');
     } catch (error) {
-      console.error('Error creating guest from NewGuestForm:', error);
+      console.error('💥 Error creating guest from NewGuestForm:', error);
+      console.error('💥 Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       throw error;
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
+    console.log(`📝 Input changed: ${field} = "${value}"`);
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
+      console.log(`🔧 Clearing error for field: ${field}`);
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
