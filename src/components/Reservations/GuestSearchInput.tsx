@@ -29,7 +29,7 @@ export const GuestSearchInput = ({
   const [filteredGuests, setFilteredGuests] = useState<Guest[]>([]);
 
   // Get selected guest for display
-  const selectedGuest = guests.find(g => g?.id === selectedGuestId);
+  const selectedGuest = guests.find(g => g.id === selectedGuestId);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -39,9 +39,8 @@ export const GuestSearchInput = ({
 
     const searchLower = searchTerm.toLowerCase();
     
-    // Search by guest name with null checks
+    // Search by guest name
     const guestMatches = guests.filter(guest => {
-      if (!guest?.first_name || !guest?.last_name) return false;
       return (
         guest.first_name.toLowerCase().includes(searchLower) ||
         guest.last_name.toLowerCase().includes(searchLower) ||
@@ -51,30 +50,27 @@ export const GuestSearchInput = ({
 
     // Search by room number (find guests with current reservations in matching rooms)
     const roomMatches = rooms
-      .filter(room => room?.number?.toLowerCase().includes(searchLower))
+      .filter(room => room.number.toLowerCase().includes(searchLower))
       .map(room => {
-        if (!room?.id) return null;
         // Find current reservation for this room
         const currentReservation = reservations.find(r => 
-          r?.room_id === room.id && 
-          (r?.status === 'confirmed' || r?.status === 'checked-in')
+          r.room_id === room.id && 
+          (r.status === 'confirmed' || r.status === 'checked-in')
         );
-        if (!currentReservation?.guest_id) return null;
-        return guests.find(g => g?.id === currentReservation.guest_id);
+        return currentReservation ? guests.find(g => g.id === currentReservation.guest_id) : null;
       })
       .filter(Boolean) as Guest[];
 
     // Combine results and remove duplicates
     const allMatches = [...guestMatches, ...roomMatches];
     const uniqueGuests = allMatches.filter((guest, index, self) => 
-      guest && index === self.findIndex(g => g?.id === guest.id)
+      index === self.findIndex(g => g.id === guest.id)
     );
 
     setFilteredGuests(uniqueGuests.slice(0, 8)); // Limit to 8 results
   }, [searchTerm, guests, rooms, reservations]);
 
   const handleGuestSelect = (guest: Guest) => {
-    if (!guest?.id) return;
     onGuestSelect(guest.id);
     setSearchTerm('');
     setIsOpen(false);
@@ -86,13 +82,12 @@ export const GuestSearchInput = ({
   };
 
   const getCurrentRoomForGuest = (guestId: string) => {
-    if (!guestId) return null;
     const currentReservation = reservations.find(r => 
-      r?.guest_id === guestId && 
-      (r?.status === 'confirmed' || r?.status === 'checked-in')
+      r.guest_id === guestId && 
+      (r.status === 'confirmed' || r.status === 'checked-in')
     );
-    if (currentReservation?.room_id) {
-      return rooms.find(r => r?.id === currentReservation.room_id);
+    if (currentReservation) {
+      return rooms.find(r => r.id === currentReservation.room_id);
     }
     return null;
   };
@@ -152,7 +147,6 @@ export const GuestSearchInput = ({
                   ) : (
                     <div className="space-y-1 p-2">
                       {filteredGuests.map((guest) => {
-                        if (!guest?.id) return null;
                         const currentRoom = getCurrentRoomForGuest(guest.id);
                         return (
                           <div
@@ -167,7 +161,7 @@ export const GuestSearchInput = ({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium truncate">
-                                    {guest.first_name || ''} {guest.last_name || ''}
+                                    {guest.first_name} {guest.last_name}
                                   </span>
                                   {guest.is_associated && (
                                     <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-200">
@@ -176,18 +170,18 @@ export const GuestSearchInput = ({
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground truncate">
-                                  {guest.email || ''}
+                                  {guest.email}
                                 </div>
                                 {currentRoom && (
                                   <div className="text-xs text-blue-600 font-medium">
-                                    Habitación #{currentRoom.number || ''}
+                                    Habitación #{currentRoom.number}
                                   </div>
                                 )}
                               </div>
                             </div>
                           </div>
                         );
-                      }).filter(Boolean)}
+                      })}
                     </div>
                   )}
                 </CardContent>
