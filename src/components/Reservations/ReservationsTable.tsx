@@ -274,14 +274,16 @@ export const ReservationsTable = ({
         </Table>
       </div>
 
-      <ReservationViewModal
-        isOpen={viewModal.isOpen}
-        onClose={() => setViewModal({ isOpen: false })}
-        reservation={viewModal.reservation!}
-        guest={viewModal.guest!}
-        room={viewModal.room!}
-        onEditGuest={handleEditGuest}
-      />
+      {viewModal.isOpen && viewModal.reservation && viewModal.guest && viewModal.room && (
+        <ReservationViewModal
+          isOpen={viewModal.isOpen}
+          onClose={() => setViewModal({ isOpen: false })}
+          reservation={viewModal.reservation}
+          guest={viewModal.guest}
+          room={viewModal.room}
+          onEditGuest={handleEditGuest}
+        />
+      )}
 
       <GuestModal
         isOpen={guestModal.isOpen}
