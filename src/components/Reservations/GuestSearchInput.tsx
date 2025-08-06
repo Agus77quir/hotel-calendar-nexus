@@ -29,7 +29,7 @@ export const GuestSearchInput = ({
   const [filteredGuests, setFilteredGuests] = useState<Guest[]>([]);
 
   // Get selected guest for display
-  const selectedGuest = guests.find(g => g.id === selectedGuestId);
+  const selectedGuest = guests.find(g => g && g.id === selectedGuestId);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -41,36 +41,39 @@ export const GuestSearchInput = ({
     
     // Search by guest name
     const guestMatches = guests.filter(guest => {
+      if (!guest || !guest.id) return false;
       return (
-        guest.first_name.toLowerCase().includes(searchLower) ||
-        guest.last_name.toLowerCase().includes(searchLower) ||
-        `${guest.first_name} ${guest.last_name}`.toLowerCase().includes(searchLower)
+        (guest.first_name && guest.first_name.toLowerCase().includes(searchLower)) ||
+        (guest.last_name && guest.last_name.toLowerCase().includes(searchLower)) ||
+        `${guest.first_name || ''} ${guest.last_name || ''}`.toLowerCase().includes(searchLower)
       );
     });
 
     // Search by room number (find guests with current reservations in matching rooms)
     const roomMatches = rooms
-      .filter(room => room.number.toLowerCase().includes(searchLower))
+      .filter(room => room && room.id && room.number && room.number.toLowerCase().includes(searchLower))
       .map(room => {
         // Find current reservation for this room
         const currentReservation = reservations.find(r => 
-          r.room_id === room.id && 
+          r && r.id && r.room_id === room.id && 
           (r.status === 'confirmed' || r.status === 'checked-in')
         );
-        return currentReservation ? guests.find(g => g.id === currentReservation.guest_id) : null;
+        return currentReservation ? guests.find(g => g && g.id === currentReservation.guest_id) : null;
       })
       .filter(Boolean) as Guest[];
 
     // Combine results and remove duplicates
     const allMatches = [...guestMatches, ...roomMatches];
     const uniqueGuests = allMatches.filter((guest, index, self) => 
-      index === self.findIndex(g => g.id === guest.id)
+      guest && guest.id && index === self.findIndex(g => g && g.id === guest.id)
     );
 
     setFilteredGuests(uniqueGuests.slice(0, 8)); // Limit to 8 results
   }, [searchTerm, guests, rooms, reservations]);
 
   const handleGuestSelect = (guest: Guest) => {
+    if (!guest || !guest.id) return;
+    
     onGuestSelect(guest.id);
     setSearchTerm('');
     setIsOpen(false);
@@ -82,12 +85,14 @@ export const GuestSearchInput = ({
   };
 
   const getCurrentRoomForGuest = (guestId: string) => {
+    if (!guestId) return null;
+    
     const currentReservation = reservations.find(r => 
-      r.guest_id === guestId && 
+      r && r.id && r.guest_id === guestId && 
       (r.status === 'confirmed' || r.status === 'checked-in')
     );
-    if (currentReservation) {
-      return rooms.find(r => r.id === currentReservation.room_id);
+    if (currentReservation && currentReservation.room_id) {
+      return rooms.find(r => r && r.id === currentReservation.room_id);
     }
     return null;
   };
@@ -147,6 +152,8 @@ export const GuestSearchInput = ({
                   ) : (
                     <div className="space-y-1 p-2">
                       {filteredGuests.map((guest) => {
+                        if (!guest || !guest.id) return null;
+                        
                         const currentRoom = getCurrentRoomForGuest(guest.id);
                         return (
                           <div
@@ -170,9 +177,9 @@ export const GuestSearchInput = ({
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground truncate">
-                                  {guest.email}
+                                  {guest.email || guest.phone}
                                 </div>
-                                {currentRoom && (
+                                {currentRoom && currentRoom.number && (
                                   <div className="text-xs text-blue-600 font-medium">
                                     Habitación #{currentRoom.number}
                                   </div>

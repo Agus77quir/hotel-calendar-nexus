@@ -79,8 +79,10 @@ export const ReservationsTable = ({
   };
 
   const handleView = (reservation: Reservation) => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
+    if (!reservation || !reservation.id) return;
+    
+    const guest = guests.find(g => g && g.id === reservation.guest_id);
+    const room = rooms.find(r => r && r.id === reservation.room_id);
     
     if (guest && room) {
       setViewModal({
@@ -93,7 +95,7 @@ export const ReservationsTable = ({
   };
 
   const handleGuestUpdate = async (updatedGuestData: any) => {
-    if (onGuestUpdate && viewModal.guest) {
+    if (onGuestUpdate && viewModal.guest && viewModal.guest.id) {
       const updatedGuest = await onGuestUpdate(viewModal.guest.id, updatedGuestData);
       
       // Update the modal state with the updated guest
@@ -105,6 +107,8 @@ export const ReservationsTable = ({
   };
 
   const getStatusActions = (reservation: Reservation) => {
+    if (!reservation || !reservation.id) return [];
+    
     const actions = [];
     
     switch (reservation.status) {
@@ -176,9 +180,9 @@ export const ReservationsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservations.map((reservation) => {
-              const guest = guests.find(g => g.id === reservation.guest_id);
-              const room = rooms.find(r => r.id === reservation.room_id);
+            {reservations.filter(reservation => reservation && reservation.id).map((reservation) => {
+              const guest = guests.find(g => g && g.id === reservation.guest_id);
+              const room = rooms.find(r => r && r.id === reservation.room_id);
               const statusActions = getStatusActions(reservation);
 
               return (
@@ -213,11 +217,11 @@ export const ReservationsTable = ({
                     <div className="space-y-1">
                       <div className="text-sm">
                         <span className="text-green-600">Entrada: </span>
-                        {format(new Date(reservation.check_in), 'dd/MM/yy', { locale: es })}
+                        {reservation.check_in && format(new Date(reservation.check_in), 'dd/MM/yy', { locale: es })}
                       </div>
                       <div className="text-sm">
                         <span className="text-red-600">Salida: </span>
-                        {format(new Date(reservation.check_out), 'dd/MM/yy', { locale: es })}
+                        {reservation.check_out && format(new Date(reservation.check_out), 'dd/MM/yy', { locale: es })}
                       </div>
                     </div>
                   </TableCell>
@@ -225,7 +229,7 @@ export const ReservationsTable = ({
                     {reservation.guests_count}
                   </TableCell>
                   <TableCell className="font-medium text-green-600">
-                    ${Number(reservation.total_amount).toFixed(2)}
+                    ${Number(reservation.total_amount || 0).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(reservation.status)}
@@ -256,7 +260,7 @@ export const ReservationsTable = ({
                             Editar Reserva
                           </DropdownMenuItem>
                           
-                          {guest && (
+                          {guest && guest.id && (
                             <DropdownMenuItem
                               onClick={() => onNewReservationForGuest(guest.id)}
                               className="flex items-center gap-2"
@@ -296,14 +300,16 @@ export const ReservationsTable = ({
       </div>
 
       {/* View Modal */}
-      <ReservationViewModal
-        isOpen={viewModal.isOpen}
-        onClose={() => setViewModal({ isOpen: false })}
-        reservation={viewModal.reservation!}
-        guest={viewModal.guest!}
-        room={viewModal.room!}
-        onGuestUpdate={handleGuestUpdate}
-      />
+      {viewModal.isOpen && viewModal.reservation && viewModal.guest && viewModal.room && (
+        <ReservationViewModal
+          isOpen={viewModal.isOpen}
+          onClose={() => setViewModal({ isOpen: false })}
+          reservation={viewModal.reservation}
+          guest={viewModal.guest}
+          room={viewModal.room}
+          onGuestUpdate={handleGuestUpdate}
+        />
+      )}
     </>
   );
 };
