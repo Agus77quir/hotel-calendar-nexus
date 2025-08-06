@@ -96,7 +96,7 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            Doc: {guest.document}
+                            Doc: {guest.document} • {guest.nationality}
                           </div>
                         </div>
                       </div>
