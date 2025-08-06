@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const ReservationsPage = () => {
   // Real-time updates are handled automatically in useHotelData
-  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
+  const { reservations, guests, rooms, addReservation, updateReservation, updateGuest, deleteReservation, isLoading } = useHotelData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
@@ -153,6 +153,25 @@ const ReservationsPage = () => {
     });
   };
 
+  const handleSaveGuest = async (guestData: any) => {
+    try {
+      await updateGuest({ id: guestData.id, ...guestData });
+      
+      toast({
+        title: "Huésped actualizado",
+        description: `${guestData.first_name} ${guestData.last_name} ha sido actualizado exitosamente.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating guest:', error);
+      
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el huésped. Por favor intenta nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -196,6 +215,7 @@ const ReservationsPage = () => {
             onDelete={handleDeleteReservation}
             onNewReservationForGuest={handleNewReservationForGuest}
             onStatusChange={handleStatusChange}
+            onSaveGuest={handleSaveGuest}
           />
         </CardContent>
       </Card>

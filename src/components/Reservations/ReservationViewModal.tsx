@@ -5,10 +5,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, MapPin, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, User, MapPin, DollarSign, FileText, Users, Edit } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +20,7 @@ interface ReservationViewModalProps {
   reservation: Reservation;
   guest: Guest;
   room: Room;
+  onEditGuest?: (guest: Guest) => void;
 }
 
 export const ReservationViewModal = ({
@@ -26,7 +28,8 @@ export const ReservationViewModal = ({
   onClose,
   reservation,
   guest,
-  room
+  room,
+  onEditGuest
 }: ReservationViewModalProps) => {
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
@@ -40,6 +43,12 @@ export const ReservationViewModal = ({
         return <Badge variant="destructive">Cancelada</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const handleEditGuest = () => {
+    if (onEditGuest) {
+      onEditGuest(guest);
     }
   };
 
@@ -57,9 +66,22 @@ export const ReservationViewModal = ({
           {/* Información del Huésped */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5 text-purple-600" />
-                Información del Huésped
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-purple-600" />
+                  Información del Huésped
+                </div>
+                {onEditGuest && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditGuest}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar
+                  </Button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
