@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -79,10 +78,6 @@ export const ReservationViewModal = ({
                 <div>
                   <p className="text-sm text-muted-foreground">Documento</p>
                   <p className="font-medium">{guest.document}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Nacionalidad</p>
-                  <p className="font-medium">{guest.nationality}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Estado</p>
