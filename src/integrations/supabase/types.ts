@@ -19,36 +19,36 @@ export type Database = {
           created_at: string
           discount_percentage: number | null
           document: string
-          email: string
+          email: string | null
           first_name: string
           id: string
           is_associated: boolean | null
           last_name: string
-          nationality: string
+          nationality: string | null
           phone: string
         }
         Insert: {
           created_at?: string
           discount_percentage?: number | null
           document: string
-          email: string
+          email?: string | null
           first_name: string
           id?: string
           is_associated?: boolean | null
           last_name: string
-          nationality: string
+          nationality?: string | null
           phone: string
         }
         Update: {
           created_at?: string
           discount_percentage?: number | null
           document?: string
-          email?: string
+          email?: string | null
           first_name?: string
           id?: string
           is_associated?: boolean | null
           last_name?: string
-          nationality?: string
+          nationality?: string | null
           phone?: string
         }
         Relationships: []

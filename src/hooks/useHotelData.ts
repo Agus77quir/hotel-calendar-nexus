@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -202,9 +203,21 @@ export const useHotelData = () => {
 
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: Omit<Guest, 'id' | 'created_at'>) => {
+      // Transform the guest data to ensure compatibility with database schema
+      const dbGuestData = {
+        first_name: guestData.first_name,
+        last_name: guestData.last_name,
+        email: guestData.email || null, // Use null instead of undefined for database
+        phone: guestData.phone,
+        document: guestData.document,
+        nationality: guestData.nationality || null, // Use null instead of undefined for database
+        is_associated: guestData.is_associated || false,
+        discount_percentage: guestData.discount_percentage || 0
+      };
+
       const { data, error } = await supabase
         .from('guests')
-        .insert([guestData])
+        .insert([dbGuestData])
         .select()
         .single();
       
