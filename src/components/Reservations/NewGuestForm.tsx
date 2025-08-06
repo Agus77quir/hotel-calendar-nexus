@@ -37,8 +37,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
     }
-    // Removed email validation - now optional
-    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Email is completely optional - only validate format if provided
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = 'Email inválido';
     }
     if (!formData.phone.trim()) {
@@ -64,6 +64,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
+        email: formData.email.trim() || '', // Ensure empty email is sent as empty string
         is_associated: false,
         discount_percentage: 0
       };
@@ -140,13 +141,14 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </div>
 
             <div>
-              <Label htmlFor="email" className="text-sm">Email</Label>
+              <Label htmlFor="email" className="text-sm">Email (opcional)</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isSubmitting}
+                placeholder="Ingrese email o deje en blanco"
                 className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
                 style={{ fontSize: '16px' }}
               />
