@@ -54,20 +54,32 @@ export const ReservationViewModal = ({
   };
 
   const handleEditGuest = () => {
-    console.log('Opening guest edit modal with data:', guest);
+    console.log('Opening guest edit modal with guest data:', guest);
+    console.log('Guest fields - first_name:', guest.first_name, 'last_name:', guest.last_name, 'email:', guest.email, 'phone:', guest.phone, 'document:', guest.document, 'nationality:', guest.nationality);
     
     // Ensure all required fields are present with defaults for optional fields
     const guestWithDefaults = {
-      ...guest,
+      id: guest.id,
+      first_name: guest.first_name || '',
+      last_name: guest.last_name || '',
+      email: guest.email || '',
+      phone: guest.phone || '',
+      document: guest.document || '',
       nationality: guest.nationality || '',
-      email: guest.email || ''
+      is_associated: guest.is_associated,
+      discount_percentage: guest.discount_percentage,
+      created_at: guest.created_at
     };
+    
+    console.log('Setting guest modal with processed data:', guestWithDefaults);
     
     setGuestModal({
       isOpen: true,
       guest: guestWithDefaults,
       mode: 'edit'
     });
+    
+    console.log('Guest modal state after setting:', { isOpen: true, mode: 'edit' });
   };
 
   const handleSaveGuest = async (updatedGuestData: any) => {
@@ -76,6 +88,7 @@ export const ReservationViewModal = ({
     if (onUpdateGuest && guest) {
       try {
         const updatedGuest = { ...guest, ...updatedGuestData };
+        console.log('Final guest data to save:', updatedGuest);
         await onUpdateGuest(updatedGuest);
         setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' });
         console.log('Guest updated successfully');
@@ -83,10 +96,13 @@ export const ReservationViewModal = ({
         console.error('Error updating guest:', error);
         throw error; // Let the GuestModal handle the error display
       }
+    } else {
+      console.error('No onUpdateGuest function provided or guest is missing');
     }
   };
 
   const handleCloseGuestModal = () => {
+    console.log('Closing guest modal');
     setGuestModal({ isOpen: false, guest: undefined, mode: 'edit' });
   };
 
