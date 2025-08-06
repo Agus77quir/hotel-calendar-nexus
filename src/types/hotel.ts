@@ -1,11 +1,12 @@
+
 export interface Guest {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email?: string; // Ahora es opcional
   phone: string;
   document: string;
-  nationality: string;
+  nationality?: string; // Opcional por compatibilidad
   is_associated: boolean;
   discount_percentage: number;
   created_at: string;

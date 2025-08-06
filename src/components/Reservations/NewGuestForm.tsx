@@ -21,7 +21,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     email: '',
     phone: '',
     document: '',
-    nationality: 'No especificado',
     is_associated: false,
     discount_percentage: 0,
   });
@@ -37,9 +36,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
     }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido';
     }
     if (!formData.phone.trim()) {
@@ -64,7 +61,11 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     
     try {
       const guestPayload = {
-        ...formData,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim() || undefined, // Solo enviar email si tiene valor
+        phone: formData.phone.trim(),
+        document: formData.document.trim(),
         is_associated: false,
         discount_percentage: 0
       };
@@ -141,7 +142,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
             </div>
 
             <div>
-              <Label htmlFor="email" className="text-sm">Email *</Label>
+              <Label htmlFor="email" className="text-sm">Email (opcional)</Label>
               <Input
                 id="email"
                 type="email"
@@ -150,6 +151,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 disabled={isSubmitting}
                 className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
                 style={{ fontSize: '16px' }}
+                placeholder="ejemplo@correo.com"
               />
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email}</p>
