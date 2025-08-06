@@ -34,12 +34,12 @@ const ReservationsPage = () => {
     const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
-    // Text search filter
+    // Text search filter - add null checks before calling toLowerCase()
     const matchesSearch = (
-      guest?.first_name.toLowerCase().includes(searchLower) ||
-      guest?.last_name.toLowerCase().includes(searchLower) ||
-      guest?.email.toLowerCase().includes(searchLower) ||
-      room?.number.includes(searchLower) ||
+      (guest?.first_name && guest.first_name.toLowerCase().includes(searchLower)) ||
+      (guest?.last_name && guest.last_name.toLowerCase().includes(searchLower)) ||
+      (guest?.email && guest.email.toLowerCase().includes(searchLower)) ||
+      (room?.number && room.number.includes(searchLower)) ||
       reservation.id.includes(searchLower)
     );
 
