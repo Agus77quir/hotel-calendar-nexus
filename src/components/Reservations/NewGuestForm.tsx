@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,9 +36,13 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apellido es requerido';
     }
-    // Email is completely optional - only validate format if provided
-    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Email inválido';
+    // Email is completely optional - no validation needed
+    // Only validate email format if user actually entered something
+    const emailValue = formData.email.trim();
+    if (emailValue && emailValue.length > 0) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        newErrors.email = 'Formato de email inválido';
+      }
     }
     if (!formData.phone.trim()) {
       newErrors.phone = 'Teléfono es requerido';
@@ -64,7 +67,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
     try {
       const guestPayload = {
         ...formData,
-        email: formData.email.trim() || '', // Ensure empty email is sent as empty string
+        email: formData.email.trim(), // Just send the trimmed email, empty or not
         is_associated: false,
         discount_percentage: 0
       };
@@ -148,7 +151,7 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isSubmitting}
-                placeholder="Ingrese email o deje en blanco"
+                placeholder="Opcional - puede dejarse en blanco"
                 className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
                 style={{ fontSize: '16px' }}
               />
