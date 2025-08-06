@@ -76,20 +76,11 @@ export const ReservationModal = ({
   }, [preselectedGuestId, mode, isOpen, handleFormChange]);
 
   const handleCreateGuest = async (guestData: any) => {
-    console.log('🔄 ReservationModal: Starting handleCreateGuest');
-    console.log('📋 ReservationModal: Guest data received:', guestData);
-    
     setIsCreatingGuest(true);
     try {
-      console.log('🚀 ReservationModal: Calling addGuest function...');
       const newGuest = await addGuest(guestData);
-      console.log('✅ ReservationModal: addGuest returned:', newGuest);
+      console.log('New guest created:', newGuest);
       
-      if (!newGuest || !newGuest.id) {
-        throw new Error('addGuest returned invalid data structure');
-      }
-      
-      console.log('🎯 ReservationModal: Setting guest_id to:', newGuest.id);
       handleFormChange('guest_id', newGuest.id);
       
       setShowNewGuestForm(false);
@@ -98,24 +89,14 @@ export const ReservationModal = ({
         title: "Huésped creado",
         description: `${newGuest.first_name} ${newGuest.last_name} ha sido creado y seleccionado automáticamente.`,
       });
-      
-      console.log('✅ ReservationModal: Guest creation completed successfully');
     } catch (error) {
-      console.error('💥 ReservationModal: Error in handleCreateGuest:', error);
-      console.error('💥 ReservationModal: Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name,
-        cause: error?.cause
-      });
-      
+      console.error('Error creating guest:', error);
       toast({
         title: "Error",
-        description: error?.message || "No se pudo crear el huésped. Intenta nuevamente.",
+        description: "No se pudo crear el huésped. Intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
-      console.log('🏁 ReservationModal: Finishing guest creation process');
       setIsCreatingGuest(false);
     }
   };
