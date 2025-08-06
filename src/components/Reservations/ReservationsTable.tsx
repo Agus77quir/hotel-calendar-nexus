@@ -1,3 +1,4 @@
+
 import { 
   Table,
   TableBody,
@@ -25,7 +26,6 @@ interface ReservationsTableProps {
   onDelete: (id: string) => void;
   onNewReservationForGuest?: (guestId: string) => void;
   onStatusChange?: (reservationId: string, newStatus: Reservation['status']) => void;
-  onUpdateGuest?: (guest: Guest) => Promise<void>;
 }
 
 export const ReservationsTable = ({
@@ -35,8 +35,7 @@ export const ReservationsTable = ({
   onEdit,
   onDelete,
   onNewReservationForGuest,
-  onStatusChange,
-  onUpdateGuest
+  onStatusChange
 }: ReservationsTableProps) => {
   const [viewModal, setViewModal] = useState<{
     isOpen: boolean;
@@ -328,7 +327,6 @@ export const ReservationsTable = ({
           reservation={viewModal.reservation}
           guest={viewModal.guest}
           room={viewModal.room}
-          onUpdateGuest={onUpdateGuest}
         />
       )}
     </>

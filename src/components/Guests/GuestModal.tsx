@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -34,10 +33,7 @@ export const GuestModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    console.log('GuestModal useEffect triggered - mode:', mode, 'isOpen:', isOpen, 'guest:', guest);
-    
     if (guest && mode === 'edit') {
-      console.log('Setting form data from guest:', guest);
       setFormData({
         first_name: guest.first_name || '',
         last_name: guest.last_name || '',
@@ -46,16 +42,7 @@ export const GuestModal = ({
         document: guest.document || '',
         nationality: guest.nationality || '',
       });
-      console.log('Form data set to:', {
-        first_name: guest.first_name || '',
-        last_name: guest.last_name || '',
-        email: guest.email || '',
-        phone: guest.phone || '',
-        document: guest.document || '',
-        nationality: guest.nationality || '',
-      });
     } else {
-      console.log('Resetting form data for new guest');
       setFormData({
         first_name: '',
         last_name: '',
@@ -120,7 +107,7 @@ export const GuestModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting guest creation/update process with form data:', formData);
+    console.log('Starting guest creation/update process');
     
     if (!validateForm()) {
       console.error('Form validation failed');
@@ -153,8 +140,6 @@ export const GuestModal = ({
       onClose();
     }
   };
-
-  console.log('GuestModal render - isOpen:', isOpen, 'formData:', formData);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
