@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
-import { getTodayInBuenosAires, getTomorrowInBuenosAires, calculateDaysDifference } from '@/utils/dateUtils';
+import { getTodayInBuenosAires, getTomorrowInBuenosAires, calculateDaysDifference, formatSelectedDateForBuenosAires } from '@/utils/dateUtils';
 
 interface UseReservationFormProps {
   rooms: Room[];
@@ -213,7 +213,7 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes with Buenos Aires timezone
+  // Handle date changes with Buenos Aires timezone - FIXED
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
     console.log(`Date change for ${field}:`, value, 'today:', today);
     

@@ -4,12 +4,10 @@ export const BUENOS_AIRES_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
 // Convierte una fecha a string en formato YYYY-MM-DD en timezone de Buenos Aires
 export const formatDateForBuenosAires = (date: Date): string => {
-  // Crear una fecha en timezone de Buenos Aires
-  const bsAsDate = new Date(date.toLocaleString('en-US', { timeZone: BUENOS_AIRES_TIMEZONE }));
-  
-  const year = bsAsDate.getFullYear();
-  const month = String(bsAsDate.getMonth() + 1).padStart(2, '0');
-  const day = String(bsAsDate.getDate()).padStart(2, '0');
+  // Usar directamente los valores de la fecha local para evitar conversiones incorrectas
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   
   return `${year}-${month}-${day}`;
 };
@@ -31,6 +29,7 @@ export const formatSelectedDateForBuenosAires = (date: Date): string => {
 // Obtiene la fecha actual en timezone de Buenos Aires
 export const getTodayInBuenosAires = (): string => {
   const now = new Date();
+  // Usar formatDateForBuenosAires consistentemente
   return formatDateForBuenosAires(now);
 };
 
@@ -40,6 +39,7 @@ export const parseStringToDate = (dateString: string): Date => {
   
   const [year, month, day] = dateString.split('-').map(Number);
   // Crear fecha en timezone local para evitar desplazamientos
+  // Usar new Date(year, month - 1, day) en lugar de Date.parse para mayor precisión
   return new Date(year, month - 1, day);
 };
 

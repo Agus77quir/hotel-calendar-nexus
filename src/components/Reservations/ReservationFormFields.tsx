@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -72,13 +73,13 @@ export const ReservationFormFields = ({
     return number.length === 1 ? `0${number}` : number;
   };
 
-  // Manejo de fechas optimizado para zona horaria de Buenos Aires
+  // Manejo de fechas optimizado para zona horaria de Buenos Aires - FIXED
   const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
     if (date) {
-      // Usar la nueva utilidad para formatear fechas en Buenos Aires
+      // Usar la utilidad corregida para formatear fechas sin desplazamientos
       const dateString = formatSelectedDateForBuenosAires(date);
       
-      console.log('Selected date:', date, 'Formatted for Buenos Aires:', dateString);
+      console.log('Selected date:', date, 'Formatted correctly:', dateString);
       onDateChange(field, dateString);
       
       // Close the calendar after selection
