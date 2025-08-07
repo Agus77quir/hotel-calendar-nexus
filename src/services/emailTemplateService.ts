@@ -1,5 +1,6 @@
 
 import { Guest, Room, Reservation } from '@/types/hotel';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 const generateSimpleId = (uuid: string): string => {
   const hexString = uuid.replace(/-/g, '').substring(0, 8);
@@ -9,9 +10,8 @@ const generateSimpleId = (uuid: string): string => {
 };
 
 const formatDate = (dateString: string): string => {
-  // Parse the date string directly without adding time component
-  const [year, month, day] = dateString.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
+  // Use the utility function that handles timezone correctly
+  const date = parseStringToDate(dateString);
   
   return date.toLocaleDateString('es-ES', {
     weekday: 'long',
