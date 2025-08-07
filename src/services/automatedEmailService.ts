@@ -10,7 +10,10 @@ const generateSimpleId = (uuid: string): string => {
 };
 
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString + 'T00:00:00');
+  // Parse the date string directly without adding time component
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  
   return date.toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
