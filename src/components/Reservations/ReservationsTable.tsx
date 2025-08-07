@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,8 @@ import {
   CheckCircle,
   LogOut,
   XCircle,
-  UserCog
+  UserCog,
+  Users
 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
@@ -77,30 +79,15 @@ export const ReservationsTable = ({
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
-        return <Badge variant="default" className="bg-blue-500">Confirmada</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Confirmada</Badge>;
       case 'checked-in':
-        return <Badge className="bg-green-500">Registrado</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Check-in</Badge>;
       case 'checked-out':
-        return <Badge variant="secondary">Check-out</Badge>;
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Check-out</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">Cancelada</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelada</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: Reservation['status']) => {
-    switch (status) {
-      case 'confirmed':
-        return <Clock className="h-4 w-4" />;
-      case 'checked-in':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'checked-out':
-        return <LogOut className="h-4 w-4" />;
-      case 'cancelled':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return null;
     }
   };
 
@@ -139,10 +126,13 @@ export const ReservationsTable = ({
 
   if (reservations.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground text-lg mb-4">No hay reservas que mostrar</p>
-        <p className="text-sm text-muted-foreground">
-          Las reservas aparecerán aquí una vez que sean creadas
+      <div className="text-center py-12 bg-gray-50 rounded-lg">
+        <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <Users className="w-12 h-12 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No hay reservas</h3>
+        <p className="text-gray-500 max-w-sm mx-auto">
+          No se encontraron reservas que coincidan con los criterios de búsqueda.
         </p>
       </div>
     );
@@ -150,21 +140,31 @@ export const ReservationsTable = ({
 
   return (
     <>
-      <div className="rounded-md border overflow-hidden">
+      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">Huésped</TableHead>
-              <TableHead className="font-semibold">Habitación</TableHead>
-              <TableHead className="font-semibold">Check-in</TableHead>
-              <TableHead className="font-semibold">Check-out</TableHead>
-              <TableHead className="font-semibold">Huéspedes</TableHead>
-              <TableHead className="font-semibold">Total</TableHead>
-              <TableHead className="font-semibold">Estado</TableHead>
-              <TableHead className="text-right font-semibold">Acciones</TableHead>
+          <TableHeader className="bg-gray-50">
+            <TableRow>
+              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Huésped
+              </TableHead>
+              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Habitación
+              </TableHead>
+              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fechas
+              </TableHead>
+              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estado
+              </TableHead>
+              <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total
+              </TableHead>
+              <TableHead className="relative px-6 py-3">
+                <span className="sr-only">Acciones</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="bg-white divide-y divide-gray-200">
             {reservations.map((reservation) => {
               const guest = guests.find(g => g.id === reservation.guest_id);
               const room = rooms.find(r => r.id === reservation.room_id);
@@ -172,56 +172,60 @@ export const ReservationsTable = ({
               if (!guest || !room) return null;
 
               return (
-                <TableRow key={reservation.id} className="hover:bg-muted/25">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div>
-                        <div className="font-medium">
+                <TableRow key={reservation.id} className="hover:bg-gray-50">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                           {guest.first_name} {guest.last_name}
+                          {guest.is_associated && (
+                            <UserCheck className="h-4 w-4 text-green-500" />
+                          )}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {guest.email}
-                        </div>
+                        <div className="text-sm text-gray-500">{guest.email}</div>
+                        <div className="text-xs text-gray-400">{guest.phone}</div>
                       </div>
-                      {guest.is_associated && (
-                        <UserCheck className="h-4 w-4 text-green-600" />
-                      )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="font-medium">#{room.number}</div>
-                    <div className="text-sm text-muted-foreground capitalize">
-                      {room.type.replace('-', ' ')}
+                  
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      Habitación #{room.number}
+                    </div>
+                    <div className="text-sm text-gray-500 capitalize">
+                      {room.type.replace('-', ' ')} • {reservation.guests_count} huéspedes
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {getStatusIcon('confirmed')}
-                      <span>{reservation.guests_count}</span>
+                  
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {format(new Date(reservation.check_in), 'dd MMM yyyy', { locale: es })}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      hasta {format(new Date(reservation.check_out), 'dd MMM yyyy', { locale: es })}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="font-medium">
-                      ${Number(reservation.total_amount).toFixed(2)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
+                  
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(reservation.status)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    ${Number(reservation.total_amount).toLocaleString()}
+                  </TableCell>
+                  
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuItem onClick={() => handleViewDetails(reservation)}>
                           <Eye className="h-4 w-4 mr-2" />
                           Ver Detalles
@@ -244,15 +248,15 @@ export const ReservationsTable = ({
 
                         {reservation.status === 'confirmed' && (
                           <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'checked-in')}>
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Check-in
+                            <UserCheck className="h-4 w-4 mr-2 text-green-600" />
+                            <span className="text-green-600">Check-in</span>
                           </DropdownMenuItem>
                         )}
 
                         {reservation.status === 'checked-in' && (
                           <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'checked-out')}>
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Check-out
+                            <LogOut className="h-4 w-4 mr-2 text-blue-600" />
+                            <span className="text-blue-600">Check-out</span>
                           </DropdownMenuItem>
                         )}
 
