@@ -1,16 +1,22 @@
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, MapPin, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, User, MapPin, DollarSign, FileText, Users, Mail, MessageCircle, Download } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
+import { openEmailClient } from '@/services/emailTemplateService';
+import { sendReservationToWhatsApp } from '@/services/whatsappService';
+import { generateReservationPDF } from '@/services/pdfService';
 
 interface ReservationViewModalProps {
   isOpen: boolean;
@@ -27,6 +33,8 @@ export const ReservationViewModal = ({
   guest,
   room
 }: ReservationViewModalProps) => {
+  const { toast } = useToast();
+
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
@@ -42,19 +50,108 @@ export const ReservationViewModal = ({
     }
   };
 
+  const handleSendEmail = () => {
+    try {
+      openEmailClient(guest, reservation, room);
+      toast({
+        title: "📧 Email preparado",
+        description: `Se abrió el cliente de email para enviar confirmación a ${guest.email}`,
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Error preparando email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendWhatsApp = () => {
+    try {
+      sendReservationToWhatsApp(reservation, guest, room);
+      toast({
+        title: "📱 WhatsApp enviado",
+        description: `Mensaje enviado a ${guest.phone}`,
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Error enviando WhatsApp",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    try {
+      generateReservationPDF(reservation, guest, room);
+      toast({
+        title: "📄 PDF generado",
+        description: "Voucher de reserva descargado",
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Error generando PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl">
+        <DialogHeader className="space-y-3 pr-8">
+          <div className="flex items-start justify-between">
+            <DialogTitle className="text-xl pr-4">
               Detalles de Reserva #{reservation.id.slice(0, 8)}
             </DialogTitle>
-            {getStatusBadge(reservation.status)}
+            <div className="flex-shrink-0">
+              {getStatusBadge(reservation.status)}
+            </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Botones de Acción */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Acciones</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  onClick={handleSendEmail}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar por Email
+                </Button>
+                
+                {guest.phone && (
+                  <Button
+                    onClick={handleSendWhatsApp}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Enviar por WhatsApp
+                  </Button>
+                )}
+                
+                <Button
+                  onClick={handleDownloadPDF}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar PDF
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Información del Huésped */}
           <Card>
             <CardHeader className="pb-3">
@@ -75,7 +172,7 @@ export const ReservationViewModal = ({
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Teléfono</p>
-                  <p className="font-medium">{guest.phone}</p>
+                  <p className="font-medium">{guest.phone || 'No especificado'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Documento</p>
