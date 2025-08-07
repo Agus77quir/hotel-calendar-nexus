@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { openEmailClient } from '@/services/emailTemplateService';
 import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 interface ReservationViewModalProps {
   isOpen: boolean;
@@ -98,10 +99,16 @@ export const ReservationViewModal = ({
     }
   };
 
+  // Formatear fechas correctamente usando parseStringToDate
+  const formatReservationDate = (dateString: string) => {
+    const parsedDate = parseStringToDate(dateString);
+    return format(parsedDate, 'dd/MM/yyyy', { locale: es });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3 pr-12">
+        <DialogHeader className="space-y-3 pr-16 pb-2">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl">
@@ -241,13 +248,13 @@ export const ReservationViewModal = ({
                 <div>
                   <p className="text-sm text-muted-foreground">Check-in</p>
                   <p className="font-medium">
-                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
+                    {formatReservationDate(reservation.check_in)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Check-out</p>
                   <p className="font-medium">
-                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
+                    {formatReservationDate(reservation.check_out)}
                   </p>
                 </div>
                 <div>
