@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const ReservationsPage = () => {
   // Real-time updates are handled automatically in useHotelData
-  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, updateGuest, isLoading } = useHotelData();
+  const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
@@ -30,25 +30,22 @@ const ReservationsPage = () => {
   });
 
   const filteredReservations = reservations.filter(reservation => {
-    // Check if reservation exists and has an id
-    if (!reservation || !reservation.id) return false;
-    
-    const guest = guests.find(g => g && g.id === reservation.guest_id);
-    const room = rooms.find(r => r && r.id === reservation.room_id);
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
-    // Text search filter - add null checks before calling toLowerCase()
+    // Text search filter
     const matchesSearch = (
-      (guest?.first_name && guest.first_name.toLowerCase().includes(searchLower)) ||
-      (guest?.last_name && guest.last_name.toLowerCase().includes(searchLower)) ||
-      (guest?.email && guest.email.toLowerCase().includes(searchLower)) ||
-      (room?.number && room.number.includes(searchLower)) ||
+      guest?.first_name.toLowerCase().includes(searchLower) ||
+      guest?.last_name.toLowerCase().includes(searchLower) ||
+      guest?.email.toLowerCase().includes(searchLower) ||
+      room?.number.includes(searchLower) ||
       reservation.id.includes(searchLower)
     );
 
     // Date filter
     let matchesDate = true;
-    if (dateFilters.dateFrom && dateFilters.dateTo && reservation.check_in && reservation.check_out) {
+    if (dateFilters.dateFrom && dateFilters.dateTo) {
       const checkIn = reservation.check_in;
       const checkOut = reservation.check_out;
       matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
@@ -92,8 +89,8 @@ const ReservationsPage = () => {
   };
 
   const handleDeleteReservation = async (id: string) => {
-    const reservation = reservations.find(r => r && r.id === id);
-    const guest = reservation ? guests.find(g => g && g.id === reservation.guest_id) : null;
+    const reservation = reservations.find(r => r.id === id);
+    const guest = reservation ? guests.find(g => g.id === reservation.guest_id) : null;
     
     const confirmMessage = guest 
       ? `¿Estás seguro de que quieres eliminar la reserva de ${guest.first_name} ${guest.last_name}?`
@@ -141,7 +138,7 @@ const ReservationsPage = () => {
   };
 
   const handleNewReservationForGuest = (guestId: string) => {
-    const guest = guests.find(g => g && g.id === guestId);
+    const guest = guests.find(g => g.id === guestId);
     if (guest) {
       toast({
         title: "Nueva reserva",
@@ -154,30 +151,6 @@ const ReservationsPage = () => {
       mode: 'create',
       preselectedGuestId: guestId
     });
-  };
-
-  const handleGuestUpdate = async (guestId: string, guestData: any) => {
-    try {
-      console.log('Updating guest:', guestId, guestData);
-      const updatedGuest = await updateGuest({ id: guestId, ...guestData });
-      
-      toast({
-        title: "Huésped actualizado",
-        description: "Los datos del huésped han sido actualizados exitosamente",
-      });
-      
-      return updatedGuest;
-    } catch (error: any) {
-      console.error('Error updating guest:', error);
-      
-      toast({
-        title: "Error",
-        description: "No se pudieron actualizar los datos del huésped. Intenta nuevamente.",
-        variant: "destructive",
-      });
-      
-      throw error;
-    }
   };
 
   if (isLoading) {
@@ -223,7 +196,6 @@ const ReservationsPage = () => {
             onDelete={handleDeleteReservation}
             onNewReservationForGuest={handleNewReservationForGuest}
             onStatusChange={handleStatusChange}
-            onGuestUpdate={handleGuestUpdate}
           />
         </CardContent>
       </Card>

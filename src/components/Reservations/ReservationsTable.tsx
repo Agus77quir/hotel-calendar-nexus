@@ -1,8 +1,4 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
   Table,
   TableBody,
@@ -11,29 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  MoreHorizontal, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  UserPlus,
-  MapPin,
-  Calendar as CalendarIcon,
-  User as UserIcon
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Edit, Trash2, Calendar, User, MapPin, DollarSign, Eye } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
-import { ReservationViewModal } from './ReservationViewModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ReservationQuickActions } from './ReservationQuickActions';
+import { ReservationViewModal } from './ReservationViewModal';
+import { useState } from 'react';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -41,9 +24,8 @@ interface ReservationsTableProps {
   rooms: Room[];
   onEdit: (reservation: Reservation) => void;
   onDelete: (id: string) => void;
-  onNewReservationForGuest: (guestId: string) => void;
-  onStatusChange: (reservationId: string, newStatus: Reservation['status']) => void;
-  onGuestUpdate?: (guestId: string, guestData: any) => Promise<Guest>;
+  onNewReservationForGuest?: (guestId: string) => void;
+  onStatusChange?: (reservationId: string, newStatus: Reservation['status']) => void;
 }
 
 export const ReservationsTable = ({
@@ -53,8 +35,7 @@ export const ReservationsTable = ({
   onEdit,
   onDelete,
   onNewReservationForGuest,
-  onStatusChange,
-  onGuestUpdate
+  onStatusChange
 }: ReservationsTableProps) => {
   const [viewModal, setViewModal] = useState<{
     isOpen: boolean;
@@ -66,23 +47,33 @@ export const ReservationsTable = ({
   const getStatusBadge = (status: Reservation['status']) => {
     switch (status) {
       case 'confirmed':
-        return <Badge variant="default" className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />Confirmada</Badge>;
+        return <Badge variant="default" className="text-xs">Confirmada</Badge>;
       case 'checked-in':
-        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Registrado</Badge>;
+        return <Badge className="bg-green-500 text-xs">Registrado</Badge>;
       case 'checked-out':
-        return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />Check-out</Badge>;
+        return <Badge variant="secondary" className="text-xs">Check-out</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Cancelada</Badge>;
+        return <Badge variant="destructive" className="text-xs">Cancelada</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
   };
 
-  const handleView = (reservation: Reservation) => {
-    if (!reservation || !reservation.id) return;
-    
-    const guest = guests.find(g => g && g.id === reservation.guest_id);
-    const room = rooms.find(r => r && r.id === reservation.room_id);
+  const handleStatusChange = async (reservationId: string, newStatus: Reservation['status']) => {
+    if (onStatusChange) {
+      await onStatusChange(reservationId, newStatus);
+    }
+  };
+
+  const handleNewReservation = (guestId: string) => {
+    if (onNewReservationForGuest) {
+      onNewReservationForGuest(guestId);
+    }
+  };
+
+  const handleViewReservation = (reservation: Reservation) => {
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
     
     if (guest && room) {
       setViewModal({
@@ -94,202 +85,231 @@ export const ReservationsTable = ({
     }
   };
 
-  const handleGuestUpdate = async (updatedGuestData: any) => {
-    if (onGuestUpdate && viewModal.guest && viewModal.guest.id) {
-      const updatedGuest = await onGuestUpdate(viewModal.guest.id, updatedGuestData);
-      
-      // Update the modal state with the updated guest
-      setViewModal(prev => ({
-        ...prev,
-        guest: updatedGuest
-      }));
-    }
-  };
-
-  const getStatusActions = (reservation: Reservation) => {
-    if (!reservation || !reservation.id) return [];
-    
-    const actions = [];
-    
-    switch (reservation.status) {
-      case 'confirmed':
-        actions.push({
-          label: 'Check-in',
-          action: () => onStatusChange(reservation.id, 'checked-in'),
-          icon: <CheckCircle className="w-4 h-4" />
-        });
-        break;
-      case 'checked-in':
-        actions.push({
-          label: 'Check-out',
-          action: () => onStatusChange(reservation.id, 'checked-out'),
-          icon: <XCircle className="w-4 h-4" />
-        });
-        break;
-    }
-    
-    if (reservation.status !== 'cancelled') {
-      actions.push({
-        label: 'Cancelar',
-        action: () => onStatusChange(reservation.id, 'cancelled'),
-        icon: <XCircle className="w-4 h-4" />,
-        destructive: true
-      });
-    }
-    
-    return actions;
-  };
-
   if (reservations.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <CardTitle className="text-xl mb-2">No hay reservas</CardTitle>
-          <p className="text-muted-foreground text-center">
-            No se encontraron reservas que coincidan con los filtros aplicados.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-8 text-muted-foreground">
+        No hay reservas para mostrar
+      </div>
     );
   }
 
   return (
     <>
-      <div className="rounded-md border overflow-hidden">
+      {/* Mobile Cards View - Visible only on small screens */}
+      <div className="block md:hidden space-y-4">
+        {reservations.map((reservation) => {
+          const guest = guests.find(g => g.id === reservation.guest_id);
+          const room = rooms.find(r => r.id === reservation.room_id);
+          
+          if (!guest || !room) return null;
+          
+          return (
+            <Card key={reservation.id} className="w-full">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {/* Header with status and ID */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground font-mono">
+                      #{reservation.id.slice(0, 8)}
+                    </div>
+                    {getStatusBadge(reservation.status)}
+                  </div>
+                  
+                  {/* Guest Info */}
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-purple-600" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        {guest.first_name} {guest.last_name}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {guest.email}
+                      </div>
+                      {guest.is_associated && (
+                        <Badge variant="outline" className="text-xs mt-1">
+                          Asociado
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Room Info */}
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-green-600" />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">Habitación #{room.number}</div>
+                      <div className="text-xs text-muted-foreground capitalize">
+                        {room.type.replace('-', ' ')} • {reservation.guests_count} huésped{reservation.guests_count > 1 ? 'es' : ''}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Dates */}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <div className="flex-1">
+                      <div className="text-sm">
+                        {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })} - {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Total */}
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <div className="font-medium text-sm">
+                      ${Number(reservation.total_amount).toFixed(2)}
+                    </div>
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="pt-2 border-t">
+                    <ReservationQuickActions
+                      reservation={reservation}
+                      guest={guest}
+                      room={room}
+                      onStatusChange={handleStatusChange}
+                      onNewReservation={handleNewReservation}
+                    />
+                  </div>
+                  
+                  {/* Edit/Delete Actions */}
+                  <div className="flex justify-end gap-2 pt-2 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewReservation(reservation)}
+                      className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(reservation)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(reservation.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Desktop Table View - Hidden on small screens */}
+      <div className="hidden md:block rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-4 w-4" />
-                  Huésped
-                </div>
-              </TableHead>
-              <TableHead className="font-semibold">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Habitación
-                </div>
-              </TableHead>
-              <TableHead className="font-semibold">Fechas</TableHead>
-              <TableHead className="font-semibold">Huéspedes</TableHead>
-              <TableHead className="font-semibold">Total</TableHead>
-              <TableHead className="font-semibold">Estado</TableHead>
-              <TableHead className="text-right font-semibold">Acciones</TableHead>
+            <TableRow>
+              <TableHead className="min-w-[100px]">Reserva</TableHead>
+              <TableHead className="min-w-[200px]">Huésped</TableHead>
+              <TableHead className="min-w-[150px]">Habitación</TableHead>
+              <TableHead className="min-w-[100px]">Check-in</TableHead>
+              <TableHead className="min-w-[100px]">Check-out</TableHead>
+              <TableHead className="min-w-[80px]">Total</TableHead>
+              <TableHead className="min-w-[100px]">Estado</TableHead>
+              <TableHead className="min-w-[200px]">Acciones Automáticas</TableHead>
+              <TableHead className="text-right min-w-[150px]">Gestión</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservations.filter(reservation => reservation && reservation.id).map((reservation) => {
-              const guest = guests.find(g => g && g.id === reservation.guest_id);
-              const room = rooms.find(r => r && r.id === reservation.room_id);
-              const statusActions = getStatusActions(reservation);
-
+            {reservations.map((reservation) => {
+              const guest = guests.find(g => g.id === reservation.guest_id);
+              const room = rooms.find(r => r.id === reservation.room_id);
+              
+              if (!guest || !room) return null;
+              
               return (
-                <TableRow key={reservation.id} className="hover:bg-muted/30">
-                  <TableCell>
-                    {guest ? (
-                      <div className="space-y-1">
-                        <div className="font-medium">
-                          {guest.first_name} {guest.last_name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {guest.email || guest.phone}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Huésped no encontrado</span>
-                    )}
+                <TableRow key={reservation.id}>
+                  <TableCell className="font-mono text-sm">
+                    {reservation.id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
-                    {room ? (
-                      <div className="space-y-1">
-                        <div className="font-medium">#{room.number}</div>
-                        <div className="text-sm text-muted-foreground capitalize">
-                          {room.type.replace('-', ' ')}
-                        </div>
+                    <div>
+                      <div className="font-medium">
+                        {guest.first_name} {guest.last_name}
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground">Habitación no encontrada</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm">
-                        <span className="text-green-600">Entrada: </span>
-                        {reservation.check_in && format(new Date(reservation.check_in), 'dd/MM/yy', { locale: es })}
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-red-600">Salida: </span>
-                        {reservation.check_out && format(new Date(reservation.check_out), 'dd/MM/yy', { locale: es })}
+                      <div className="text-sm text-muted-foreground">
+                        {guest.email}
+                        {guest.is_associated && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            Asociado
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {reservation.guests_count}
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">#{room.number}</div>
+                      <div className="text-sm text-muted-foreground capitalize">
+                        {room.type.replace('-', ' ')} • {reservation.guests_count} huésped{reservation.guests_count > 1 ? 'es' : ''}
+                      </div>
+                    </div>
                   </TableCell>
-                  <TableCell className="font-medium text-green-600">
-                    ${Number(reservation.total_amount || 0).toFixed(2)}
+                  <TableCell>
+                    {format(new Date(reservation.check_in), 'dd/MM/yyyy', { locale: es })}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(reservation.check_out), 'dd/MM/yyyy', { locale: es })}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    ${Number(reservation.total_amount).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(reservation.status)}
                   </TableCell>
+                  <TableCell>
+                    <ReservationQuickActions
+                      reservation={reservation}
+                      guest={guest}
+                      room={room}
+                      onStatusChange={handleStatusChange}
+                      onNewReservation={handleNewReservation}
+                    />
+                  </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleView(reservation)}
-                        title="Ver detalles"
+                        onClick={() => handleViewReservation(reservation)}
+                        title="Ver detalles de la reserva"
+                        className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" title="Más opciones">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem
-                            onClick={() => onEdit(reservation)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Editar Reserva
-                          </DropdownMenuItem>
-                          
-                          {guest && guest.id && (
-                            <DropdownMenuItem
-                              onClick={() => onNewReservationForGuest(guest.id)}
-                              className="flex items-center gap-2"
-                            >
-                              <UserPlus className="h-4 w-4" />
-                              Nueva Reserva para {guest.first_name}
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {statusActions.map((action, index) => (
-                            <DropdownMenuItem
-                              key={index}
-                              onClick={action.action}
-                              className={`flex items-center gap-2 ${action.destructive ? 'text-destructive focus:text-destructive' : ''}`}
-                            >
-                              {action.icon}
-                              {action.label}
-                            </DropdownMenuItem>
-                          ))}
-                          
-                          <DropdownMenuItem
-                            onClick={() => onDelete(reservation.id)}
-                            className="flex items-center gap-2 text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar Reserva
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(reservation)}
+                        title="Editar reserva"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDelete(reservation.id)}
+                        title="Eliminar reserva"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -307,7 +327,6 @@ export const ReservationsTable = ({
           reservation={viewModal.reservation}
           guest={viewModal.guest}
           room={viewModal.room}
-          onGuestUpdate={handleGuestUpdate}
         />
       )}
     </>
