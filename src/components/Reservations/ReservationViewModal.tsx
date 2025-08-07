@@ -8,10 +8,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, MapPin, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, User, MapPin, DollarSign, FileText, Users, X } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 interface ReservationViewModalProps {
   isOpen: boolean;
@@ -46,11 +47,25 @@ export const ReservationViewModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Detalles de Reserva #{reservation.id.slice(0, 8)}</span>
-            {getStatusBadge(reservation.status)}
-          </DialogTitle>
+        <DialogHeader className="relative">
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-start justify-between">
+              <DialogTitle className="text-xl">
+                Detalles de Reserva #{reservation.id.slice(0, 8)}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex justify-start">
+              {getStatusBadge(reservation.status)}
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
