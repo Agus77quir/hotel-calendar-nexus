@@ -101,12 +101,14 @@ export const ReservationViewModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3 pr-8">
-          <div className="flex items-start justify-between">
-            <DialogTitle className="text-xl pr-4">
-              Detalles de Reserva #{reservation.id.slice(0, 8)}
-            </DialogTitle>
-            <div className="flex-shrink-0">
+        <DialogHeader className="space-y-3 pr-12">
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-xl">
+                Detalles de Reserva #{reservation.id.slice(0, 8)}
+              </DialogTitle>
+            </div>
+            <div className="flex-shrink-0 mt-1">
               {getStatusBadge(reservation.status)}
             </div>
           </div>
