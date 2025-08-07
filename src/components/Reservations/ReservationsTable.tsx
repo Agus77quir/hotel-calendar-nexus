@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,7 @@ import {
   CheckCircle,
   LogOut,
   XCircle,
-  UserEdit
+  UserCog
 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
@@ -234,7 +233,7 @@ export const ReservationsTable = ({
                         </DropdownMenuItem>
 
                         <DropdownMenuItem onClick={() => setEditGuestModal({ isOpen: true, guest })}>
-                          <UserEdit className="h-4 w-4 mr-2" />
+                          <UserCog className="h-4 w-4 mr-2" />
                           Editar Huésped
                         </DropdownMenuItem>
 
