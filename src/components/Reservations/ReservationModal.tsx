@@ -275,6 +275,17 @@ export const ReservationModal = ({
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
+            {isAdmin && mode === 'create' && !showNewGuestForm && (
+              <Button
+                type="button"
+                variant={useMultiRoomSelection ? "default" : "outline"}
+                size="sm"
+                onClick={handleMultiRoomToggle}
+                className="flex-shrink-0 text-xs px-2 py-1 h-7 mr-6"
+              >
+                Multi Hab.
+              </Button>
+            )}
             <div className="min-w-0 flex-1">
               <DialogTitle className="text-lg sm:text-xl">
                 {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
@@ -283,17 +294,6 @@ export const ReservationModal = ({
                 {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
               </p>
             </div>
-            {isAdmin && mode === 'create' && !showNewGuestForm && (
-              <Button
-                type="button"
-                variant={useMultiRoomSelection ? "default" : "outline"}
-                size="sm"
-                onClick={handleMultiRoomToggle}
-                className="flex-shrink-0 text-xs mr-4"
-              >
-                {useMultiRoomSelection ? 'Selección Individual' : 'Selección Múltiple'}
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
