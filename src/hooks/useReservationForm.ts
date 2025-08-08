@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -213,7 +214,7 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Handle date changes with Buenos Aires timezone - FIXED
+  // Handle date changes - CORREGIDO para mantener fechas exactas
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
     console.log(`Date change for ${field}:`, value, 'today:', today);
     
@@ -228,10 +229,12 @@ export const useReservationForm = ({
         [field]: value,
       };
       
+      // Auto-suggest checkout date only for new reservations and when no checkout is set
       if (field === 'check_in' && mode === 'create' && !prev.check_out) {
         newFormData.check_out = getDefaultCheckOut(value);
       }
       
+      // Clear room selection if dates conflict
       if (newFormData.check_in && newFormData.check_out && newFormData.room_id) {
         const hasOverlap = hasDateOverlap(
           newFormData.room_id, 
@@ -251,7 +254,7 @@ export const useReservationForm = ({
     setAvailabilityError('');
   };
 
-  // Simple form change handler - NO MORE AUTOMATIC CHANGES
+  // Simple form change handler
   const handleFormChange = (field: string, value: any) => {
     console.log(`Form field changed: ${field} =`, value);
     

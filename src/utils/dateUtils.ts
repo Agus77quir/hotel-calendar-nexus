@@ -2,7 +2,7 @@
 // Utilidad para manejo de fechas en zona horaria de Buenos Aires
 export const BUENOS_AIRES_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
-// Convierte una fecha a string en formato YYYY-MM-DD en timezone de Buenos Aires
+// Convierte una fecha a string en formato YYYY-MM-DD manteniendo los valores locales
 export const formatDateForBuenosAires = (date: Date): string => {
   // Usar directamente los valores de la fecha local para evitar conversiones incorrectas
   const year = date.getFullYear();
@@ -29,17 +29,16 @@ export const formatSelectedDateForBuenosAires = (date: Date): string => {
 // Obtiene la fecha actual en timezone de Buenos Aires
 export const getTodayInBuenosAires = (): string => {
   const now = new Date();
-  // Usar formatDateForBuenosAires consistentemente
   return formatDateForBuenosAires(now);
 };
 
-// Convierte string YYYY-MM-DD a Date object para el calendar
+// Convierte string YYYY-MM-DD a Date object para el calendar - CORREGIDO
 export const parseStringToDate = (dateString: string): Date => {
   if (!dateString) return new Date();
   
   const [year, month, day] = dateString.split('-').map(Number);
-  // Crear fecha en timezone local para evitar desplazamientos
-  // Usar new Date(year, month - 1, day) en lugar de Date.parse para mayor precisión
+  // Crear fecha en timezone local sin desplazamientos
+  // Usar new Date(year, month - 1, day) para crear fecha local exacta
   const date = new Date(year, month - 1, day);
   
   console.log('Parsing string to date:', dateString, '-> Date object:', date);
@@ -48,11 +47,9 @@ export const parseStringToDate = (dateString: string): Date => {
 
 // Nueva función para formatear fechas de visualización consistentemente
 export const formatDisplayDate = (dateString: string): string => {
-  const date = parseStringToDate(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  if (!dateString) return '';
   
+  const [year, month, day] = dateString.split('-');
   return `${day}/${month}/${year}`;
 };
 

@@ -72,16 +72,13 @@ export const ReservationFormFields = ({
     return number.length === 1 ? `0${number}` : number;
   };
 
-  // Manejo de fechas corregido para evitar desplazamientos de zona horaria
+  // Manejo de fechas corregido para mantener la fecha exactamente como se selecciona
   const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
     if (date) {
-      // Asegurar que la fecha seleccionada se mantenga exactamente como fue seleccionada
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Convertir la fecha seleccionada directamente a string YYYY-MM-DD
+      const dateString = formatSelectedDateForBuenosAires(date);
       
-      console.log('Calendar date selected:', date, 'Formatted as:', dateString);
+      console.log(`Calendar date selected for ${field}:`, date, 'Formatted as:', dateString);
       onDateChange(field, dateString);
       
       // Close the calendar after selection
@@ -211,7 +208,11 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_in ? format(parseStringToDate(formData.check_in), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_in ? (
+                      format(parseStringToDate(formData.check_in), 'dd MMMM yyyy', { locale: es })
+                    ) : (
+                      <span>Seleccionar fecha</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -239,7 +240,11 @@ export const ReservationFormFields = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.check_out ? format(parseStringToDate(formData.check_out), 'dd MMMM yyyy', { locale: es }) : <span>Seleccionar fecha</span>}
+                    {formData.check_out ? (
+                      format(parseStringToDate(formData.check_out), 'dd MMMM yyyy', { locale: es })
+                    ) : (
+                      <span>Seleccionar fecha</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
