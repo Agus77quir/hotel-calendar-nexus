@@ -283,22 +283,18 @@ export const ReservationModal = ({
                 {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
               </p>
             </div>
-          </div>
-          
-          {/* Multi-room toggle button moved below header */}
-          {isAdmin && mode === 'create' && !showNewGuestForm && (
-            <div className="mt-3 pt-3 border-t">
+            {isAdmin && mode === 'create' && !showNewGuestForm && (
               <Button
                 type="button"
                 variant={useMultiRoomSelection ? "default" : "outline"}
                 size="sm"
                 onClick={handleMultiRoomToggle}
-                className="text-xs"
+                className="flex-shrink-0 text-xs mr-4"
               >
                 {useMultiRoomSelection ? 'Selección Individual' : 'Selección Múltiple'}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '10rem' }}>
