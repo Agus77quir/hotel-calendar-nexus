@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,8 +18,7 @@ import {
 import { ReservationViewModal } from './ReservationViewModal';
 import { EditGuestModal } from '../Guests/EditGuestModal';
 import { Reservation, Guest, Room } from '@/types/hotel';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatDisplayDate } from '@/utils/dateUtils';
 import { 
   Eye, 
   Edit, 
@@ -199,10 +197,10 @@ export const ReservationsTable = ({
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {format(new Date(reservation.check_in), 'dd MMM yyyy', { locale: es })}
+                      {formatDisplayDate(reservation.check_in)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      hasta {format(new Date(reservation.check_out), 'dd MMM yyyy', { locale: es })}
+                      hasta {formatDisplayDate(reservation.check_out)}
                     </div>
                   </TableCell>
                   
