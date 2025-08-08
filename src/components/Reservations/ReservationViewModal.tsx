@@ -1,108 +1,132 @@
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, MapPin, DollarSign, FileText, Users, Mail, MessageCircle, Download } from 'lucide-react';
+import { 
+  CalendarDays, 
+  User, 
+  MapPin, 
+  Users, 
+  DollarSign, 
+  Clock,
+  Phone,
+  Mail,
+  FileText,
+  Download,
+  MessageCircle,
+  Edit
+} from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { openEmailClient } from '@/services/emailTemplateService';
 import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
-import { parseStringToDate } from '@/utils/dateUtils';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 interface ReservationViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  reservation: Reservation;
-  guest: Guest;
-  room: Room;
+  reservation: Reservation | undefined;
+  guest: Guest | undefined;
+  room: Room | undefined;
+  onEdit?: () => void;
 }
 
-export const ReservationViewModal = ({
-  isOpen,
-  onClose,
-  reservation,
-  guest,
-  room
-}: ReservationViewModalProps) => {
-  const { toast } = useToast();
+export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room, onEdit }: ReservationViewModalProps) => {
+  if (!reservation || !guest || !room) return null;
 
-  const getStatusBadge = (status: Reservation['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge variant="default">Confirmada</Badge>;
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'checked-in':
-        return <Badge className="bg-green-500">Registrado</Badge>;
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'checked-out':
-        return <Badge variant="secondary">Check-out</Badge>;
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'cancelled':
-        return <Badge variant="destructive">Cancelada</Badge>;
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmada';
+      case 'checked-in':
+        return 'Registrado';
+      case 'checked-out':
+        return 'Check-out';
+      case 'cancelled':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  };
+
+  const formatRoomType = (type: string) => {
+    return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatRoomNumber = (number: string) => {
+    return number.length === 1 ? `0${number}` : number;
   };
 
   const handleSendEmail = () => {
-    try {
-      openEmailClient(guest, reservation, room);
-      toast({
-        title: "📧 Email preparado",
-        description: `Se abrió el cliente de email para enviar confirmación a ${guest.email}`,
-      });
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "Error preparando email",
-        variant: "destructive",
-      });
-    }
+    const subject = `Confirmación de Reserva - ${guest.first_name} ${guest.last_name}`;
+    const body = `
+Estimado/a ${guest.first_name} ${guest.last_name},
+
+Confirmamos su reserva con los siguientes detalles:
+
+📅 Check-in: ${formatDisplayDate(reservation.check_in)}
+📅 Check-out: ${formatDisplayDate(reservation.check_out)}
+🏠 Habitación: ${room.number} (${formatRoomType(room.type)})
+👥 Huéspedes: ${reservation.guests_count}
+💰 Total: $${reservation.total_amount}
+
+Estado: ${getStatusText(reservation.status)}
+
+${reservation.special_requests ? `Solicitudes especiales: ${reservation.special_requests}` : ''}
+
+Gracias por elegirnos.
+
+Saludos cordiales.
+    `.trim();
+
+    openEmailClient(guest.email, subject, body);
   };
 
   const handleSendWhatsApp = () => {
-    try {
-      sendReservationToWhatsApp(reservation, guest, room);
-      toast({
-        title: "📱 WhatsApp enviado",
-        description: `Mensaje enviado a ${guest.phone}`,
-      });
-    } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "Error enviando WhatsApp",
-        variant: "destructive",
-      });
-    }
+    const message = `
+🏨 *Confirmación de Reserva*
+
+👤 *Huésped:* ${guest.first_name} ${guest.last_name}
+📅 *Check-in:* ${formatDisplayDate(reservation.check_in)}
+📅 *Check-out:* ${formatDisplayDate(reservation.check_out)}
+🏠 *Habitación:* ${room.number} (${formatRoomType(room.type)})
+👥 *Huéspedes:* ${reservation.guests_count}
+💰 *Total:* $${reservation.total_amount}
+📋 *Estado:* ${getStatusText(reservation.status)}
+
+${reservation.special_requests ? `📝 *Solicitudes especiales:* ${reservation.special_requests}` : ''}
+
+¡Gracias por elegirnos! 🙏
+    `.trim();
+
+    sendReservationToWhatsApp(guest.phone, message);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
-      generateReservationPDF(reservation, guest, room);
-      toast({
-        title: "📄 PDF generado",
-        description: "Voucher de reserva descargado",
-      });
+      await generateReservationPDF(reservation, guest, room);
     } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "Error generando PDF",
-        variant: "destructive",
-      });
+      console.error('Error generating PDF:', error);
     }
-  };
-
-  // Formatear fechas correctamente usando parseStringToDate
-  const formatReservationDate = (dateString: string) => {
-    const parsedDate = parseStringToDate(dateString);
-    return format(parsedDate, 'dd/MM/yyyy', { locale: es });
   };
 
   return (
@@ -112,67 +136,78 @@ export const ReservationViewModal = ({
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl">
-                Detalles de Reserva #{reservation.id.slice(0, 8)}
+                Reserva de {guest.first_name} {guest.last_name}
               </DialogTitle>
+              <div className="flex items-center gap-3 mt-2">
+                <Badge className={`${getStatusColor(reservation.status)} border`}>
+                  {getStatusText(reservation.status)}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Habitación {formatRoomNumber(room.number)}
+                </span>
+              </div>
             </div>
-            <div className="flex-shrink-0 mt-1">
-              {getStatusBadge(reservation.status)}
+            <div className="flex gap-2 flex-shrink-0">
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onEdit}
+                  className="h-8 w-8 p-0"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Botones de Acción */}
+          {/* Quick Actions */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Acciones</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2 flex-wrap">
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-2">
                 <Button
-                  onClick={handleSendEmail}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Enviar por Email
-                </Button>
-                
-                {guest.phone && (
-                  <Button
-                    onClick={handleSendWhatsApp}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    size="sm"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Enviar por WhatsApp
-                  </Button>
-                )}
-                
-                <Button
-                  onClick={handleDownloadPDF}
                   variant="outline"
                   size="sm"
+                  onClick={handleSendEmail}
+                  className="flex items-center gap-2"
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Mail className="h-4 w-4" />
+                  Enviar Email
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendWhatsApp}
+                  className="flex items-center gap-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
                   Descargar PDF
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Información del Huésped */}
+          {/* Guest Information */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
                 <User className="h-5 w-5 text-purple-600" />
-                Información del Huésped
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+                <h3 className="font-semibold">Información del Huésped</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Nombre Completo</p>
+                  <p className="text-sm text-muted-foreground">Nombre completo</p>
                   <p className="font-medium">{guest.first_name} {guest.last_name}</p>
                 </div>
                 <div>
@@ -181,7 +216,7 @@ export const ReservationViewModal = ({
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Teléfono</p>
-                  <p className="font-medium">{guest.phone || 'No especificado'}</p>
+                  <p className="font-medium">{guest.phone}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Documento</p>
@@ -191,112 +226,109 @@ export const ReservationViewModal = ({
                   <p className="text-sm text-muted-foreground">Nacionalidad</p>
                   <p className="font-medium">{guest.nationality}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Estado</p>
-                  {guest.is_associated ? (
-                    <Badge variant="outline" className="text-green-600">
+                {guest.is_associated && (
+                  <div>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">
                       Huésped Asociado
                     </Badge>
-                  ) : (
-                    <Badge variant="outline">Huésped Regular</Badge>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Información de la Habitación */}
+          {/* Reservation Details */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-5 w-5 text-green-600" />
-                Información de la Habitación
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Número</p>
-                  <p className="font-medium">#{room.number}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipo</p>
-                  <p className="font-medium capitalize">{room.type.replace('-', ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Capacidad</p>
-                  <p className="font-medium">{room.capacity} personas</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Precio por Noche</p>
-                  <p className="font-medium">${Number(room.price).toFixed(2)}</p>
-                </div>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarDays className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold">Detalles de la Reserva</h3>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Información de la Reserva */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                Información de la Reserva
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Check-in</p>
                   <p className="font-medium">
-                    {formatReservationDate(reservation.check_in)}
+                    {formatDisplayDate(reservation.check_in)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Check-out</p>
                   <p className="font-medium">
-                    {formatReservationDate(reservation.check_out)}
+                    {formatDisplayDate(reservation.check_out)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Número de Huéspedes</p>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <p className="font-medium">{reservation.guests_count}</p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">Número de huéspedes</p>
+                  <p className="font-medium">{reservation.guests_count}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <p className="font-medium text-lg">${Number(reservation.total_amount).toFixed(2)}</p>
-                  </div>
+                  <p className="font-semibold text-green-600">${reservation.total_amount}</p>
                 </div>
               </div>
 
               {reservation.special_requests && (
                 <>
-                  <Separator />
+                  <Separator className="my-4" />
                   <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Solicitudes Especiales
-                    </p>
-                    <p className="font-medium mt-1 p-3 bg-muted rounded-md">
-                      {reservation.special_requests}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-2">Solicitudes especiales</p>
+                    <p className="text-sm bg-muted p-3 rounded-lg">{reservation.special_requests}</p>
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
 
-              <Separator />
-              <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+          {/* Room Information */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <MapPin className="h-5 w-5 text-green-600" />
+                <h3 className="font-semibold">Información de la Habitación</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p>Creada el: {format(new Date(reservation.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+                  <p className="text-sm text-muted-foreground">Número</p>
+                  <p className="font-mono text-lg font-bold text-blue-800">
+                    #{formatRoomNumber(room.number)}
+                  </p>
                 </div>
                 <div>
-                  <p>Actualizada el: {format(new Date(reservation.updated_at), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+                  <p className="text-sm text-muted-foreground">Tipo</p>
+                  <p className="font-medium">{formatRoomType(room.type)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Capacidad</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Precio por noche</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    ${room.price}
+                  </p>
                 </div>
               </div>
+
+              {room.amenities && room.amenities.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Amenidades</p>
+                  <div className="flex flex-wrap gap-1">
+                    {room.amenities.map((amenity, index) => (
+                      <Badge 
+                        key={index} 
+                        variant="outline" 
+                        className="text-xs"
+                      >
+                        {amenity}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
