@@ -77,48 +77,11 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
   };
 
   const handleSendEmail = () => {
-    const subject = `Confirmación de Reserva - ${guest.first_name} ${guest.last_name}`;
-    const body = `
-Estimado/a ${guest.first_name} ${guest.last_name},
-
-Confirmamos su reserva con los siguientes detalles:
-
-📅 Check-in: ${formatDisplayDate(reservation.check_in)}
-📅 Check-out: ${formatDisplayDate(reservation.check_out)}
-🏠 Habitación: ${room.number} (${formatRoomType(room.type)})
-👥 Huéspedes: ${reservation.guests_count}
-💰 Total: $${reservation.total_amount}
-
-Estado: ${getStatusText(reservation.status)}
-
-${reservation.special_requests ? `Solicitudes especiales: ${reservation.special_requests}` : ''}
-
-Gracias por elegirnos.
-
-Saludos cordiales.
-    `.trim();
-
-    openEmailClient(guest.email, subject, body);
+    openEmailClient(guest, reservation, room);
   };
 
   const handleSendWhatsApp = () => {
-    const message = `
-🏨 *Confirmación de Reserva*
-
-👤 *Huésped:* ${guest.first_name} ${guest.last_name}
-📅 *Check-in:* ${formatDisplayDate(reservation.check_in)}
-📅 *Check-out:* ${formatDisplayDate(reservation.check_out)}
-🏠 *Habitación:* ${room.number} (${formatRoomType(room.type)})
-👥 *Huéspedes:* ${reservation.guests_count}
-💰 *Total:* $${reservation.total_amount}
-📋 *Estado:* ${getStatusText(reservation.status)}
-
-${reservation.special_requests ? `📝 *Solicitudes especiales:* ${reservation.special_requests}` : ''}
-
-¡Gracias por elegirnos! 🙏
-    `.trim();
-
-    sendReservationToWhatsApp(guest.phone, message);
+    sendReservationToWhatsApp(reservation, guest, room);
   };
 
   const handleDownloadPDF = async () => {
