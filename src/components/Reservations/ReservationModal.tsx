@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Room, Guest, Reservation } from '@/types/hotel';
@@ -284,18 +283,22 @@ export const ReservationModal = ({
                 {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
               </p>
             </div>
-            {isAdmin && mode === 'create' && !showNewGuestForm && (
+          </div>
+          
+          {/* Multi-room toggle button moved below header */}
+          {isAdmin && mode === 'create' && !showNewGuestForm && (
+            <div className="mt-3 pt-3 border-t">
               <Button
                 type="button"
                 variant={useMultiRoomSelection ? "default" : "outline"}
                 size="sm"
                 onClick={handleMultiRoomToggle}
-                className="flex-shrink-0 text-xs"
+                className="text-xs"
               >
-                {useMultiRoomSelection ? 'Una Hab.' : 'Multi Hab.'}
+                {useMultiRoomSelection ? 'Selección Individual' : 'Selección Múltiple'}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '10rem' }}>
