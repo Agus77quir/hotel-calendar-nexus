@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,7 +135,7 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
                   variant="outline"
                   size="sm"
                   onClick={handleSendEmail}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <Mail className="h-4 w-4" />
                   Enviar Email
@@ -143,7 +144,7 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
                   variant="outline"
                   size="sm"
                   onClick={handleSendWhatsApp}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-green-100 border-green-200 text-green-700 hover:from-green-100 hover:to-green-200 hover:border-green-300 shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp
