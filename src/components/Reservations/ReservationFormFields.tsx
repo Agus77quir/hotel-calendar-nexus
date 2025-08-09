@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { Label } from '@/components/ui/label';
@@ -7,10 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { CalendarDays, User, Users, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
+import { parseStringToDate, formatDisplayDate } from '@/utils/dateUtils';
 
 interface ReservationFormFieldsProps {
   formData: any;
@@ -123,9 +121,19 @@ export const ReservationFormFields = ({
   onDateChange,
   onRoomChange,
 }: ReservationFormFieldsProps) => {
+  const handleDateSelect = (field: 'check_in' | 'check_out', date: Date | undefined) => {
+    if (date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      onDateChange(field, formattedDate);
+    }
+  };
+
   return (
     <form className="space-y-4 sm:space-y-6">
-      {/* Guest Selection - Vuelto al Select tradicional */}
+      {/* Guest Selection */}
       <div className="space-y-2">
         <Label htmlFor="guest_id" className="text-sm font-medium">
           Huésped *
@@ -171,16 +179,16 @@ export const ReservationFormFields = ({
               <Input
                 id="check_in"
                 placeholder="Seleccione fecha de check-in"
-                value={formData.check_in ? format(new Date(formData.check_in), 'yyyy-MM-dd') : ''}
-                className="text-sm"
+                value={formData.check_in ? formatDisplayDate(formData.check_in) : ''}
+                className="text-sm cursor-pointer"
                 readOnly
               />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 border-none shadow-md">
               <Calendar
                 mode="single"
-                selected={formData.check_in ? new Date(formData.check_in) : undefined}
-                onSelect={(date) => onDateChange('check_in', format(date!, 'yyyy-MM-dd'))}
+                selected={formData.check_in ? parseStringToDate(formData.check_in) : undefined}
+                onSelect={(date) => handleDateSelect('check_in', date)}
                 disabled={(date) => date < new Date(today)}
                 initialFocus
               />
@@ -197,16 +205,16 @@ export const ReservationFormFields = ({
               <Input
                 id="check_out"
                 placeholder="Seleccione fecha de check-out"
-                value={formData.check_out ? format(new Date(formData.check_out), 'yyyy-MM-dd') : ''}
-                className="text-sm"
+                value={formData.check_out ? formatDisplayDate(formData.check_out) : ''}
+                className="text-sm cursor-pointer"
                 readOnly
               />
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 border-none shadow-md">
               <Calendar
                 mode="single"
-                selected={formData.check_out ? new Date(formData.check_out) : undefined}
-                onSelect={(date) => onDateChange('check_out', format(date!, 'yyyy-MM-dd'))}
+                selected={formData.check_out ? parseStringToDate(formData.check_out) : undefined}
+                onSelect={(date) => handleDateSelect('check_out', date)}
                 disabled={(date) => date < new Date(formData.check_in || today)}
                 initialFocus
               />
