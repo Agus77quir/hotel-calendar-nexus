@@ -7,10 +7,8 @@ import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { ReservationValidationAlert } from './ReservationValidationAlert';
 import { NewGuestForm } from './NewGuestForm';
-import { MultiRoomSelector } from './MultiRoomSelector';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -33,12 +31,9 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { user } = useAuth();
   const { reservations, addGuest, updateGuest } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
-  const [useMultiRoomSelection, setUseMultiRoomSelection] = useState(false);
-  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const { toast } = useToast();
   
   const {
@@ -68,78 +63,8 @@ export const ReservationModal = ({
     isOpen
   });
 
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin';
-
-  // Reset multi-room selection when modal opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      setUseMultiRoomSelection(false);
-      setSelectedRoomIds(formData.room_id ? [formData.room_id] : []);
-    } else {
-      setUseMultiRoomSelection(false);
-      setSelectedRoomIds([]);
-    }
-  }, [isOpen, formData.room_id]);
-
-  // Update form data when multi-room selection changes
-  useEffect(() => {
-    if (useMultiRoomSelection && selectedRoomIds.length > 0) {
-      // Use the first room as the primary room for form validation
-      handleFormChange('room_id', selectedRoomIds[0]);
-    } else if (useMultiRoomSelection && selectedRoomIds.length === 0) {
-      handleFormChange('room_id', '');
-    }
-  }, [useMultiRoomSelection, selectedRoomIds, handleFormChange]);
-
-  const handleMultiRoomToggle = () => {
-    const newUseMultiRoom = !useMultiRoomSelection;
-    setUseMultiRoomSelection(newUseMultiRoom);
-    
-    if (newUseMultiRoom) {
-      // Switch to multi-room mode
-      setSelectedRoomIds(formData.room_id ? [formData.room_id] : []);
-    } else {
-      // Switch back to single room mode
-      const firstSelectedRoom = selectedRoomIds[0];
-      if (firstSelectedRoom) {
-        handleFormChange('room_id', firstSelectedRoom);
-      }
-      setSelectedRoomIds([]);
-    }
-  };
-
-  const handleMultiRoomSelectionChange = (roomIds: string[]) => {
-    setSelectedRoomIds(roomIds);
-  };
-
-  // Calculate total for multi-room selection
-  const calculateMultiRoomTotal = () => {
-    if (!useMultiRoomSelection || selectedRoomIds.length === 0 || !formData.check_in || !formData.check_out) {
-      return calculateTotal();
-    }
-
-    const checkInDate = new Date(formData.check_in);
-    const checkOutDate = new Date(formData.check_out);
-    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
-
-    const subtotal = selectedRoomIds.reduce((total, roomId) => {
-      const room = rooms.find(r => r.id === roomId);
-      return total + (room ? room.price * nights : 0);
-    }, 0);
-
-    const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
-    const total = subtotal - discountAmount;
-
-    return {
-      subtotal,
-      discount: discountAmount,
-      total
-    };
-  };
-
-  // Get totals (multi-room or single room)
-  const totals = calculateMultiRoomTotal();
+  // Get totals
+  const totals = calculateTotal();
 
   // Get validation errors
   const validationErrors = validateForm();
@@ -181,13 +106,6 @@ export const ReservationModal = ({
     
     // Validate all form fields
     const validationErrors = validateForm();
-    
-    // Additional validation for multi-room selection
-    if (useMultiRoomSelection && selectedRoomIds.length === 0) {
-      setAvailabilityError('Debe seleccionar al menos una habitación');
-      return;
-    }
-
     if (validationErrors.length > 0) {
       setAvailabilityError(validationErrors[0]); // Show first error
       return;
@@ -197,53 +115,26 @@ export const ReservationModal = ({
     setAvailabilityError('');
 
     try {
-      if (useMultiRoomSelection && selectedRoomIds.length > 1) {
-        // Create multiple reservations for multiple rooms
-        const promises = selectedRoomIds.map(async (roomId) => {
-          const reservationData = {
-            guest_id: formData.guest_id,
-            room_id: roomId,
-            check_in: formData.check_in,
-            check_out: formData.check_out,
-            guests_count: Math.ceil(formData.guests_count / selectedRoomIds.length), // Distribute guests
-            status: formData.status,
-            special_requests: formData.special_requests,
-            total_amount: rooms.find(r => r.id === roomId)?.price || 0,
-            created_by: 'current-user-id',
-          };
+      const reservationData = {
+        guest_id: formData.guest_id,
+        room_id: formData.room_id,
+        check_in: formData.check_in,
+        check_out: formData.check_out,
+        guests_count: formData.guests_count,
+        status: formData.status,
+        special_requests: formData.special_requests,
+        total_amount: totals.total,
+        created_by: 'current-user-id',
+      };
 
-          return await onSave(reservationData);
-        });
+      await onSave(reservationData);
 
-        await Promise.all(promises);
-
-        toast({
-          title: "Reservas creadas",
-          description: `Se han creado ${selectedRoomIds.length} reservas exitosamente`,
-        });
-      } else {
-        // Single room reservation (normal flow)
-        const reservationData = {
-          guest_id: formData.guest_id,
-          room_id: useMultiRoomSelection ? selectedRoomIds[0] : formData.room_id,
-          check_in: formData.check_in,
-          check_out: formData.check_out,
-          guests_count: formData.guests_count,
-          status: formData.status,
-          special_requests: formData.special_requests,
-          total_amount: totals.total,
-          created_by: 'current-user-id',
-        };
-
-        await onSave(reservationData);
-
-        toast({
-          title: mode === 'create' ? "Reserva creada" : "Reserva actualizada",
-          description: mode === 'create' 
-            ? "Reserva confirmada exitosamente" 
-            : "La reserva ha sido actualizada correctamente",
-        });
-      }
+      toast({
+        title: mode === 'create' ? "Reserva creada" : "Reserva actualizada",
+        description: mode === 'create' 
+          ? "Reserva confirmada exitosamente" 
+          : "La reserva ha sido actualizada correctamente",
+      });
 
       onClose();
     } catch (error: any) {
@@ -262,31 +153,18 @@ export const ReservationModal = ({
 
   const handleClose = () => {
     setShowNewGuestForm(false);
-    setUseMultiRoomSelection(false);
-    setSelectedRoomIds([]);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-5xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0 fixed inset-0 sm:inset-2 left-0 top-0 sm:left-1/2 sm:top-1/2 transform-none sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 m-0 sm:m-2 touch-manipulation">
+      <DialogContent className="w-[95vw] max-w-4xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0 fixed inset-0 sm:inset-2 left-0 top-0 sm:left-1/2 sm:top-1/2 transform-none sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 m-0 sm:m-2 touch-manipulation">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0 bg-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            {isAdmin && mode === 'create' && !showNewGuestForm && (
-              <Button
-                type="button"
-                variant={useMultiRoomSelection ? "default" : "outline"}
-                size="sm"
-                onClick={handleMultiRoomToggle}
-                className="flex-shrink-0 text-xs px-2 py-1 h-7 mr-6"
-              >
-                Multi Hab.
-              </Button>
-            )}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <DialogTitle className="text-lg sm:text-xl">
                 {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
               </DialogTitle>
@@ -332,34 +210,21 @@ export const ReservationModal = ({
                 </div>
               )}
 
-              {isAdmin && useMultiRoomSelection ? (
-                <MultiRoomSelector
-                  rooms={rooms}
-                  reservations={reservations}
-                  checkIn={formData.check_in}
-                  checkOut={formData.check_out}
-                  selectedRoomIds={selectedRoomIds}
-                  onRoomSelectionChange={handleMultiRoomSelectionChange}
-                  reservationId={reservation?.id}
-                  guestsCount={formData.guests_count}
-                />
-              ) : (
-                <ReservationFormFields
-                  formData={formData}
-                  guests={guests}
-                  reservations={reservations}
-                  availableRooms={availableRooms}
-                  selectedRoom={selectedRoom}
-                  selectedGuest={selectedGuest}
-                  maxCapacity={maxCapacity}
-                  availabilityError={availabilityError}
-                  today={today}
-                  totals={totals}
-                  onFormChange={handleFormChange}
-                  onDateChange={handleDateChange}
-                  onRoomChange={handleRoomChange}
-                />
-              )}
+              <ReservationFormFields
+                formData={formData}
+                guests={guests}
+                reservations={reservations}
+                availableRooms={availableRooms}
+                selectedRoom={selectedRoom}
+                selectedGuest={selectedGuest}
+                maxCapacity={maxCapacity}
+                availabilityError={availabilityError}
+                today={today}
+                totals={totals}
+                onFormChange={handleFormChange}
+                onDateChange={handleDateChange}
+                onRoomChange={handleRoomChange}
+              />
             </div>
           )}
         </div>
@@ -372,15 +237,11 @@ export const ReservationModal = ({
             <Button 
               onClick={handleSubmit}
               className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isFormValid() || isSubmitting || (useMultiRoomSelection && selectedRoomIds.length === 0)}
+              disabled={!isFormValid() || isSubmitting}
             >
               {isSubmitting 
                 ? 'Procesando...' 
-                : mode === 'create' 
-                  ? (useMultiRoomSelection && selectedRoomIds.length > 1 
-                      ? `Crear ${selectedRoomIds.length} Reservas` 
-                      : 'Crear Reserva')
-                  : 'Actualizar Reserva'
+                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
               }
             </Button>
           </div>
