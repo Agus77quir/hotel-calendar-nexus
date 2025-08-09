@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -6,7 +7,8 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000 // Reducido a 1000 (1 segundo)
+const TOAST_REMOVE_DELAY = 1000000000 // Muy alto para prevenir auto-remove
+const TOAST_AUTO_DISMISS_DELAY = 1000 // 1 segundo para auto-dismiss
 
 type ToasterToast = ToastProps & {
   id: string
@@ -54,6 +56,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -69,6 +72,22 @@ const addToRemoveQueue = (toastId: string) => {
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
+}
+
+const addToDismissQueue = (toastId: string) => {
+  if (dismissTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    dismissTimeouts.delete(toastId)
+    dispatch({
+      type: "DISMISS_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_AUTO_DISMISS_DELAY)
+
+  dismissTimeouts.set(toastId, timeout)
 }
 
 export const reducer = (state: State, action: Action): State => {
@@ -160,6 +179,9 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Auto-dismiss después de 1 segundo
+  addToDismissQueue(id)
 
   return {
     id: id,
