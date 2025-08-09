@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -122,69 +123,41 @@ export const ReservationFormFields = ({
   onDateChange,
   onRoomChange,
 }: ReservationFormFieldsProps) => {
-  const [guestSearchQuery, setGuestSearchQuery] = useState('');
-  const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
-
-  const filteredGuests = guests.filter(guest => {
-    const searchLower = guestSearchQuery.toLowerCase();
-    return (
-      guest.first_name.toLowerCase().includes(searchLower) ||
-      guest.last_name.toLowerCase().includes(searchLower) ||
-      guest.email?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const handleGuestSelect = (guestId: string) => {
-    onFormChange('guest_id', guestId);
-    setGuestSearchQuery('');
-    setIsGuestDropdownOpen(false);
-  };
-
   return (
     <form className="space-y-4 sm:space-y-6">
-      {/* Guest Selection */}
+      {/* Guest Selection - Vuelto al Select tradicional */}
       <div className="space-y-2">
         <Label htmlFor="guest_id" className="text-sm font-medium">
           Huésped *
         </Label>
-        <Popover open={isGuestDropdownOpen} onOpenChange={setIsGuestDropdownOpen}>
-          <PopoverTrigger asChild>
-            <Input
-              id="guest_id"
-              placeholder="Buscar huésped por nombre, apellido o email..."
-              value={selectedGuest ? `${selectedGuest.first_name} ${selectedGuest.last_name} (${selectedGuest.email})` : guestSearchQuery}
-              onChange={(e) => {
-                setGuestSearchQuery(e.target.value);
-                onFormChange('guest_id', '');
-              }}
-              onFocus={() => setIsGuestDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setIsGuestDropdownOpen(false), 100)}
-            />
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0 border-none shadow-md">
-            {filteredGuests.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground">
-                No se encontraron huéspedes
-              </div>
+        <Select value={formData.guest_id} onValueChange={(value) => onFormChange('guest_id', value)}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Seleccione un huésped" />
+          </SelectTrigger>
+          <SelectContent>
+            {guests.length === 0 ? (
+              <SelectItem value="" disabled>
+                No hay huéspedes disponibles
+              </SelectItem>
             ) : (
-              <div className="max-h-60 overflow-y-auto">
-                {filteredGuests.map(guest => (
-                  <button
-                    key={guest.id}
-                    className="w-full flex items-start gap-2 p-3 text-sm text-gray-800 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                    onClick={() => handleGuestSelect(guest.id)}
-                  >
-                    <User className="h-4 w-4 flex-shrink-0 text-gray-500" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{guest.first_name} {guest.last_name}</span>
-                      <span className="text-xs text-gray-500">{guest.email}</span>
+              guests.map(guest => (
+                <SelectItem key={guest.id} value={guest.id}>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <span className="font-medium">
+                        {guest.first_name} {guest.last_name}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({guest.email})
+                      </span>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                </SelectItem>
+              ))
             )}
-          </PopoverContent>
-        </Popover>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Dates */}
@@ -367,7 +340,7 @@ export const ReservationFormFields = ({
         />
       </div>
 
-      {/* Discount and Total Section - Updated to work with both single and multi-room */}
+      {/* Discount and Total Section */}
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
         {selectedGuest && (
           <>
