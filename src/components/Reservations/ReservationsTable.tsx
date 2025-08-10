@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ReservationViewModal } from './ReservationViewModal';
 import { EditGuestModal } from '../Guests/EditGuestModal';
+import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { 
@@ -32,10 +33,12 @@ import {
   LogOut,
   XCircle,
   UserCog,
-  Users
+  Users,
+  CalendarDays
 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -56,8 +59,9 @@ export const ReservationsTable = ({
   onNewReservationForGuest,
   onStatusChange,
 }: ReservationsTableProps) => {
-  const { updateGuest } = useHotelData();
+  const { updateGuest, addReservation } = useHotelData();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [viewModal, setViewModal] = useState<{
     isOpen: boolean;
     reservation?: Reservation;
@@ -74,20 +78,14 @@ export const ReservationsTable = ({
     isOpen: false,
   });
 
-  const getStatusBadge = (status: Reservation['status']) => {
-    switch (status) {
-      case 'confirmed':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Confirmada</Badge>;
-      case 'checked-in':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Check-in</Badge>;
-      case 'checked-out':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Check-out</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelada</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const [multiRoomModal, setMultiRoomModal] = useState<{
+    isOpen: boolean;
+    guest?: Guest;
+  }>({
+    isOpen: false,
+  });
+
+  const isAdmin = user?.role === 'admin';
 
   const handleViewDetails = (reservation: Reservation) => {
     const guest = guests.find(g => g.id === reservation.guest_id);
@@ -119,6 +117,31 @@ export const ReservationsTable = ({
         variant: "destructive",
       });
       throw error;
+    }
+  };
+
+  const handleMultiRoomReservations = async (reservationsData: any[]) => {
+    try {
+      for (const reservationData of reservationsData) {
+        await addReservation(reservationData);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const getStatusBadge = (status: Reservation['status']) => {
+    switch (status) {
+      case 'confirmed':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Confirmada</Badge>;
+      case 'checked-in':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Check-in</Badge>;
+      case 'checked-out':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Check-out</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelada</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -244,6 +267,13 @@ export const ReservationsTable = ({
                           Nueva Reserva
                         </DropdownMenuItem>
 
+                        {isAdmin && (
+                          <DropdownMenuItem onClick={() => setMultiRoomModal({ isOpen: true, guest })}>
+                            <CalendarDays className="h-4 w-4 mr-2" />
+                            Reserva Múltiple
+                          </DropdownMenuItem>
+                        )}
+
                         {reservation.status === 'confirmed' && (
                           <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'checked-in')}>
                             <UserCheck className="h-4 w-4 mr-2 text-green-600" />
@@ -298,6 +328,16 @@ export const ReservationsTable = ({
           onClose={() => setEditGuestModal({ isOpen: false })}
           guest={editGuestModal.guest}
           onSave={handleEditGuest}
+        />
+      )}
+
+      {multiRoomModal.isOpen && multiRoomModal.guest && (
+        <MultiRoomReservationModal
+          isOpen={multiRoomModal.isOpen}
+          onClose={() => setMultiRoomModal({ isOpen: false })}
+          guest={multiRoomModal.guest}
+          rooms={rooms}
+          onCreateReservations={handleMultiRoomReservations}
         />
       )}
     </>
