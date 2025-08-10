@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -57,10 +56,14 @@ export const MultiRoomReservationModal = ({
     });
   };
 
-  const handleGuestsCountChange = (roomId: string, count: number) => {
+  const handleGuestsCountChange = (roomId: string, value: string) => {
+    const count = parseInt(value) || 1;
     const room = rooms.find(r => r.id === roomId);
-    if (room && count >= 1 && count <= room.capacity) {
-      setGuestsCount(prev => ({ ...prev, [roomId]: count }));
+    
+    if (room) {
+      // Ensure count is within valid range
+      const validCount = Math.max(1, Math.min(count, room.capacity));
+      setGuestsCount(prev => ({ ...prev, [roomId]: validCount }));
     }
   };
 
@@ -233,7 +236,7 @@ export const MultiRoomReservationModal = ({
                           min={1}
                           max={room.capacity}
                           value={guestsCount[room.id] || 1}
-                          onChange={(e) => handleGuestsCountChange(room.id, parseInt(e.target.value))}
+                          onChange={(e) => handleGuestsCountChange(room.id, e.target.value)}
                           className="w-20"
                         />
                         <span className="text-sm text-gray-500">/ {room.capacity}</span>
