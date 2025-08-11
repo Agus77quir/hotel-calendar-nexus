@@ -1,12 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, Plus, Grid3X3 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useReservationForm } from '@/hooks/useReservationForm';
 import { ReservationFormFields } from './ReservationFormFields';
 import { ReservationValidationAlert } from './ReservationValidationAlert';
 import { NewGuestForm } from './NewGuestForm';
+import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,8 +32,10 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest } = useHotelData();
+  const { reservations, addGuest, updateGuest, addReservation } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
+  const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);
+  const [selectedGuestForMultiRoom, setSelectedGuestForMultiRoom] = useState<Guest | null>(null);
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
   const { toast } = useToast();
   
@@ -101,6 +104,44 @@ export const ReservationModal = ({
     }
   };
 
+  const handleMultiRoomReservation = () => {
+    if (!formData.guest_id) {
+      toast({
+        title: "Seleccione un huésped",
+        description: "Debe seleccionar un huésped antes de crear reservas múltiples",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const guest = guests.find(g => g.id === formData.guest_id);
+    if (guest) {
+      setSelectedGuestForMultiRoom(guest);
+      setShowMultiRoomModal(true);
+    }
+  };
+
+  const handleCreateMultipleReservations = async (reservationsData: any[]) => {
+    try {
+      // Crear todas las reservas
+      for (const reservationData of reservationsData) {
+        await addReservation(reservationData);
+      }
+      
+      toast({
+        title: "Reservas múltiples creadas",
+        description: `Se crearon ${reservationsData.length} reservas exitosamente`,
+      });
+      
+      // Cerrar ambos modales
+      setShowMultiRoomModal(false);
+      onClose();
+    } catch (error) {
+      console.error('Error creating multiple reservations:', error);
+      throw error; // Re-throw para que el modal de múltiples habitaciones maneje el error
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -153,100 +194,140 @@ export const ReservationModal = ({
 
   const handleClose = () => {
     setShowNewGuestForm(false);
+    setShowMultiRoomModal(false);
+    setSelectedGuestForMultiRoom(null);
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] max-w-4xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0 fixed inset-0 sm:inset-2 left-0 top-0 sm:left-1/2 sm:top-1/2 transform-none sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 m-0 sm:m-2 touch-manipulation">
-        <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="w-[95vw] max-w-4xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0 fixed inset-0 sm:inset-2 left-0 top-0 sm:left-1/2 sm:top-1/2 transform-none sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 m-0 sm:m-2 touch-manipulation">
+          <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0 bg-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg sm:text-xl">
+                  {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
+                </DialogTitle>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <DialogTitle className="text-lg sm:text-xl">
-                {mode === 'create' ? 'Nueva Reserva' : 'Editar Reserva'}
-              </DialogTitle>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {mode === 'create' ? 'Complete los detalles de la reserva' : 'Modifique los detalles de la reserva'}
-              </p>
-            </div>
-          </div>
-        </DialogHeader>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '10rem' }}>
-          <ReservationValidationAlert
-            validationErrors={validationErrors}
-            isFormValid={isFormValid()}
-            availabilityError={availabilityError}
-          />
-
-          {showNewGuestForm ? (
-            <NewGuestForm
-              onSave={handleCreateGuest}
-              onCancel={() => setShowNewGuestForm(false)}
-              isSubmitting={isCreatingGuest}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 overscroll-contain -webkit-overflow-scrolling-touch bg-white" style={{ paddingBottom: showNewGuestForm ? '1rem' : '10rem' }}>
+            <ReservationValidationAlert
+              validationErrors={validationErrors}
+              isFormValid={isFormValid()}
+              availabilityError={availabilityError}
             />
-          ) : (
-            <div className="space-y-4 sm:space-y-6">
-              {!preselectedGuestId && (
-                <div className="flex flex-col items-start justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 gap-3">
-                  <div className="flex-1 min-w-0 w-full">
-                    <h3 className="font-medium text-blue-900 text-sm sm:text-base">Crear Huésped Rápido</h3>
-                    <p className="text-xs sm:text-sm text-blue-700 mt-1">
-                      Se aplicarán automáticamente descuentos y configuraciones
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowNewGuestForm(true)}
-                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100 touch-manipulation w-full sm:w-auto text-sm px-4 py-3 min-h-[48px] sm:min-h-[44px] flex-shrink-0 justify-center"
-                  >
-                    <Plus className="h-4 w-4 flex-shrink-0" />
-                    <span className="whitespace-nowrap">Nuevo Huésped</span>
-                  </Button>
-                </div>
-              )}
 
-              <ReservationFormFields
-                formData={formData}
-                guests={guests}
-                reservations={reservations}
-                availableRooms={availableRooms}
-                selectedRoom={selectedRoom}
-                selectedGuest={selectedGuest}
-                maxCapacity={maxCapacity}
-                availabilityError={availabilityError}
-                today={today}
-                totals={totals}
-                onFormChange={handleFormChange}
-                onDateChange={handleDateChange}
-                onRoomChange={handleRoomChange}
+            {showNewGuestForm ? (
+              <NewGuestForm
+                onSave={handleCreateGuest}
+                onCancel={() => setShowNewGuestForm(false)}
+                isSubmitting={isCreatingGuest}
               />
+            ) : (
+              <div className="space-y-4 sm:space-y-6">
+                {/* Sección de reserva múltiple - Solo en modo crear */}
+                {mode === 'create' && (
+                  <div className="flex flex-col items-start justify-between p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 gap-3">
+                    <div className="flex-1 min-w-0 w-full">
+                      <h3 className="font-medium text-purple-900 text-sm sm:text-base">Reserva Múltiple</h3>
+                      <p className="text-xs sm:text-sm text-purple-700 mt-1">
+                        Crear reservas para múltiples habitaciones con el mismo huésped
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleMultiRoomReservation}
+                      disabled={!formData.guest_id}
+                      className="flex items-center gap-2 border-purple-300 text-purple-700 hover:bg-purple-100 touch-manipulation w-full sm:w-auto text-sm px-4 py-3 min-h-[48px] sm:min-h-[44px] flex-shrink-0 justify-center disabled:opacity-50"
+                    >
+                      <Grid3X3 className="h-4 w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">Múltiples Habitaciones</span>
+                    </Button>
+                  </div>
+                )}
+
+                {!preselectedGuestId && (
+                  <div className="flex flex-col items-start justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 gap-3">
+                    <div className="flex-1 min-w-0 w-full">
+                      <h3 className="font-medium text-blue-900 text-sm sm:text-base">Crear Huésped Rápido</h3>
+                      <p className="text-xs sm:text-sm text-blue-700 mt-1">
+                        Se aplicarán automáticamente descuentos y configuraciones
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowNewGuestForm(true)}
+                      className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100 touch-manipulation w-full sm:w-auto text-sm px-4 py-3 min-h-[48px] sm:min-h-[44px] flex-shrink-0 justify-center"
+                    >
+                      <Plus className="h-4 w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">Nuevo Huésped</span>
+                    </Button>
+                  </div>
+                )}
+
+                <ReservationFormFields
+                  formData={formData}
+                  guests={guests}
+                  reservations={reservations}
+                  availableRooms={availableRooms}
+                  selectedRoom={selectedRoom}
+                  selectedGuest={selectedGuest}
+                  maxCapacity={maxCapacity}
+                  availabilityError={availabilityError}
+                  today={today}
+                  totals={totals}
+                  onFormChange={handleFormChange}
+                  onDateChange={handleDateChange}
+                  onRoomChange={handleRoomChange}
+                />
+              </div>
+            )}
+          </div>
+
+          {!showNewGuestForm && (
+            <div className="fixed bottom-8 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-6 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
+              <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isFormValid() || isSubmitting}
+              >
+                {isSubmitting 
+                  ? 'Procesando...' 
+                  : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+                }
+              </Button>
             </div>
           )}
-        </div>
+        </DialogContent>
+      </Dialog>
 
-        {!showNewGuestForm && (
-          <div className="fixed bottom-8 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-6 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
-            <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isFormValid() || isSubmitting}
-            >
-              {isSubmitting 
-                ? 'Procesando...' 
-                : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
-              }
-            </Button>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      {/* Modal de reserva múltiple */}
+      {selectedGuestForMultiRoom && (
+        <MultiRoomReservationModal
+          isOpen={showMultiRoomModal}
+          onClose={() => {
+            setShowMultiRoomModal(false);
+            setSelectedGuestForMultiRoom(null);
+          }}
+          guest={selectedGuestForMultiRoom}
+          rooms={rooms}
+          onCreateReservations={handleCreateMultipleReservations}
+        />
+      )}
+    </>
   );
 };
