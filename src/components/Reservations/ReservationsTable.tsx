@@ -87,6 +87,26 @@ export const ReservationsTable = ({
 
   const isAdmin = user?.role === 'admin';
 
+  // Función para agrupar reservas múltiples
+  const groupReservations = (reservations: Reservation[]) => {
+    const grouped: { [key: string]: Reservation[] } = {};
+    
+    reservations.forEach(reservation => {
+      // Crear clave única basada en huésped, fechas de check-in y check-out
+      const key = `${reservation.guest_id}-${reservation.check_in}-${reservation.check_out}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(reservation);
+    });
+    
+    // Retornar solo grupos que tienen más de una reserva o reservas individuales
+    return Object.values(grouped);
+  };
+
+  const groupedReservations = groupReservations(reservations);
+
   const handleViewDetails = (reservation: Reservation) => {
     const guest = guests.find(g => g.id === reservation.guest_id);
     const room = rooms.find(r => r.id === reservation.room_id);
@@ -169,7 +189,7 @@ export const ReservationsTable = ({
                 Huésped
               </TableHead>
               <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Habitación
+                Habitación(es)
               </TableHead>
               <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Fechas
@@ -186,14 +206,18 @@ export const ReservationsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody className="bg-white divide-y divide-gray-200">
-            {reservations.map((reservation) => {
-              const guest = guests.find(g => g.id === reservation.guest_id);
-              const room = rooms.find(r => r.id === reservation.room_id);
+            {groupedReservations.map((reservationGroup, groupIndex) => {
+              const firstReservation = reservationGroup[0];
+              const guest = guests.find(g => g.id === firstReservation.guest_id);
               
-              if (!guest || !room) return null;
+              if (!guest) return null;
+
+              const isMultipleRooms = reservationGroup.length > 1;
+              const totalAmount = reservationGroup.reduce((sum, res) => sum + Number(res.total_amount), 0);
+              const totalGuests = reservationGroup.reduce((sum, res) => sum + res.guests_count, 0);
 
               return (
-                <TableRow key={reservation.id} className="hover:bg-gray-50">
+                <TableRow key={`group-${groupIndex}`} className="hover:bg-gray-50">
                   <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="ml-4">
@@ -201,6 +225,11 @@ export const ReservationsTable = ({
                           {guest.first_name} {guest.last_name}
                           {guest.is_associated && (
                             <UserCheck className="h-4 w-4 text-green-500" />
+                          )}
+                          {isMultipleRooms && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              Múltiple
+                            </Badge>
                           )}
                         </div>
                         <div className="text-sm text-gray-500">{guest.email}</div>
@@ -210,29 +239,65 @@ export const ReservationsTable = ({
                   </TableCell>
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      Habitación #{room.number}
-                    </div>
-                    <div className="text-sm text-gray-500 capitalize">
-                      {room.type.replace('-', ' ')} • {reservation.guests_count} huéspedes
-                    </div>
+                    {isMultipleRooms ? (
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          {reservationGroup.length} Habitaciones
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {reservationGroup.map(res => {
+                            const room = rooms.find(r => r.id === res.room_id);
+                            return room ? `#${room.number}` : '';
+                          }).filter(Boolean).join(', ')}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {totalGuests} huéspedes total
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {(() => {
+                          const room = rooms.find(r => r.id === firstReservation.room_id);
+                          return room ? (
+                            <>
+                              <div className="text-sm font-medium text-gray-900">
+                                Habitación #{room.number}
+                              </div>
+                              <div className="text-sm text-gray-500 capitalize">
+                                {room.type.replace('-', ' ')} • {firstReservation.guests_count} huéspedes
+                              </div>
+                            </>
+                          ) : null;
+                        })()}
+                      </div>
+                    )}
                   </TableCell>
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatDisplayDate(reservation.check_in)}
+                      {formatDisplayDate(firstReservation.check_in)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      hasta {formatDisplayDate(reservation.check_out)}
+                      hasta {formatDisplayDate(firstReservation.check_out)}
                     </div>
                   </TableCell>
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(reservation.status)}
+                    {isMultipleRooms ? (
+                      <div className="space-y-1">
+                        {reservationGroup.map((res, idx) => (
+                          <div key={idx}>
+                            {getStatusBadge(res.status)}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      getStatusBadge(firstReservation.status)
+                    )}
                   </TableCell>
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${Number(reservation.total_amount).toLocaleString()}
+                    ${totalAmount.toLocaleString()}
                   </TableCell>
                   
                   <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -247,61 +312,95 @@ export const ReservationsTable = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => handleViewDetails(reservation)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver Detalles
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuItem onClick={() => onEdit(reservation)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar Reserva
-                        </DropdownMenuItem>
+                        {isMultipleRooms ? (
+                          <>
+                            <DropdownMenuItem onClick={() => setEditGuestModal({ isOpen: true, guest })}>
+                              <UserCog className="h-4 w-4 mr-2" />
+                              Editar Huésped
+                            </DropdownMenuItem>
 
-                        <DropdownMenuItem onClick={() => setEditGuestModal({ isOpen: true, guest })}>
-                          <UserCog className="h-4 w-4 mr-2" />
-                          Editar Huésped
-                        </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onNewReservationForGuest(guest.id)}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Nueva Reserva
+                            </DropdownMenuItem>
 
-                        <DropdownMenuItem onClick={() => onNewReservationForGuest(guest.id)}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Nueva Reserva
-                        </DropdownMenuItem>
+                            {isAdmin && (
+                              <DropdownMenuItem onClick={() => setMultiRoomModal({ isOpen: true, guest })}>
+                                <CalendarDays className="h-4 w-4 mr-2" />
+                                Reserva Múltiple
+                              </DropdownMenuItem>
+                            )}
 
-                        {isAdmin && (
-                          <DropdownMenuItem onClick={() => setMultiRoomModal({ isOpen: true, guest })}>
-                            <CalendarDays className="h-4 w-4 mr-2" />
-                            Reserva Múltiple
-                          </DropdownMenuItem>
+                            {reservationGroup.map((reservation, idx) => (
+                              <DropdownMenuItem 
+                                key={idx}
+                                onClick={() => onDelete(reservation.id)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar Hab. #{rooms.find(r => r.id === reservation.room_id)?.number}
+                              </DropdownMenuItem>
+                            ))}
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem onClick={() => handleViewDetails(firstReservation)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalles
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem onClick={() => onEdit(firstReservation)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar Reserva
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => setEditGuestModal({ isOpen: true, guest })}>
+                              <UserCog className="h-4 w-4 mr-2" />
+                              Editar Huésped
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => onNewReservationForGuest(guest.id)}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Nueva Reserva
+                            </DropdownMenuItem>
+
+                            {isAdmin && (
+                              <DropdownMenuItem onClick={() => setMultiRoomModal({ isOpen: true, guest })}>
+                                <CalendarDays className="h-4 w-4 mr-2" />
+                                Reserva Múltiple
+                              </DropdownMenuItem>
+                            )}
+
+                            {firstReservation.status === 'confirmed' && (
+                              <DropdownMenuItem onClick={() => onStatusChange(firstReservation.id, 'checked-in')}>
+                                <UserCheck className="h-4 w-4 mr-2 text-green-600" />
+                                <span className="text-green-600">Check-in</span>
+                              </DropdownMenuItem>
+                            )}
+
+                            {firstReservation.status === 'checked-in' && (
+                              <DropdownMenuItem onClick={() => onStatusChange(firstReservation.id, 'checked-out')}>
+                                <LogOut className="h-4 w-4 mr-2 text-blue-600" />
+                                <span className="text-blue-600">Check-out</span>
+                              </DropdownMenuItem>
+                            )}
+
+                            {(firstReservation.status === 'confirmed' || firstReservation.status === 'checked-in') && (
+                              <DropdownMenuItem onClick={() => onStatusChange(firstReservation.id, 'cancelled')}>
+                                <XCircle className="h-4 w-4 mr-2 text-red-500" />
+                                <span className="text-red-500">Cancelar</span>
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuItem 
+                              onClick={() => onDelete(firstReservation.id)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </>
                         )}
-
-                        {reservation.status === 'confirmed' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'checked-in')}>
-                            <UserCheck className="h-4 w-4 mr-2 text-green-600" />
-                            <span className="text-green-600">Check-in</span>
-                          </DropdownMenuItem>
-                        )}
-
-                        {reservation.status === 'checked-in' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'checked-out')}>
-                            <LogOut className="h-4 w-4 mr-2 text-blue-600" />
-                            <span className="text-blue-600">Check-out</span>
-                          </DropdownMenuItem>
-                        )}
-
-                        {(reservation.status === 'confirmed' || reservation.status === 'checked-in') && (
-                          <DropdownMenuItem onClick={() => onStatusChange(reservation.id, 'cancelled')}>
-                            <XCircle className="h-4 w-4 mr-2 text-red-500" />
-                            <span className="text-red-500">Cancelar</span>
-                          </DropdownMenuItem>
-                        )}
-
-                        <DropdownMenuItem 
-                          onClick={() => onDelete(reservation.id)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
