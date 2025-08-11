@@ -60,7 +60,7 @@ export const generateMultipleReservationEmailTemplate = (
   const arrivalDate = formatDate(firstReservation.check_in);
   const departureDate = formatDate(firstReservation.check_out);
   
-  // Generate room details with proper formatting
+  // Generate room details with room numbers included
   const roomDetails = reservations.map(reservation => {
     const room = rooms.find(r => r.id === reservation.room_id);
     if (!room) return '';
