@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
-import { openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
+import { openMultipleReservationEmailClient, openEmailClient } from '@/services/emailTemplateService';
+import { sendMultipleReservationToWhatsApp, sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
 
 interface MultiReservationViewModalProps {
@@ -82,11 +82,25 @@ export const MultiReservationViewModal = ({
   };
 
   const handleSendEmail = () => {
-    openMultipleReservationEmailClient(guest, reservations, rooms);
+    if (reservations.length === 1) {
+      const room = rooms.find(r => r.id === reservations[0].room_id);
+      if (room) {
+        openEmailClient(guest, reservations[0], room);
+      }
+    } else {
+      openMultipleReservationEmailClient(guest, reservations, rooms);
+    }
   };
 
   const handleSendWhatsApp = () => {
-    sendMultipleReservationToWhatsApp(reservations, guest, rooms);
+    if (reservations.length === 1) {
+      const room = rooms.find(r => r.id === reservations[0].room_id);
+      if (room) {
+        sendReservationToWhatsApp(reservations[0], guest, room);
+      }
+    } else {
+      sendMultipleReservationToWhatsApp(reservations, guest, rooms);
+    }
   };
 
   const handleDownloadPDF = async () => {
