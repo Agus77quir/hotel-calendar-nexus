@@ -60,14 +60,18 @@ export const generateMultipleReservationEmailTemplate = (
   const arrivalDate = formatDate(firstReservation.check_in);
   const departureDate = formatDate(firstReservation.check_out);
   
-  // Generate room details
+  // Generate room details with proper formatting
   const roomDetails = reservations.map(reservation => {
     const room = rooms.find(r => r.id === reservation.room_id);
-    const roomNumber = room?.number.length === 1 ? `0${room.number}` : room?.number;
-    return `• Habitación #${roomNumber} - ${room?.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} (${reservation.guests_count} huéspedes)`;
-  }).join('\n');
+    if (!room) return '';
+    
+    const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
+    const roomType = room.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return `• Habitación #${roomNumber} - ${roomType} (${reservation.guests_count} huéspedes)`;
+  }).filter(detail => detail !== '').join('\n');
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
+  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
 
   const subject = `Confirmación de Reserva Múltiple - Hostería Anillaco - ${reservationNumber}`;
   
@@ -80,6 +84,7 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • Total de huéspedes: ${totalGuests}
+• Monto total: $${totalAmount.toLocaleString()}
 
 Habitaciones reservadas:
 ${roomDetails}
