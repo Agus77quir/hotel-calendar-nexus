@@ -10,6 +10,7 @@ import { NewGuestForm } from './NewGuestForm';
 import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -124,13 +125,25 @@ export const ReservationModal = ({
   const handleCreateMultipleReservations = async (reservationsData: any[]) => {
     try {
       // Crear todas las reservas
+      const createdReservations = [];
       for (const reservationData of reservationsData) {
-        await addReservation(reservationData);
+        const created = await addReservation(reservationData);
+        createdReservations.push(created);
       }
       
+      // Crear mensaje único de resumen para todas las reservas
+      const roomNumbers = createdReservations.map(res => {
+        const room = rooms.find(r => r.id === res.room_id);
+        return room?.number || res.room_id;
+      }).join(', ');
+      
+      const totalGuests = createdReservations.reduce((sum, res) => sum + res.guests_count, 0);
+      const checkInDate = formatDisplayDate(createdReservations[0].check_in);
+      const checkOutDate = formatDisplayDate(createdReservations[0].check_out);
+      
       toast({
-        title: "Reservas múltiples creadas",
-        description: `Se crearon ${reservationsData.length} reservas exitosamente`,
+        title: "Reservas múltiples creadas exitosamente",
+        description: `Se crearon ${createdReservations.length} reservas para ${selectedGuestForMultiRoom?.first_name} ${selectedGuestForMultiRoom?.last_name} en las habitaciones ${roomNumbers} (${totalGuests} huéspedes en total) desde ${checkInDate} hasta ${checkOutDate}`,
       });
       
       // Cerrar ambos modales

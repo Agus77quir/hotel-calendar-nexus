@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export const MultiRoomReservationModal = ({
     const room = rooms.find(r => r.id === roomId);
     
     if (room) {
-      // Ensure count is within valid range
+      // Ensure count is within valid range (1 to capacity)
       const validCount = Math.max(1, Math.min(count, room.capacity));
       setGuestsCount(prev => ({ ...prev, [roomId]: validCount }));
     }
@@ -175,9 +176,17 @@ export const MultiRoomReservationModal = ({
 
       await onCreateReservations(reservationsData);
       
+      // Crear un mensaje único para todas las reservas
+      const roomNumbers = selectedRooms.map(roomId => {
+        const room = rooms.find(r => r.id === roomId);
+        return room?.number || roomId;
+      }).join(', ');
+      
+      const totalGuests = Object.values(guestsCount).reduce((sum, count) => sum + count, 0);
+      
       toast({
-        title: "Reservas creadas",
-        description: `Se crearon ${selectedRooms.length} reservas exitosamente`,
+        title: "Reservas múltiples creadas",
+        description: `Se crearon ${selectedRooms.length} reservas para ${guest.first_name} ${guest.last_name} en las habitaciones ${roomNumbers} (${totalGuests} huéspedes en total) desde ${formatDisplayDate(checkIn)} hasta ${formatDisplayDate(checkOut)}`,
       });
       
       onClose();
@@ -271,14 +280,21 @@ export const MultiRoomReservationModal = ({
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-gray-500" />
                         <Label className="text-xs sm:text-sm">Huéspedes:</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={room.capacity}
-                          value={guestsCount[room.id] || 1}
-                          onChange={(e) => handleGuestsCountChange(room.id, e.target.value)}
-                          className="w-16 sm:w-20 touch-manipulation h-10 sm:h-auto"
-                        />
+                        <Select
+                          value={(guestsCount[room.id] || 1).toString()}
+                          onValueChange={(value) => handleGuestsCountChange(room.id, value)}
+                        >
+                          <SelectTrigger className="w-20 sm:w-24 touch-manipulation h-10 sm:h-auto">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: room.capacity }, (_, i) => i + 1).map((num) => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <span className="text-xs sm:text-sm text-gray-500">/ {room.capacity}</span>
                       </div>
                     )}
