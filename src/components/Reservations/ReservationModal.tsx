@@ -124,27 +124,13 @@ export const ReservationModal = ({
 
   const handleCreateMultipleReservations = async (reservationsData: any[]) => {
     try {
-      // Crear todas las reservas
-      const createdReservations = [];
+      // Crear todas las reservas sin mostrar mensajes individuales
       for (const reservationData of reservationsData) {
-        const created = await addReservation(reservationData);
-        createdReservations.push(created);
+        await addReservation(reservationData);
       }
       
-      // Crear mensaje único de resumen para todas las reservas
-      const roomNumbers = createdReservations.map(res => {
-        const room = rooms.find(r => r.id === res.room_id);
-        return room?.number || res.room_id;
-      }).join(', ');
-      
-      const totalGuests = createdReservations.reduce((sum, res) => sum + res.guests_count, 0);
-      const checkInDate = formatDisplayDate(createdReservations[0].check_in);
-      const checkOutDate = formatDisplayDate(createdReservations[0].check_out);
-      
-      toast({
-        title: "Reservas múltiples creadas exitosamente",
-        description: `Se crearon ${createdReservations.length} reservas para ${selectedGuestForMultiRoom?.first_name} ${selectedGuestForMultiRoom?.last_name} en las habitaciones ${roomNumbers} (${totalGuests} huéspedes en total) desde ${checkInDate} hasta ${checkOutDate}`,
-      });
+      // El mensaje consolidado se maneja en el MultiRoomReservationModal
+      // No mostrar ningún mensaje aquí para evitar duplicados
       
       // Cerrar ambos modales
       setShowMultiRoomModal(false);
