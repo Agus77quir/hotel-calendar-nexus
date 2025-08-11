@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ReservationViewModal } from './ReservationViewModal';
+import { MultiReservationViewModal } from './MultiReservationViewModal';
 import { EditGuestModal } from '../Guests/EditGuestModal';
 import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
 import { Reservation, Guest, Room } from '@/types/hotel';
@@ -34,11 +35,15 @@ import {
   XCircle,
   UserCog,
   Users,
-  CalendarDays
+  CalendarDays,
+  Mail,
+  MessageCircle
 } from 'lucide-react';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { openEmailClient } from '@/services/emailTemplateService';
+import { sendReservationToWhatsApp } from '@/services/whatsappService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -71,6 +76,14 @@ export const ReservationsTable = ({
     isOpen: false,
   });
 
+  const [multiViewModal, setMultiViewModal] = useState<{
+    isOpen: boolean;
+    reservations?: Reservation[];
+    guest?: Guest;
+  }>({
+    isOpen: false,
+  });
+
   const [editGuestModal, setEditGuestModal] = useState<{
     isOpen: boolean;
     guest?: Guest;
@@ -87,12 +100,10 @@ export const ReservationsTable = ({
 
   const isAdmin = user?.role === 'admin';
 
-  // Función para agrupar reservas múltiples
   const groupReservations = (reservations: Reservation[]) => {
     const grouped: { [key: string]: Reservation[] } = {};
     
     reservations.forEach(reservation => {
-      // Crear clave única basada en huésped, fechas de check-in y check-out
       const key = `${reservation.guest_id}-${reservation.check_in}-${reservation.check_out}`;
       
       if (!grouped[key]) {
@@ -101,7 +112,6 @@ export const ReservationsTable = ({
       grouped[key].push(reservation);
     });
     
-    // Retornar solo grupos que tienen más de una reserva o reservas individuales
     return Object.values(grouped);
   };
 
@@ -117,6 +127,40 @@ export const ReservationsTable = ({
         reservation,
         guest,
         room,
+      });
+    }
+  };
+
+  const handleViewMultiDetails = (reservationGroup: Reservation[]) => {
+    const guest = guests.find(g => g.id === reservationGroup[0].guest_id);
+    
+    if (guest) {
+      setMultiViewModal({
+        isOpen: true,
+        reservations: reservationGroup,
+        guest,
+      });
+    }
+  };
+
+  const handleSendEmail = (reservation: Reservation, guest: Guest) => {
+    const room = rooms.find(r => r.id === reservation.room_id);
+    if (room) {
+      openEmailClient(guest, reservation, room);
+      toast({
+        title: "Email enviado",
+        description: `Confirmación enviada a ${guest.email}`,
+      });
+    }
+  };
+
+  const handleSendWhatsApp = (reservation: Reservation, guest: Guest) => {
+    const room = rooms.find(r => r.id === reservation.room_id);
+    if (room) {
+      sendReservationToWhatsApp(reservation, guest, room);
+      toast({
+        title: "WhatsApp enviado",
+        description: `Mensaje enviado a ${guest.phone}`,
       });
     }
   };
@@ -314,10 +358,27 @@ export const ReservationsTable = ({
                       <DropdownMenuContent align="end" className="w-56">
                         {isMultipleRooms ? (
                           <>
+                            <DropdownMenuItem onClick={() => handleViewMultiDetails(reservationGroup)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalles
+                            </DropdownMenuItem>
+
                             <DropdownMenuItem onClick={() => setEditGuestModal({ isOpen: true, guest })}>
                               <UserCog className="h-4 w-4 mr-2" />
                               Editar Huésped
                             </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => handleSendEmail(firstReservation, guest)}>
+                              <Mail className="h-4 w-4 mr-2" />
+                              Enviar Email
+                            </DropdownMenuItem>
+
+                            {guest.phone && (
+                              <DropdownMenuItem onClick={() => handleSendWhatsApp(firstReservation, guest)}>
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Enviar WhatsApp
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuItem onClick={() => onNewReservationForGuest(guest.id)}>
                               <Plus className="h-4 w-4 mr-2" />
@@ -358,6 +419,18 @@ export const ReservationsTable = ({
                               <UserCog className="h-4 w-4 mr-2" />
                               Editar Huésped
                             </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => handleSendEmail(firstReservation, guest)}>
+                              <Mail className="h-4 w-4 mr-2" />
+                              Enviar Email
+                            </DropdownMenuItem>
+
+                            {guest.phone && (
+                              <DropdownMenuItem onClick={() => handleSendWhatsApp(firstReservation, guest)}>
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Enviar WhatsApp
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuItem onClick={() => onNewReservationForGuest(guest.id)}>
                               <Plus className="h-4 w-4 mr-2" />
@@ -418,6 +491,27 @@ export const ReservationsTable = ({
           reservation={viewModal.reservation}
           guest={viewModal.guest}
           room={viewModal.room}
+          onEdit={() => {
+            setViewModal({ isOpen: false });
+            onEdit(viewModal.reservation!);
+          }}
+        />
+      )}
+
+      {multiViewModal.isOpen && multiViewModal.reservations && multiViewModal.guest && (
+        <MultiReservationViewModal
+          isOpen={multiViewModal.isOpen}
+          onClose={() => setMultiViewModal({ isOpen: false })}
+          reservations={multiViewModal.reservations}
+          guest={multiViewModal.guest}
+          rooms={rooms}
+          onEdit={(reservationId) => {
+            const reservation = multiViewModal.reservations?.find(r => r.id === reservationId);
+            if (reservation) {
+              setMultiViewModal({ isOpen: false });
+              onEdit(reservation);
+            }
+          }}
         />
       )}
 
