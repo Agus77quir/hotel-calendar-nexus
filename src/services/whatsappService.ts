@@ -50,3 +50,49 @@ Concesionaria Nardini SRL`;
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');
 };
+
+export const sendMultipleReservationToWhatsApp = (
+  reservations: Reservation[],
+  guest: Guest,
+  rooms: Room[]
+) => {
+  const firstReservation = reservations[0];
+  const reservationNumber = generateSimpleId(firstReservation.id);
+  const guestName = `${guest.first_name} ${guest.last_name}`;
+  const arrivalDate = formatDate(firstReservation.check_in);
+  const departureDate = formatDate(firstReservation.check_out);
+  
+  // Generate room details
+  const roomDetails = reservations.map(reservation => {
+    const room = rooms.find(r => r.id === reservation.room_id);
+    const roomNumber = room?.number.length === 1 ? `0${room.number}` : room?.number;
+    return `• Habitación #${roomNumber} - ${room?.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} (${reservation.guests_count} huéspedes)`;
+  }).join('\n');
+
+  const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
+  
+  const message = `Estimado/a ${guestName},
+
+¡Gracias por elegir Hostería Anillaco! Concesionaria Nardini SRL, nos complace confirmar su reserva múltiple.
+
+Detalle de su reserva:
+• Número de reserva: ${reservationNumber}
+• Fecha de llegada: ${arrivalDate}
+• Fecha de salida: ${departureDate}
+• Total de huéspedes: ${totalGuests}
+
+Habitaciones reservadas:
+${roomDetails}
+
+• Check in: 13 hs
+• Check out: 10 hs
+
+Saludos cordiales,
+Concesionaria Nardini SRL`;
+
+  // Crear enlace de WhatsApp
+  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
+  
+  // Abrir WhatsApp
+  window.open(whatsappLink, '_blank');
+};

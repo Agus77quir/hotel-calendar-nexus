@@ -49,12 +49,70 @@ Concesionaria Nardini SRL`;
   return { subject, body };
 };
 
+export const generateMultipleReservationEmailTemplate = (
+  guest: Guest,
+  reservations: Reservation[],
+  rooms: Room[]
+): { subject: string; body: string } => {
+  const firstReservation = reservations[0];
+  const reservationNumber = generateSimpleId(firstReservation.id);
+  const guestName = `${guest.first_name} ${guest.last_name}`;
+  const arrivalDate = formatDate(firstReservation.check_in);
+  const departureDate = formatDate(firstReservation.check_out);
+  
+  // Generate room details
+  const roomDetails = reservations.map(reservation => {
+    const room = rooms.find(r => r.id === reservation.room_id);
+    const roomNumber = room?.number.length === 1 ? `0${room.number}` : room?.number;
+    return `• Habitación #${roomNumber} - ${room?.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} (${reservation.guests_count} huéspedes)`;
+  }).join('\n');
+
+  const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
+
+  const subject = `Confirmación de Reserva Múltiple - Hostería Anillaco - ${reservationNumber}`;
+  
+  const body = `Estimado/a ${guestName},
+
+¡Gracias por elegir Hostería Anillaco! Concesionaria Nardini SRL, nos complace confirmar su reserva múltiple.
+
+Detalle de su reserva:
+• Número de reserva: ${reservationNumber}
+• Fecha de llegada: ${arrivalDate}
+• Fecha de salida: ${departureDate}
+• Total de huéspedes: ${totalGuests}
+
+Habitaciones reservadas:
+${roomDetails}
+
+• Check in: 13 hs
+• Check out: 10 hs
+
+Saludos cordiales,
+Concesionaria Nardini SRL`;
+
+  return { subject, body };
+};
+
 export const openEmailClient = (
   guest: Guest,
   reservation: Reservation,
   room: Room
 ) => {
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
+  
+  // Crear enlace mailto
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  
+  // Abrir cliente de email
+  window.open(mailtoLink, '_blank');
+};
+
+export const openMultipleReservationEmailClient = (
+  guest: Guest,
+  reservations: Reservation[],
+  rooms: Room[]
+) => {
+  const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
   // Crear enlace mailto
   const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
