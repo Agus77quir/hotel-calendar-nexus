@@ -62,23 +62,26 @@ export const sendMultipleReservationToWhatsApp = (
   const arrivalDate = formatDate(firstReservation.check_in);
   const departureDate = formatDate(firstReservation.check_out);
   
-  // Generate room details with room numbers included
-  const roomDetails = reservations.map(reservation => {
+  console.log('=== DEBUGGING MULTIPLE RESERVATION WHATSAPP ===');
+  console.log('Reservations:', reservations);
+  console.log('Rooms available:', rooms);
+  
+  // Generate room numbers for the summary
+  const roomNumbers = reservations.map(reservation => {
     console.log('Processing reservation:', reservation.id, 'room_id:', reservation.room_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     console.log('Found room:', room);
     
     if (!room) {
       console.warn('Room not found for reservation:', reservation.id, 'room_id:', reservation.room_id);
-      return '';
+      return null;
     }
     
     const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
-    const roomType = room.type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    return `• Habitación #${roomNumber} - ${roomType} (${reservation.guests_count} huéspedes)`;
-  }).filter(detail => detail !== '');
+    return `#${roomNumber}`;
+  }).filter(Boolean);
 
-  console.log('Room details generated:', roomDetails);
+  console.log('Room numbers generated:', roomNumbers);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
@@ -91,11 +94,10 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
-• Total de huéspedes: ${totalGuests}
+• ${reservations.length} Habitaciones
+${roomNumbers.join(', ')}
+• ${totalGuests} huéspedes total
 • Monto total: $${totalAmount.toLocaleString()}
-
-Habitaciones reservadas:
-${roomDetails.join('\n')}
 
 • Check in: 13 hs
 • Check out: 10 hs
