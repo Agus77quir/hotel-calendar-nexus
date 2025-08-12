@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ export const RoomModal = ({
     number: '',
     type: 'matrimonial' as Room['type'],
     price: '',
+    single_occupancy_price: '',
     capacity: '',
     status: 'available' as Room['status'],
     amenities: [] as string[],
@@ -43,6 +45,7 @@ export const RoomModal = ({
         number: room.number,
         type: room.type,
         price: room.price.toString(),
+        single_occupancy_price: room.single_occupancy_price?.toString() || '',
         capacity: room.capacity.toString(),
         status: room.status,
         amenities: room.amenities || [],
@@ -52,6 +55,7 @@ export const RoomModal = ({
         number: '',
         type: 'matrimonial',
         price: '',
+        single_occupancy_price: '',
         capacity: '',
         status: 'available',
         amenities: [],
@@ -64,6 +68,7 @@ export const RoomModal = ({
     onSave({
       ...formData,
       price: parseFloat(formData.price),
+      single_occupancy_price: formData.single_occupancy_price ? parseFloat(formData.single_occupancy_price) : undefined,
       capacity: parseInt(formData.capacity),
     }, updateGroupPrice);
     onClose();
@@ -151,6 +156,7 @@ export const RoomModal = ({
               rooms={rooms}
               updateGroupPrice={updateGroupPrice}
               onPriceChange={(price) => setFormData({...formData, price})}
+              onSingleOccupancyPriceChange={(singlePrice) => setFormData({...formData, single_occupancy_price: singlePrice})}
               onUpdateGroupPriceChange={setUpdateGroupPrice}
               mode={mode}
               room={room}

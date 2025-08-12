@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
 import { getTodayInBuenosAires, getTomorrowInBuenosAires, calculateDaysDifference, formatSelectedDateForBuenosAires } from '@/utils/dateUtils';
+import { calculateRoomPrice } from '@/utils/pricingUtils';
 
 interface UseReservationFormProps {
   rooms: Room[];
@@ -264,7 +264,7 @@ export const useReservationForm = ({
     }));
   };
 
-  // Calculate total with proper date handling
+  // Calculate total with proper date handling and single occupancy pricing
   const calculateTotal = () => {
     const selectedRoom = rooms.find(r => r.id === formData.room_id);
     
@@ -272,11 +272,14 @@ export const useReservationForm = ({
     
     const nights = calculateDaysDifference(formData.check_in, formData.check_out);
     
-    const subtotal = selectedRoom.price * nights;
+    // Usar la nueva función de cálculo de precios
+    const roomPrice = calculateRoomPrice(selectedRoom, formData.guests_count);
+    
+    const subtotal = roomPrice * nights;
     const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
     const total = subtotal - discountAmount;
     
-    console.log('Calculate total - nights:', nights, 'subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
+    console.log('Calculate total - nights:', nights, 'guests:', formData.guests_count, 'roomPrice:', roomPrice, 'subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
     
     return {
       subtotal,

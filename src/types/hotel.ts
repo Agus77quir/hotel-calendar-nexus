@@ -17,6 +17,7 @@ export interface Room {
   number: string;
   type: 'matrimonial' | 'triple-individual' | 'triple-matrimonial' | 'doble-individual' | 'suite-presidencial-doble';
   price: number;
+  single_occupancy_price?: number; // Nuevo campo para precio de ocupación individual
   capacity: number;
   amenities: string[];
   status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
