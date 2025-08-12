@@ -29,6 +29,7 @@ export const sendReservationToWhatsApp = (
   const reservationNumber = generateSimpleId(reservation.id);
   const guestName = `${guest.first_name} ${guest.last_name}`;
   const arrivalDate = formatDate(reservation.check_in);
+  const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
   
   const message = `Estimado/a ${guestName},
 
@@ -38,6 +39,9 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Tipo de habitación: ${room.type}
+• 1 Habitación
+#${roomNumber}
+• ${reservation.guests_count} huéspedes total
 • Check in: 13 hs
 • Check out: 10 hs
 
