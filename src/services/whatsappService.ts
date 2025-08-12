@@ -70,20 +70,20 @@ export const sendMultipleReservationToWhatsApp = (
   console.log('Reservations:', reservations);
   console.log('Rooms available:', rooms);
   
-  // Generate room numbers for ALL reservations
-  const roomDetails = reservations.map(reservation => {
+  // Generate room numbers for ALL reservations - CORREGIDO
+  const roomDetails = [];
+  for (const reservation of reservations) {
     console.log('Processing reservation:', reservation.id, 'room_id:', reservation.room_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     console.log('Found room:', room);
     
-    if (!room) {
+    if (room) {
+      const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
+      roomDetails.push(`#${roomNumber}`);
+    } else {
       console.warn('Room not found for reservation:', reservation.id, 'room_id:', reservation.room_id);
-      return null;
     }
-    
-    const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
-    return `#${roomNumber}`;
-  }).filter(Boolean);
+  }
 
   console.log('Room details generated:', roomDetails);
 

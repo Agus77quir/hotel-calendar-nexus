@@ -68,20 +68,20 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email reservations:', reservations);
   console.log('Email rooms available:', rooms);
   
-  // Generate room numbers for ALL reservations
-  const roomDetails = reservations.map(reservation => {
+  // Generate room numbers for ALL reservations - CORREGIDO
+  const roomDetails = [];
+  for (const reservation of reservations) {
     console.log('Processing email reservation:', reservation.id, 'room_id:', reservation.room_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     console.log('Found email room:', room);
     
-    if (!room) {
+    if (room) {
+      const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
+      roomDetails.push(`#${roomNumber}`);
+    } else {
       console.warn('Room not found for email reservation:', reservation.id, 'room_id:', reservation.room_id);
-      return null;
     }
-    
-    const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
-    return `#${roomNumber}`;
-  }).filter(Boolean);
+  }
 
   console.log('Email room details generated:', roomDetails);
 
