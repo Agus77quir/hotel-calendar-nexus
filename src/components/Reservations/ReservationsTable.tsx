@@ -42,8 +42,8 @@ import {
 import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { openEmailClient } from '@/services/emailTemplateService';
-import { sendReservationToWhatsApp } from '@/services/whatsappService';
+import { openEmailClient, openMultipleReservationEmailClient } from '@/services/emailTemplateService';
+import { sendReservationToWhatsApp, sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -143,25 +143,59 @@ export const ReservationsTable = ({
     }
   };
 
-  const handleSendEmail = (reservation: Reservation, guest: Guest) => {
-    const room = rooms.find(r => r.id === reservation.room_id);
-    if (room) {
-      openEmailClient(guest, reservation, room);
+  const handleSendEmail = (reservationGroup: Reservation[], guest: Guest) => {
+    console.log('=== EMAIL BUTTON CLICKED FROM TABLE ===');
+    console.log('Reservation group length:', reservationGroup.length);
+    console.log('Guest:', guest.first_name, guest.last_name);
+    
+    if (reservationGroup.length > 1) {
+      // Es una reserva múltiple
+      console.log('Sending MULTIPLE reservation email');
+      openMultipleReservationEmailClient(guest, reservationGroup, rooms);
       toast({
         title: "Email enviado",
-        description: `Confirmación enviada a ${guest.email}`,
+        description: `Confirmación de reservas múltiples enviada a ${guest.email}`,
       });
+    } else {
+      // Es una reserva simple
+      console.log('Sending SINGLE reservation email');
+      const reservation = reservationGroup[0];
+      const room = rooms.find(r => r.id === reservation.room_id);
+      if (room) {
+        openEmailClient(guest, reservation, room);
+        toast({
+          title: "Email enviado",
+          description: `Confirmación enviada a ${guest.email}`,
+        });
+      }
     }
   };
 
-  const handleSendWhatsApp = (reservation: Reservation, guest: Guest) => {
-    const room = rooms.find(r => r.id === reservation.room_id);
-    if (room) {
-      sendReservationToWhatsApp(reservation, guest, room);
+  const handleSendWhatsApp = (reservationGroup: Reservation[], guest: Guest) => {
+    console.log('=== WHATSAPP BUTTON CLICKED FROM TABLE ===');
+    console.log('Reservation group length:', reservationGroup.length);
+    console.log('Guest:', guest.first_name, guest.last_name);
+    
+    if (reservationGroup.length > 1) {
+      // Es una reserva múltiple
+      console.log('Sending MULTIPLE reservation WhatsApp');
+      sendMultipleReservationToWhatsApp(reservationGroup, guest, rooms);
       toast({
         title: "WhatsApp enviado",
-        description: `Mensaje enviado a ${guest.phone}`,
+        description: `Mensaje de reservas múltiples enviado a ${guest.phone}`,
       });
+    } else {
+      // Es una reserva simple
+      console.log('Sending SINGLE reservation WhatsApp');
+      const reservation = reservationGroup[0];
+      const room = rooms.find(r => r.id === reservation.room_id);
+      if (room) {
+        sendReservationToWhatsApp(reservation, guest, room);
+        toast({
+          title: "WhatsApp enviado",
+          description: `Mensaje enviado a ${guest.phone}`,
+        });
+      }
     }
   };
 
@@ -368,13 +402,13 @@ export const ReservationsTable = ({
                               Editar Huésped
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => handleSendEmail(firstReservation, guest)}>
+                            <DropdownMenuItem onClick={() => handleSendEmail(reservationGroup, guest)}>
                               <Mail className="h-4 w-4 mr-2" />
                               Enviar Email
                             </DropdownMenuItem>
 
                             {guest.phone && (
-                              <DropdownMenuItem onClick={() => handleSendWhatsApp(firstReservation, guest)}>
+                              <DropdownMenuItem onClick={() => handleSendWhatsApp(reservationGroup, guest)}>
                                 <MessageCircle className="h-4 w-4 mr-2" />
                                 Enviar WhatsApp
                               </DropdownMenuItem>
@@ -420,13 +454,13 @@ export const ReservationsTable = ({
                               Editar Huésped
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => handleSendEmail(firstReservation, guest)}>
+                            <DropdownMenuItem onClick={() => handleSendEmail([firstReservation], guest)}>
                               <Mail className="h-4 w-4 mr-2" />
                               Enviar Email
                             </DropdownMenuItem>
 
                             {guest.phone && (
-                              <DropdownMenuItem onClick={() => handleSendWhatsApp(firstReservation, guest)}>
+                              <DropdownMenuItem onClick={() => handleSendWhatsApp([firstReservation], guest)}>
                                 <MessageCircle className="h-4 w-4 mr-2" />
                                 Enviar WhatsApp
                               </DropdownMenuItem>
