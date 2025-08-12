@@ -110,8 +110,7 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
-• ${reservations.length} Habitaciones
-${roomNumbersText}
+• ${reservations.length} Habitaciones: ${roomNumbersText}
 • ${totalGuests} huéspedes total
 • Monto total: $${totalAmount.toLocaleString()}
 
