@@ -68,8 +68,8 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email reservations:', reservations);
   console.log('Email rooms available:', rooms);
   
-  // Generate room numbers for the summary
-  const roomNumbers = reservations.map(reservation => {
+  // Generate room numbers for ALL reservations
+  const roomDetails = reservations.map(reservation => {
     console.log('Processing email reservation:', reservation.id, 'room_id:', reservation.room_id);
     const room = rooms.find(r => r.id === reservation.room_id);
     console.log('Found email room:', room);
@@ -83,7 +83,7 @@ export const generateMultipleReservationEmailTemplate = (
     return `#${roomNumber}`;
   }).filter(Boolean);
 
-  console.log('Email room numbers generated:', roomNumbers);
+  console.log('Email room details generated:', roomDetails);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
@@ -99,7 +99,7 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones
-${roomNumbers.join(', ')}
+${roomDetails.join(', ')}
 • ${totalGuests} huéspedes total
 • Monto total: $${totalAmount.toLocaleString()}
 
