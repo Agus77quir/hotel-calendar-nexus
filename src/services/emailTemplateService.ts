@@ -70,32 +70,32 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email room IDs from reservations:', reservations.map(r => r.room_id));
   console.log('Email available rooms:', rooms.map(r => ({ id: r.id, number: r.number })));
   
-  // SOLUCIÓN DEFINITIVA: Generar números de habitación de forma más explícita
-  const roomNumbers = [];
+  // SOLUCIÓN DEFINITIVA: Crear array completo de números de habitación
+  const roomDetails = [];
   
-  // Procesar cada reserva individualmente
-  reservations.forEach((reservation, index) => {
-    console.log(`Processing email reservation ${index + 1}/${reservations.length}:`, {
+  for (let i = 0; i < reservations.length; i++) {
+    const reservation = reservations[i];
+    console.log(`Processing email reservation ${i + 1}/${reservations.length}:`, {
       reservationId: reservation.id,
       roomId: reservation.room_id
     });
     
-    // Buscar la habitación correspondiente
+    // Buscar la habitación correspondiente a esta reserva
     const matchingRoom = rooms.find(room => room.id === reservation.room_id);
     
     if (matchingRoom) {
       const formattedNumber = matchingRoom.number.length === 1 ? `0${matchingRoom.number}` : matchingRoom.number;
-      roomNumbers.push(`#${formattedNumber}`);
+      roomDetails.push(`#${formattedNumber}`);
       console.log(`✓ Found email room for reservation ${reservation.id}: #${formattedNumber}`);
     } else {
       console.error(`✗ NO EMAIL ROOM FOUND for reservation ${reservation.id} with room_id ${reservation.room_id}`);
-      // Agregar un placeholder para no perder la cuenta
-      roomNumbers.push(`#ERROR`);
+      roomDetails.push(`#ERROR-${i + 1}`);
     }
-  });
+  }
 
-  console.log('Final email room numbers array:', roomNumbers);
-  console.log('Email room numbers string:', roomNumbers.join(', '));
+  const roomNumbersText = roomDetails.join(', ');
+  console.log('Final email room details:', roomDetails);
+  console.log('Email room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
@@ -111,7 +111,7 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones
-${roomNumbers.join(', ')}
+${roomNumbersText}
 • ${totalGuests} huéspedes total
 • Monto total: $${totalAmount.toLocaleString()}
 
