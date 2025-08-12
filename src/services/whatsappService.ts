@@ -67,25 +67,37 @@ export const sendMultipleReservationToWhatsApp = (
   const departureDate = formatDate(firstReservation.check_out);
   
   console.log('=== DEBUGGING MULTIPLE RESERVATION WHATSAPP ===');
-  console.log('Reservations:', reservations);
-  console.log('Rooms available:', rooms);
+  console.log('Total reservations:', reservations.length);
+  console.log('Reservation IDs:', reservations.map(r => r.id));
+  console.log('Room IDs from reservations:', reservations.map(r => r.room_id));
+  console.log('Available rooms:', rooms.map(r => ({ id: r.id, number: r.number })));
   
-  // Generate room numbers for ALL reservations - CORREGIDO
-  const roomDetails = [];
-  for (const reservation of reservations) {
-    console.log('Processing reservation:', reservation.id, 'room_id:', reservation.room_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    console.log('Found room:', room);
+  // SOLUCIÓN DEFINITIVA: Generar números de habitación de forma más explícita
+  const roomNumbers = [];
+  
+  // Procesar cada reserva individualmente
+  reservations.forEach((reservation, index) => {
+    console.log(`Processing reservation ${index + 1}/${reservations.length}:`, {
+      reservationId: reservation.id,
+      roomId: reservation.room_id
+    });
     
-    if (room) {
-      const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
-      roomDetails.push(`#${roomNumber}`);
+    // Buscar la habitación correspondiente
+    const matchingRoom = rooms.find(room => room.id === reservation.room_id);
+    
+    if (matchingRoom) {
+      const formattedNumber = matchingRoom.number.length === 1 ? `0${matchingRoom.number}` : matchingRoom.number;
+      roomNumbers.push(`#${formattedNumber}`);
+      console.log(`✓ Found room for reservation ${reservation.id}: #${formattedNumber}`);
     } else {
-      console.warn('Room not found for reservation:', reservation.id, 'room_id:', reservation.room_id);
+      console.error(`✗ NO ROOM FOUND for reservation ${reservation.id} with room_id ${reservation.room_id}`);
+      // Agregar un placeholder para no perder la cuenta
+      roomNumbers.push(`#ERROR`);
     }
-  }
+  });
 
-  console.log('Room details generated:', roomDetails);
+  console.log('Final room numbers array:', roomNumbers);
+  console.log('Room numbers string:', roomNumbers.join(', '));
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
@@ -99,7 +111,7 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones
-${roomDetails.join(', ')}
+${roomNumbers.join(', ')}
 • ${totalGuests} huéspedes total
 • Monto total: $${totalAmount.toLocaleString()}
 
@@ -109,7 +121,7 @@ ${roomDetails.join(', ')}
 Saludos cordiales,
 Concesionaria Nardini SRL`;
 
-  console.log('Final WhatsApp message:', message);
+  console.log('FINAL MESSAGE TO SEND:', message);
 
   // Crear enlace de WhatsApp
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
