@@ -83,12 +83,24 @@ export const MultiReservationViewModal = ({
   };
 
   const handleSendEmail = () => {
-    console.log('Sending email for multiple reservations:', reservations.length);
+    console.log('=== MULTIPLE RESERVATION EMAIL BUTTON CLICKED ===');
+    console.log('Reservations count:', reservations.length);
+    console.log('Total guests:', totalGuests);
+    console.log('Total amount:', totalAmount);
+    console.log('Available rooms for email:', rooms.length);
+    
+    // FORZAR el uso de la función de múltiples reservas
     openMultipleReservationEmailClient(guest, reservations, rooms);
   };
 
   const handleSendWhatsApp = () => {
-    console.log('Sending WhatsApp for multiple reservations:', reservations.length);
+    console.log('=== MULTIPLE RESERVATION WHATSAPP BUTTON CLICKED ===');
+    console.log('Reservations count:', reservations.length);
+    console.log('Total guests:', totalGuests);
+    console.log('Total amount:', totalAmount);
+    console.log('Available rooms for WhatsApp:', rooms.length);
+    
+    // FORZAR el uso de la función de múltiples reservas
     sendMultipleReservationToWhatsApp(reservations, guest, rooms);
   };
 
