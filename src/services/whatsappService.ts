@@ -64,13 +64,21 @@ export const sendMultipleReservationToWhatsApp = (
   
   // Generate room details with room numbers included
   const roomDetails = reservations.map(reservation => {
+    console.log('Processing reservation:', reservation.id, 'room_id:', reservation.room_id);
     const room = rooms.find(r => r.id === reservation.room_id);
-    if (!room) return '';
+    console.log('Found room:', room);
+    
+    if (!room) {
+      console.warn('Room not found for reservation:', reservation.id, 'room_id:', reservation.room_id);
+      return '';
+    }
     
     const roomNumber = room.number.length === 1 ? `0${room.number}` : room.number;
-    const roomType = room.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const roomType = room.type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     return `• Habitación #${roomNumber} - ${roomType} (${reservation.guests_count} huéspedes)`;
-  }).filter(detail => detail !== '').join('\n');
+  }).filter(detail => detail !== '');
+
+  console.log('Room details generated:', roomDetails);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
@@ -87,13 +95,15 @@ Detalle de su reserva:
 • Monto total: $${totalAmount.toLocaleString()}
 
 Habitaciones reservadas:
-${roomDetails}
+${roomDetails.join('\n')}
 
 • Check in: 13 hs
 • Check out: 10 hs
 
 Saludos cordiales,
 Concesionaria Nardini SRL`;
+
+  console.log('Final WhatsApp message:', message);
 
   // Crear enlace de WhatsApp
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
