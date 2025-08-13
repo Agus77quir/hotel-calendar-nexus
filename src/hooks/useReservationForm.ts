@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -129,7 +130,7 @@ export const useReservationForm = ({
         room_id: '',
         check_in: defaultCheckIn,
         check_out: getDefaultCheckOut(defaultCheckIn),
-        guests_count: 1,
+        guests_count: 1, // Se actualizará cuando se seleccione una habitación
         status: 'confirmed',
         special_requests: '',
         discount_percentage: 0,
@@ -185,7 +186,7 @@ export const useReservationForm = ({
     }
   }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
-  // Handle room change and adjust guest count if necessary
+  // Handle room change and set guest count to maximum capacity
   const handleRoomChange = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
@@ -207,8 +208,8 @@ export const useReservationForm = ({
     setFormData(prev => ({
       ...prev,
       room_id: roomId,
-      // Only adjust guest count if it exceeds the new room capacity
-      guests_count: prev.guests_count > newMaxCapacity ? newMaxCapacity : prev.guests_count
+      // ALWAYS set guest count to maximum capacity when room is selected
+      guests_count: newMaxCapacity
     }));
     
     setAvailabilityError('');
@@ -245,6 +246,7 @@ export const useReservationForm = ({
         );
         if (hasOverlap) {
           newFormData.room_id = '';
+          newFormData.guests_count = 1; // Reset to default when room is cleared
         }
       }
       
