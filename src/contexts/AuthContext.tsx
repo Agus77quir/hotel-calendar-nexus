@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types/hotel';
 
@@ -55,36 +54,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Safari-compatible initialization
-    const initAuth = () => {
-      try {
-        // Use requestAnimationFrame for better Safari compatibility
-        requestAnimationFrame(() => {
-          try {
-            const savedUser = localStorage.getItem('hotelUser');
-            if (savedUser) {
-              const parsedUser = JSON.parse(savedUser);
-              setUser(parsedUser);
-            }
-          } catch (error) {
-            console.error('Error parsing saved user:', error);
-            // Safari-safe localStorage cleanup
-            try {
-              localStorage.removeItem('hotelUser');
-            } catch (storageError) {
-              console.error('Error cleaning localStorage:', storageError);
-            }
-          } finally {
-            setIsInitialized(true);
-          }
-        });
-      } catch (error) {
-        console.error('Error during auth initialization:', error);
-        setIsInitialized(true);
-      }
+    console.log('[Auth] Inicializando autenticación...');
+    let rafId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const finalize = () => {
+      setIsInitialized(true);
+      console.log('[Auth] Inicialización completada');
     };
 
-    initAuth();
+    try {
+      rafId = requestAnimationFrame(() => {
+        try {
+          const savedUser = localStorage.getItem('hotelUser');
+          if (savedUser) {
+            const parsedUser = JSON.parse(savedUser);
+            setUser(parsedUser);
+            console.log('[Auth] Usuario restaurado desde localStorage:', parsedUser?.email);
+          } else {
+            console.log('[Auth] No hay usuario guardado en localStorage');
+          }
+        } catch (error) {
+          console.error('[Auth] Error leyendo/parsing localStorage:', error);
+          try {
+            localStorage.removeItem('hotelUser');
+          } catch (storageError) {
+            console.error('[Auth] Error limpiando localStorage:', storageError);
+          }
+        } finally {
+          finalize();
+        }
+      });
+
+      // Fallback por si requestAnimationFrame nunca dispara
+      timeoutId = window.setTimeout(() => {
+        console.warn('[Auth] Fallback de inicialización activado');
+        finalize();
+      }, 1500);
+    } catch (error) {
+      console.error('[Auth] Error programando inicialización:', error);
+      finalize();
+    }
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -136,7 +151,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
   };
 
-  // Safari-compatible loading state
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">

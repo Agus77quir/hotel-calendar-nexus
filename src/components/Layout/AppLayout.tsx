@@ -77,8 +77,16 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Evitar pantalla en blanco: mostrar loader breve mientras redirige
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground text-sm">Redirigiendo al inicio de sesión...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
