@@ -14,7 +14,8 @@ import {
   Mail,
   Download,
   MessageCircle,
-  Edit
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
@@ -29,6 +30,7 @@ interface MultiReservationViewModalProps {
   guest: Guest | undefined;
   rooms: Room[];
   onEdit?: (reservationId: string) => void;
+  onDelete?: (reservationId: string) => void;
 }
 
 export const MultiReservationViewModal = ({ 
@@ -37,7 +39,8 @@ export const MultiReservationViewModal = ({
   reservations, 
   guest, 
   rooms,
-  onEdit 
+  onEdit,
+  onDelete 
 }: MultiReservationViewModalProps) => {
   if (!guest || reservations.length === 0) return null;
 
@@ -276,18 +279,32 @@ export const MultiReservationViewModal = ({
                         <Badge className={`${getStatusColor(reservation.status)} border text-xs`}>
                           {getStatusText(reservation.status)}
                         </Badge>
-                        {onEdit && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onEdit(reservation.id)}
-                            className="h-8 px-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                            title="Editar reserva"
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            <span className="text-xs">Editar</span>
-                          </Button>
-                        )}
+                        <div className="flex gap-1">
+                          {onEdit && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onEdit(reservation.id)}
+                              className="h-8 px-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                              title="Editar reserva"
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              <span className="text-xs">Editar</span>
+                            </Button>
+                          )}
+                          {onDelete && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onDelete(reservation.id)}
+                              className="h-8 px-2 bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
+                              title="Eliminar reserva"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              <span className="text-xs">Eliminar</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

@@ -546,6 +546,22 @@ export const ReservationsTable = ({
               onEdit(reservation);
             }
           }}
+          onDelete={(reservationId) => {
+            const reservation = multiViewModal.reservations?.find(r => r.id === reservationId);
+            if (reservation) {
+              onDelete(reservationId);
+              // Actualizar el modal si queda solo una reserva
+              const remainingReservations = multiViewModal.reservations?.filter(r => r.id !== reservationId);
+              if (remainingReservations && remainingReservations.length > 0) {
+                setMultiViewModal({
+                  ...multiViewModal,
+                  reservations: remainingReservations
+                });
+              } else {
+                setMultiViewModal({ isOpen: false });
+              }
+            }
+          }}
         />
       )}
 
