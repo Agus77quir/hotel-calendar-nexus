@@ -14,8 +14,7 @@ import {
   Mail,
   Download,
   MessageCircle,
-  Edit,
-  Trash2
+  Edit
 } from 'lucide-react';
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
@@ -30,7 +29,6 @@ interface MultiReservationViewModalProps {
   guest: Guest | undefined;
   rooms: Room[];
   onEdit?: (reservationId: string) => void;
-  onDelete?: (reservationId: string) => void;
 }
 
 export const MultiReservationViewModal = ({ 
@@ -39,8 +37,7 @@ export const MultiReservationViewModal = ({
   reservations, 
   guest, 
   rooms,
-  onEdit,
-  onDelete 
+  onEdit 
 }: MultiReservationViewModalProps) => {
   if (!guest || reservations.length === 0) return null;
 
@@ -97,21 +94,14 @@ export const MultiReservationViewModal = ({
   };
 
   const handleSendWhatsApp = () => {
-    if (!guest.phone) {
-      console.error('No phone number available for guest');
-      return;
-    }
-    
     console.log('=== MULTIPLE RESERVATION WHATSAPP BUTTON CLICKED ===');
     console.log('Reservations count:', reservations.length);
-    console.log('Guest phone:', guest.phone);
+    console.log('Total guests:', totalGuests);
+    console.log('Total amount:', totalAmount);
     console.log('Available rooms for WhatsApp:', rooms.length);
     
-    try {
-      sendMultipleReservationToWhatsApp(reservations, guest, rooms);
-    } catch (error) {
-      console.error('Error sending WhatsApp message:', error);
-    }
+    // FORZAR el uso de la función de múltiples reservas
+    sendMultipleReservationToWhatsApp(reservations, guest, rooms);
   };
 
   const handleDownloadPDF = async () => {
@@ -265,12 +255,12 @@ export const MultiReservationViewModal = ({
                   return (
                     <div key={reservation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="text-sm font-mono font-bold text-blue-800 bg-blue-50 px-2 py-1 rounded">
+                        <div className="text-sm font-mono font-bold text-blue-800">
                           #{formatRoomNumber(room.number)}
                         </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-semibold text-gray-900">{formatRoomType(room.type)}</div>
-                          <div className="text-xs text-gray-600 mt-1">
+                        <div>
+                          <div className="text-sm font-medium">{formatRoomType(room.type)}</div>
+                          <div className="text-xs text-gray-500">
                             {reservation.guests_count} huéspedes • ${Number(reservation.total_amount).toLocaleString()}
                           </div>
                         </div>
@@ -279,32 +269,16 @@ export const MultiReservationViewModal = ({
                         <Badge className={`${getStatusColor(reservation.status)} border text-xs`}>
                           {getStatusText(reservation.status)}
                         </Badge>
-                        <div className="flex gap-1">
-                          {onEdit && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onEdit(reservation.id)}
-                              className="h-8 px-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                              title="Editar reserva"
-                            >
-                              <Edit className="h-3 w-3 mr-1" />
-                              <span className="text-xs">Editar</span>
-                            </Button>
-                          )}
-                          {onDelete && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onDelete(reservation.id)}
-                              className="h-8 px-2 bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
-                              title="Eliminar reserva"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              <span className="text-xs">Eliminar</span>
-                            </Button>
-                          )}
-                        </div>
+                        {onEdit && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(reservation.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
