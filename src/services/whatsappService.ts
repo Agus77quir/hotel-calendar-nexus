@@ -49,7 +49,11 @@ Saludos cordiales,
 Concesionaria Nardini SRL`;
 
   // Crear enlace de WhatsApp
-  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
+  const cleanMessage = message
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMessage)}`;
   
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');
@@ -121,7 +125,11 @@ Concesionaria Nardini SRL`;
   console.log('FINAL MESSAGE TO SEND:', message);
 
   // Crear enlace de WhatsApp
-  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
+  const cleanMultiMessage = message
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMultiMessage)}`;
   
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');

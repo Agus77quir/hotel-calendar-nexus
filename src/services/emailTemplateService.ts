@@ -129,8 +129,14 @@ export const openEmailClient = (
 ) => {
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
   
+  // Sanitize: remove any price lines just in case
+  const safeBody = body
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
@@ -143,8 +149,14 @@ export const openMultipleReservationEmailClient = (
 ) => {
   const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
+  // Sanitize: remove any price lines just in case
+  const safeBody = body
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
