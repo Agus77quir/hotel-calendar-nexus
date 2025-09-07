@@ -97,7 +97,6 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
-  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
 
   const subject = `Confirmación de Reserva Múltiple - Hostería Anillaco - ${reservationNumber}`;
   
@@ -111,7 +110,6 @@ Detalle de su reserva:
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
 • ${totalGuests} huéspedes total
-• Monto total: $${totalAmount.toLocaleString()}
 
 • Check in: 13 hs
 • Check out: 10 hs

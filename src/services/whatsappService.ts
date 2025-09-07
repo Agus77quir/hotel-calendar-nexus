@@ -100,7 +100,6 @@ export const sendMultipleReservationToWhatsApp = (
   console.log('Room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
-  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
   
   const message = `Estimado/a ${guestName},
 
@@ -112,7 +111,6 @@ Detalle de su reserva:
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
 • ${totalGuests} huéspedes total
-• Monto total: $${totalAmount.toLocaleString()}
 
 • Check in: 13 hs
 • Check out: 10 hs
