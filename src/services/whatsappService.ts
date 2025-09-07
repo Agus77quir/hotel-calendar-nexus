@@ -127,7 +127,13 @@ Concesionaria Nardini SRL`;
   // Crear enlace de WhatsApp
   const cleanMultiMessage = message
     .split('\n')
-    .filter(line => !line.includes('$'))
+    .filter((line) => {
+      const l = line.toLowerCase();
+      // Remover cualquier línea relacionada a precios o pagos
+      if (l.includes('$') || l.includes('usd') || l.includes('eur') || l.includes('ars')) return false;
+      if (/(monto\s*total|total\s*a\s*pagar|precio|importe|tarifa|seña|anticipo|saldo)/i.test(l)) return false;
+      return true;
+    })
     .join('\n');
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMultiMessage)}`;
   
