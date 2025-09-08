@@ -5,7 +5,8 @@ import { Reservation, Guest, Room } from '@/types/hotel';
 export const generateReservationPDF = (
   reservation: Reservation,
   guest: Guest,
-  room: Room
+  room: Room,
+  options?: { hideAmounts?: boolean }
 ) => {
   const doc = new jsPDF();
   
@@ -73,7 +74,8 @@ export const generateReservationPDF = (
   doc.text(`Precio por noche: $${room.price}`, 20, yPosition);
   yPosition += 15;
   
-  // Total calculation
+// Total calculation
+if (!options?.hideAmounts) {
   const nights = Math.ceil((new Date(reservation.check_out).getTime() - new Date(reservation.check_in).getTime()) / (1000 * 60 * 60 * 24));
   const subtotal = room.price * nights;
   const discountAmount = guest.is_associated ? (subtotal * guest.discount_percentage) / 100 : 0;
@@ -94,7 +96,7 @@ export const generateReservationPDF = (
   yPosition += 8;
   doc.setFont('helvetica', 'bold');
   doc.text(`TOTAL: $${total.toFixed(2)}`, 20, yPosition);
-  
+}
   if (reservation.special_requests) {
     yPosition += 20;
     doc.setFont('helvetica', 'bold');

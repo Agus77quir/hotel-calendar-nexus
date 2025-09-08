@@ -112,7 +112,7 @@ export const MultiReservationViewModal = ({
       const firstReservation = reservations[0];
       const firstRoom = rooms.find(r => r.id === firstReservation.room_id);
       if (firstRoom) {
-        await generateReservationPDF(firstReservation, guest, firstRoom);
+        await generateReservationPDF(firstReservation, guest, firstRoom, { hideAmounts: true });
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
