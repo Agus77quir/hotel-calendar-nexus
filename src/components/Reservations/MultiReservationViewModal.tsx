@@ -19,7 +19,7 @@ import {
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
+import { sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
 import { generateReservationPDF } from '@/services/pdfService';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -103,7 +103,7 @@ export const MultiReservationViewModal = ({
     console.log('Available rooms for WhatsApp:', rooms.length);
     
     // FORZAR el uso de la función de múltiples reservas
-    sendMultipleReservationToWhatsApp(reservations, guest, rooms);
+    sendMultipleReservationToWhatsAppSanitized(reservations, guest, rooms);
   };
 
   const handleDownloadPDF = async () => {

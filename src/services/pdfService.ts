@@ -71,8 +71,10 @@ export const generateReservationPDF = (
   yPosition += 8;
   doc.text(`Capacidad: ${room.capacity} personas`, 20, yPosition);
   yPosition += 8;
+if (!options?.hideAmounts) {
   doc.text(`Precio por noche: $${room.price}`, 20, yPosition);
-  yPosition += 15;
+}
+yPosition += 15;
   
 // Total calculation
 if (!options?.hideAmounts) {
