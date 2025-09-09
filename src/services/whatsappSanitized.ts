@@ -69,7 +69,13 @@ Concesionaria Nardini SRL`;
     })
     .join('\n');
 
-  const sanitizedMessage = cleanMessage.replace(/(\$|\b(?:ar\$|usd|eur|ars)\b)\s*[\d.,]+/gi, '');
+  const sanitizedMessage = cleanMessage
+    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
+    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
+    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(sanitizedMessage)}`;
   // Clear any text selection to avoid OS/app including selected amounts
   try {

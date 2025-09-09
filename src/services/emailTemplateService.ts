@@ -134,15 +134,31 @@ export const openEmailClient = (
     .split('\n')
     .filter((line) => {
       const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l)) return false;
+      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
+      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
+      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
       if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
       return true;
     })
     .join('\n');
   
+  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
+  const safeBodyCleaned = safeBody
+    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
+    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
+    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
+  
+  // Clear any text selection to avoid clients including selected amounts
+  try {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    window.getSelection()?.removeAllRanges();
+  } catch {}
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
@@ -160,15 +176,31 @@ export const openMultipleReservationEmailClient = (
     .split('\n')
     .filter((line) => {
       const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l)) return false;
+      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
+      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
+      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
       if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
       return true;
     })
     .join('\n');
+
+  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
+  const safeBodyCleaned = safeBody
+    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
+    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
+    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
+
+  // Clear any text selection to avoid clients including selected amounts
+  try {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    window.getSelection()?.removeAllRanges();
+  } catch {}
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
