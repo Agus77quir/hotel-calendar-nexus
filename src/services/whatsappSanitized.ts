@@ -72,6 +72,9 @@ Concesionaria Nardini SRL`;
   const sanitizedMessage = cleanMessage.replace(/(\$|\b(?:ar\$|usd|eur|ars)\b)\s*[\d.,]+/gi, '');
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(sanitizedMessage)}`;
   // Clear any text selection to avoid OS/app including selected amounts
-  try { window.getSelection()?.removeAllRanges(); } catch {}
+  try {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    window.getSelection()?.removeAllRanges();
+  } catch {}
   window.open(whatsappLink, '_blank');
 };

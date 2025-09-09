@@ -129,10 +129,16 @@ export const openEmailClient = (
 ) => {
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
   
-  // Sanitize: remove any price lines just in case
+  // Sanitize: remove any monetary or payment related lines robustly
   const safeBody = body
     .split('\n')
-    .filter(line => !line.includes('$'))
+    .filter((line) => {
+      const l = line.toLowerCase();
+      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
+      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l)) return false;
+      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
+      return true;
+    })
     .join('\n');
   
   // Crear enlace mailto
@@ -149,10 +155,16 @@ export const openMultipleReservationEmailClient = (
 ) => {
   const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
-  // Sanitize: remove any price lines just in case
+  // Sanitize: remove any monetary or payment related lines robustly
   const safeBody = body
     .split('\n')
-    .filter(line => !line.includes('$'))
+    .filter((line) => {
+      const l = line.toLowerCase();
+      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
+      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l)) return false;
+      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
+      return true;
+    })
     .join('\n');
   
   // Crear enlace mailto
