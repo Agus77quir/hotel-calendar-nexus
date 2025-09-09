@@ -55,6 +55,8 @@ Concesionaria Nardini SRL`;
     .join('\n');
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMessage)}`;
   
+  // Clear any text selection to avoid OS/app including selected amounts
+  try { window.getSelection()?.removeAllRanges(); } catch {}
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');
 };
@@ -139,6 +141,8 @@ Concesionaria Nardini SRL`;
     .join('\n');
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMultiMessage)}`;
   
+  // Clear any text selection to avoid OS/app including selected amounts
+  try { window.getSelection()?.removeAllRanges(); } catch {}
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');
 };

@@ -239,12 +239,8 @@ export const MultiReservationViewModal = ({
                   <p className="text-sm text-muted-foreground">Total de huéspedes</p>
                   <p className="font-medium">{totalGuests}</p>
                 </div>
-                {isMobile && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total general</p>
-                    <p className="font-semibold text-green-600">${totalAmount.toLocaleString()}</p>
-                  </div>
-                )}
+                  {/* Monto total oculto en reservas múltiples para evitar compartir importes */}
+
               </div>
 
               <Separator className="my-4" />
@@ -265,7 +261,7 @@ export const MultiReservationViewModal = ({
                         <div>
                           <div className="text-sm font-medium">{formatRoomType(room.type)}</div>
                           <div className="text-xs text-gray-500">
-                            {reservation.guests_count} huéspedes{isMobile ? ` • $${Number(reservation.total_amount).toLocaleString()}` : ''}
+                            {reservation.guests_count} huéspedes
                           </div>
                         </div>
                       </div>
