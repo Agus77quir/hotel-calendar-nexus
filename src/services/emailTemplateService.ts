@@ -42,7 +42,7 @@ Detalle de su reserva:
 • Tipo de habitación: ${room.type}
 • 1 Habitación
 #${roomNumber}
-• ${reservation.guests_count} huéspedes total
+• Huéspedes: ${reservation.guests_count}
 • Check in: 13 hs
 • Check out: 10 hs
 
@@ -109,7 +109,7 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
-• ${totalGuests} huéspedes total
+• Huéspedes: ${totalGuests}
 
 • Check in: 13 hs
 • Check out: 10 hs

@@ -74,6 +74,7 @@ Concesionaria Nardini SRL`;
       .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
       .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
       .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
+      .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
       .replace(/\s{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
