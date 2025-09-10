@@ -48,14 +48,31 @@ Detalle de su reserva:
 Saludos cordiales,
 Concesionaria Nardini SRL`;
 
+    const safeBody = message
+      .split('\n')
+      .filter((line) => {
+        const l = line.toLowerCase();
+        if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
+        if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
+        if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
+        if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
+        return true;
+      })
+      .join('\n');
+
+    const safeBodyCleaned = safeBody
+      .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
+      .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
+      .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
     const emailData = {
       to_email: guest.email,
       to_name: guestName,
       subject,
-      message: message
-        .split('\n')
-        .filter(line => !line.includes('$'))
-        .join('\n'),
+      message: safeBodyCleaned,
       reservation_number: reservationNumber,
       hotel_name: 'Hostería Anillaco',
       check_in: arrivalDate,
