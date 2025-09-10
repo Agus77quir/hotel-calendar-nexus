@@ -21,6 +21,28 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+// Strict sanitization: remove ANY monetary info or 'total' not about huéspedes
+const sanitizeNoAmounts = (text: string): string => {
+  const filtered = text
+    .split('\n')
+    .filter((line) => {
+      const l = line.toLowerCase();
+      if (l.includes('$') || /(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
+      if (/(monto\s*total|total\s*a\s*(pagar|abonar)|total\s*general|total\s*:|precio|importe|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|anticipo|saldo|balance|restante|resto|costo|coste)/i.test(l)) return false;
+      if (/\btotal\b/i.test(l) && /\d/.test(l) && !/(hu[eé]sped(?:es)?)/i.test(l)) return false;
+      return true;
+    })
+    .join('\n');
+
+  return filtered
+    .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 export const sendReservationToWhatsApp = (
   reservation: Reservation,
   guest: Guest,
@@ -48,26 +70,8 @@ Detalle de su reserva:
 Saludos cordiales,
 Concesionaria Nardini SRL`;
 
-  // Crear enlace de WhatsApp
-  const cleanMessage = message
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
-
-  const sanitizedMessage = cleanMessage
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // Crear enlace de WhatsApp (sanitizado)
+  const sanitizedMessage = sanitizeNoAmounts(message);
 
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(sanitizedMessage)}`;
   
@@ -145,28 +149,8 @@ Concesionaria Nardini SRL`;
 
   console.log('FINAL MESSAGE TO SEND:', message);
 
-  // Crear enlace de WhatsApp
-  const cleanMultiMessage = message
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      // Remover cualquier línea relacionada a precios o pagos
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      // Si la línea contiene la palabra "total" y números, pero no es sobre huéspedes, eliminarla
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
-
-  const sanitizedMessage = cleanMultiMessage
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // Crear enlace de WhatsApp (sanitizado)
+  const sanitizedMessage = sanitizeNoAmounts(message);
 
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(sanitizedMessage)}`;
   

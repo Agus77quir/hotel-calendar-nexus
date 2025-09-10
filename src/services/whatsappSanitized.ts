@@ -57,25 +57,29 @@ Detalle de su reserva:
 Saludos cordiales,
 Concesionaria Nardini SRL`;
 
-  // Defensive sanitization to ensure NO monetary info ever leaks
-  const cleanMessage = message
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
+  // Strict sanitization: remove ANY monetary info or 'total' not about huéspedes
+  const sanitizeNoAmounts = (text: string): string => {
+    const filtered = text
+      .split('\n')
+      .filter((line) => {
+        const l = line.toLowerCase();
+        if (l.includes('$') || /(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
+        if (/(monto\s*total|total\s*a\s*(pagar|abonar)|total\s*general|total\s*:|precio|importe|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|anticipo|saldo|balance|restante|resto|costo|coste)/i.test(l)) return false;
+        if (/\btotal\b/i.test(l) && /\d/.test(l) && !/(hu[eé]sped(?:es)?)/i.test(l)) return false;
+        return true;
+      })
+      .join('\n');
 
-  const sanitizedMessage = cleanMessage
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+    return filtered
+      .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+
+  const sanitizedMessage = sanitizeNoAmounts(message);
   const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(sanitizedMessage)}`;
   // Clear any text selection to avoid OS/app including selected amounts
   try {
