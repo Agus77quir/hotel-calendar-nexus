@@ -34,13 +34,16 @@ const ReservationsPage = () => {
     const room = rooms.find(r => r.id === reservation.room_id);
     const searchLower = searchTerm.toLowerCase();
     
+    console.log('Search term:', searchTerm);
+    console.log('Total reservations:', reservations.length);
+    
     // Text search filter
-    const matchesSearch = (
+    const matchesSearch = searchTerm === '' || (
       guest?.first_name.toLowerCase().includes(searchLower) ||
       guest?.last_name.toLowerCase().includes(searchLower) ||
       guest?.email.toLowerCase().includes(searchLower) ||
-      room?.number.includes(searchLower) ||
-      reservation.id.includes(searchLower)
+      room?.number.toLowerCase().includes(searchLower) ||
+      reservation.id.toLowerCase().includes(searchLower)
     );
 
     // Date filter
@@ -51,7 +54,10 @@ const ReservationsPage = () => {
       matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
     }
 
-    return matchesSearch && matchesDate;
+    const result = matchesSearch && matchesDate;
+    console.log('Filtering reservation:', reservation.id, 'matches:', result);
+    
+    return result;
   });
 
   const handleSaveReservation = async (reservationData: any) => {

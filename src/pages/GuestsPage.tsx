@@ -33,14 +33,20 @@ const GuestsPage = () => {
 
   const filteredGuests = guests.filter(guest => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    console.log('Guest search term:', searchTerm);
+    console.log('Total guests:', guests.length);
+    
+    const matches = searchTerm === '' || (
       guest.first_name.toLowerCase().includes(searchLower) ||
       guest.last_name.toLowerCase().includes(searchLower) ||
       guest.email.toLowerCase().includes(searchLower) ||
-      guest.phone.includes(searchLower) ||
-      guest.document.includes(searchLower) ||
+      guest.phone.toLowerCase().includes(searchLower) ||
+      guest.document.toLowerCase().includes(searchLower) ||
       guest.nationality.toLowerCase().includes(searchLower)
     );
+    
+    console.log('Guest filter result:', guest.first_name, matches);
+    return matches;
   });
 
   const associatedGuests = guests.filter(guest => guest.is_associated).length;
