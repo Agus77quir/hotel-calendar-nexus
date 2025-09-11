@@ -6,12 +6,14 @@ import { DailyReservationsCard } from '@/components/Dashboard/DailyReservationsC
 import { CalendarView } from '@/components/Calendar/CalendarView';
 import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
+import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { Building2, Calendar, TrendingUp, Plus, Search } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsIPhone } from '@/hooks/use-mobile';
@@ -29,6 +31,7 @@ const Index = () => {
     isOpen: false,
     mode: 'create' as 'create' | 'edit'
   });
+  const [guestSearchOpen, setGuestSearchOpen] = useState(false);
 
   const isReceptionist = user?.role === 'receptionist';
 
@@ -80,6 +83,13 @@ const Index = () => {
     setSelectedDate(date);
   };
 
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setGuestSearchOpen(true);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32 md:h-64">
@@ -119,6 +129,29 @@ const Index = () => {
         <div className={`absolute bottom-2 left-2 sm:bottom-4 sm:left-4 ${isIPhone ? 'w-6 h-6' : 'w-8 h-8 sm:w-12 sm:h-12'} border-l-2 border-b-2 border-white/30 rounded-bl-lg`}></div>
         <div className={`absolute bottom-2 right-2 sm:bottom-4 sm:right-4 ${isIPhone ? 'w-6 h-6' : 'w-8 h-8 sm:w-12 sm:h-12'} border-r-2 border-b-2 border-white/30 rounded-br-lg`}></div>
       </div>
+
+      {/* Guest Search Bar */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-lg">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Input
+                placeholder="Buscar huéspedes por nombre, email, teléfono o documento... (Presiona Enter)"
+                onKeyPress={handleSearchKeyPress}
+                className="pl-12 pr-4 h-12 text-lg"
+              />
+            </div>
+            <Button 
+              onClick={() => setGuestSearchOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Buscar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Access to Reservations */}
       <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 shadow-lg">
@@ -244,6 +277,12 @@ const Index = () => {
         rooms={rooms}
         guests={guests}
         mode={reservationModal.mode}
+      />
+
+      {/* Guest Search Modal */}
+      <FloatingGuestSearch
+        isOpen={guestSearchOpen}
+        onClose={() => setGuestSearchOpen(false)}
       />
     </div>
   );

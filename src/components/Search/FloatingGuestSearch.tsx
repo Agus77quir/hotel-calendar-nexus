@@ -51,6 +51,11 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
                   placeholder="Buscar huéspedes por nombre, email, teléfono o documento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                   className="pl-12 pr-4 h-12 text-lg"
                   autoFocus
                 />
