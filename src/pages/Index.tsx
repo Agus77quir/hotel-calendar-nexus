@@ -8,8 +8,7 @@ import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Calendar, TrendingUp, Plus, Search } from 'lucide-react';
-import { FloatingGuestSearch } from '@/components/Search/FloatingGuestSearch';
+import { Building2, Calendar, TrendingUp, Plus } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ const Index = () => {
     isOpen: false,
     mode: 'create' as 'create' | 'edit'
   });
-  const [guestSearchOpen, setGuestSearchOpen] = useState(false);
 
   const isReceptionist = user?.role === 'receptionist';
 
@@ -155,17 +153,6 @@ const Index = () => {
             >
               Ver Todas las Reservas
             </Button>
-            <Button 
-              onClick={() => setGuestSearchOpen(true)}
-              variant="outline"
-              size="lg"
-              className={`w-full sm:w-auto border-blue-300 text-blue-700 hover:bg-blue-100 font-semibold ${
-                isIPhone ? 'text-base py-3 px-6 min-h-12' : 'px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg'
-              } touch-manipulation`}
-            >
-              <Search className={`${isIPhone ? 'h-5 w-5' : 'h-4 w-4 sm:h-5 sm:w-5'} mr-2`} />
-              Buscar Huéspedes
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -257,12 +244,6 @@ const Index = () => {
         rooms={rooms}
         guests={guests}
         mode={reservationModal.mode}
-      />
-
-      {/* Guest Search Modal */}
-      <FloatingGuestSearch
-        isOpen={guestSearchOpen}
-        onClose={() => setGuestSearchOpen(false)}
       />
     </div>
   );
