@@ -39,10 +39,10 @@ const ReservationsPage = () => {
     
     // Text search filter
     const matchesSearch = searchTerm === '' || (
-      guest?.first_name.toLowerCase().includes(searchLower) ||
-      guest?.last_name.toLowerCase().includes(searchLower) ||
-      guest?.email.toLowerCase().includes(searchLower) ||
-      room?.number.toLowerCase().includes(searchLower) ||
+      (guest?.first_name || '').toLowerCase().includes(searchLower) ||
+      (guest?.last_name || '').toLowerCase().includes(searchLower) ||
+      (guest?.email || '').toLowerCase().includes(searchLower) ||
+      (room?.number || '').toLowerCase().includes(searchLower) ||
       reservation.id.toLowerCase().includes(searchLower)
     );
 

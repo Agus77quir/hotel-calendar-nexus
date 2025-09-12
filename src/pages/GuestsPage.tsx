@@ -37,12 +37,12 @@ const GuestsPage = () => {
     console.log('Total guests:', guests.length);
     
     const matches = searchTerm === '' || (
-      guest.first_name.toLowerCase().includes(searchLower) ||
-      guest.last_name.toLowerCase().includes(searchLower) ||
-      guest.email.toLowerCase().includes(searchLower) ||
-      guest.phone.toLowerCase().includes(searchLower) ||
-      guest.document.toLowerCase().includes(searchLower) ||
-      guest.nationality.toLowerCase().includes(searchLower)
+      (guest.first_name || '').toLowerCase().includes(searchLower) ||
+      (guest.last_name || '').toLowerCase().includes(searchLower) ||
+      (guest.email || '').toLowerCase().includes(searchLower) ||
+      (guest.phone || '').toLowerCase().includes(searchLower) ||
+      (guest.document || '').toLowerCase().includes(searchLower) ||
+      (guest.nationality || '').toLowerCase().includes(searchLower)
     );
     
     console.log('Guest filter result:', guest.first_name, matches);
