@@ -43,8 +43,7 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { openEmailClient, openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendReservationToWhatsApp } from '@/services/whatsappService';
-import { sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
+import { sendReservationToWhatsAppSanitized, sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -191,7 +190,7 @@ export const ReservationsTable = ({
       const reservation = reservationGroup[0];
       const room = rooms.find(r => r.id === reservation.room_id);
       if (room) {
-        sendReservationToWhatsApp(reservation, guest, room);
+        sendReservationToWhatsAppSanitized(reservation, guest, room);
         toast({
           title: "WhatsApp enviado",
           description: `Mensaje enviado a ${guest.phone}`,
