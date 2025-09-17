@@ -39,9 +39,7 @@ export const generateConfirmationEmailTemplate = (
 Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
-• Tipo de habitación: ${room.type}
-• 1 Habitación
-#${roomNumber}
+• Habitación: #${roomNumber}
 • Huéspedes: ${reservation.guests_count}
 • Check in: 13 hs
 • Check out: 10 hs
@@ -108,9 +106,8 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
-• ${reservations.length} Habitaciones: ${roomNumbersText}
+• Habitaciones: ${roomNumbersText}
 • Huéspedes: ${totalGuests}
-
 • Check in: 13 hs
 • Check out: 10 hs
 

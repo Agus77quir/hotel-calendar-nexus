@@ -41,7 +41,8 @@ export const sendReservationConfirmationAutomatically = async (
 Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
-• Tipo de habitación: ${room.type}
+• Habitación: ${room.number}
+• Huéspedes: ${reservation.guests_count}
 • Check in: 13 hs
 • Check out: 10 hs
 

@@ -61,10 +61,8 @@ export const sendReservationToWhatsApp = (
 Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
-• Tipo de habitación: ${room.type}
-• 1 Habitación
-#${roomNumber}
-• ${reservation.guests_count} huéspedes total
+• Habitación: #${roomNumber}
+• ${reservation.guests_count} huéspedes
 • Check in: 13 hs
 • Check out: 10 hs
 
@@ -139,9 +137,8 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
-• ${reservations.length} Habitaciones: ${roomNumbersText}
-• ${totalGuests} huéspedes total
-
+• Habitaciones: ${roomNumbersText}
+• ${totalGuests} huéspedes
 • Check in: 13 hs
 • Check out: 10 hs
 
