@@ -127,30 +127,47 @@ export const openEmailClient = (
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
   
   // Sanitize: remove any monetary or payment related lines robustly
-  const safeBody = body
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
-  
-  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
-  const safeBodyCleaned = safeBody
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+  const lines = body.split('\n');
+  const isGuestCountLine = (line: string) => {
+    const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return /(huespedes?|hu(e|é)sped(?:es)?)/.test(lnorm) && /\d/.test(lnorm);
+  };
+
+  const filtered = lines.filter((line) => {
+    const l = line.toLowerCase();
+    const lnorm = l.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (/[€$£]/.test(line)) return false;
+    if (/(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b|\bclp\b|\bmxn\b)/i.test(lnorm)) return false;
+    if (/\b(pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b/i.test(lnorm) && /[0-9.,]/.test(line)) return false;
+    if (/\b(monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|senal|señal|anticipo|saldo|balance|restante|resto|costo|coste)\b/i.test(lnorm)) return false;
+    if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+    return true;
+  });
+
+  const safeBodyIntermediate = filtered
+    .join('\n')
+    .replace(/(?:[$€£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/\b(?:pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/^\s*[•-]?\s*(?:monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|senal|anticipo|saldo|balance|restante|resto|costo|coste|total).*$/gim, '')
+    .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
     .replace(/\s{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-  
+
+  const safeBodyFinal = safeBodyIntermediate
+    .split('\n')
+    .filter((line) => {
+      const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/[€$£]/.test(line)) return false;
+      if (/\b(total|monto|importe|precio|tarifa|pago|pagos|pagado|abonado|senal|seña|anticipo|saldo|costo|coste)\b/i.test(lnorm) && !/\bhuesped(?:es)?\b/.test(lnorm)) return false;
+      if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+      return true;
+    })
+    .join('\n');
+
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
-  
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyFinal)}`;
+
   // Clear any text selection to avoid clients including selected amounts
   try {
     (document.activeElement as HTMLElement | null)?.blur?.();
@@ -169,29 +186,46 @@ export const openMultipleReservationEmailClient = (
   const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
   // Sanitize: remove any monetary or payment related lines robustly
-  const safeBody = body
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
+  const lines = body.split('\n');
+  const isGuestCountLine = (line: string) => {
+    const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return /(huespedes?|hu(e|é)sped(?:es)?)/.test(lnorm) && /\d/.test(lnorm);
+  };
 
-  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
-  const safeBodyCleaned = safeBody
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
+  const filtered = lines.filter((line) => {
+    const l = line.toLowerCase();
+    const lnorm = l.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (/[€$£]/.test(line)) return false;
+    if (/(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b|\bclp\b|\bmxn\b)/i.test(lnorm)) return false;
+    if (/\b(pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b/i.test(lnorm) && /[0-9.,]/.test(line)) return false;
+    if (/\b(monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|senal|señal|anticipo|saldo|balance|restante|resto|costo|coste)\b/i.test(lnorm)) return false;
+    if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+    return true;
+  });
+
+  const safeBodyIntermediate = filtered
+    .join('\n')
+    .replace(/(?:[$€£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/\b(?:pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/^\s*[•-]?\s*(?:monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|senal|anticipo|saldo|balance|restante|resto|costo|coste|total).*$/gim, '')
+    .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
     .replace(/\s{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  const safeBodyFinal = safeBodyIntermediate
+    .split('\n')
+    .filter((line) => {
+      const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/[€$£]/.test(line)) return false;
+      if (/\b(total|monto|importe|precio|tarifa|pago|pagos|pagado|abonado|senal|seña|anticipo|saldo|costo|coste)\b/i.test(lnorm) && !/\bhuesped(?:es)?\b/.test(lnorm)) return false;
+      if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+      return true;
+    })
+    .join('\n');
   
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyFinal)}`;
 
   // Clear any text selection to avoid clients including selected amounts
   try {
