@@ -59,25 +59,46 @@ Concesionaria Nardini SRL`;
 
   // Strict sanitization: remove ANY monetary info or 'total' not about huéspedes
   const sanitizeNoAmounts = (text: string): string => {
-    const filtered = text
-      .split('\n')
-      .filter((line) => {
-        const l = line.toLowerCase();
-        if (l.includes('$') || /(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
-        if (/(monto\s*total|total\s*a\s*(pagar|abonar)|total\s*general|total\s*:|precio|importe|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|anticipo|saldo|balance|restante|resto|costo|coste)/i.test(l)) return false;
-        if (/\btotal\b/i.test(l) && /\d/.test(l) && !/(hu[eé]sped(?:es)?)/i.test(l)) return false;
-        return true;
-      })
-      .join('\n');
+    const lines = text.split('\n');
 
-    return filtered
-      .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
+    const isGuestCountLine = (line: string) => {
+      const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return /(huespedes?|hu(e|é)sped(?:es)?)/.test(lnorm) && /\d/.test(lnorm);
+    };
+
+    const filtered = lines.filter((line) => {
+      const l = line.toLowerCase();
+      const lnorm = l.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/[€$£]/.test(line)) return false;
+      if (/(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b|\bclp\b|\bmxn\b)/i.test(lnorm)) return false;
+      if (/\b(pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b/i.test(lnorm) && /[0-9.,]/.test(line)) return false;
+      if (/\b(monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|senal|señal|anticipo|saldo|balance|restante|resto|costo|coste)\b/i.test(lnorm)) return false;
+      if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+      return true;
+    });
+
+    const joined = filtered
+      .join('\n')
+      .replace(/(?:[$€£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/\b(?:pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/^\s*[•-]?\s*(?:monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|senal|anticipo|saldo|balance|restante|resto|costo|coste|total).*$/gim, '')
       .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
       .replace(/\s{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+
+    const final = joined
+      .split('\n')
+      .filter((line) => {
+        const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (/[€$£]/.test(line)) return false;
+        if (/\b(total|monto|importe|precio|tarifa|pago|pagos|pagado|abonado|senal|seña|anticipo|saldo|costo|coste)\b/i.test(lnorm) && !/\bhuesped(?:es)?\b/.test(lnorm)) return false;
+        if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+        return true;
+      })
+      .join('\n');
+
+    return final;
   };
 
   const sanitizedMessage = sanitizeNoAmounts(message);
@@ -119,25 +140,46 @@ Concesionaria Nardini SRL`;
 
   // Sanitización estricta replicada
   const sanitizeNoAmounts = (text: string): string => {
-    const filtered = text
-      .split('\n')
-      .filter((line) => {
-        const l = line.toLowerCase();
-        if (l.includes('$') || /(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b)/i.test(l)) return false;
-        if (/(monto\s*total|total\s*a\s*(pagar|abonar)|total\s*general|total\s*:|precio|importe|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|anticipo|saldo|balance|restante|resto|costo|coste)/i.test(l)) return false;
-        if (/\btotal\b/i.test(l) && /\d/.test(l) && !/(hu[eé]sped(?:es)?)/i.test(l)) return false;
-        return true;
-      })
-      .join('\n');
+    const lines = text.split('\n');
 
-    return filtered
-      .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
+    const isGuestCountLine = (line: string) => {
+      const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return /(huespedes?|hu(e|é)sped(?:es)?)/.test(lnorm) && /\d/.test(lnorm);
+    };
+
+    const filtered = lines.filter((line) => {
+      const l = line.toLowerCase();
+      const lnorm = l.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/[€$£]/.test(line)) return false;
+      if (/(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b|\bclp\b|\bmxn\b)/i.test(lnorm)) return false;
+      if (/\b(pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b/i.test(lnorm) && /[0-9.,]/.test(line)) return false;
+      if (/\b(monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|senal|señal|anticipo|saldo|balance|restante|resto|costo|coste)\b/i.test(lnorm)) return false;
+      if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+      return true;
+    });
+
+    const joined = filtered
+      .join('\n')
+      .replace(/(?:[$€£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/\b(?:pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/^\s*[•-]?\s*(?:monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|senal|anticipo|saldo|balance|restante|resto|costo|coste|total).*$/gim, '')
       .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
       .replace(/\s{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+
+    const final = joined
+      .split('\n')
+      .filter((line) => {
+        const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (/[€$£]/.test(line)) return false;
+        if (/\b(total|monto|importe|precio|tarifa|pago|pagos|pagado|abonado|senal|seña|anticipo|saldo|costo|coste)\b/i.test(lnorm) && !/\bhuesped(?:es)?\b/.test(lnorm)) return false;
+        if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
+        return true;
+      })
+      .join('\n');
+
+    return final;
   };
 
   const sanitizedMessage = sanitizeNoAmounts(message);
