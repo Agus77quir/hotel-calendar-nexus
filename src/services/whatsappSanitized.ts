@@ -102,6 +102,7 @@ Concesionaria Nardini SRL`;
     const ultimate = final
       .replace(/^.*\bmonto\s*total\b.*$/gim, '')
       .replace(/\b(?:monto\s*)?total\b\s*[:\-]?\s*(?:[€$£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)?\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+      .replace(/^.*\btotal\b.*$/gim, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
