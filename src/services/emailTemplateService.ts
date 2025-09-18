@@ -224,8 +224,15 @@ export const openMultipleReservationEmailClient = (
     })
     .join('\n');
   
+  // Ultra-strict final pass for any residual phrases like 'monto total' or 'total: $...'
+  const safeBodyUltimate = safeBodyFinal
+    .replace(/^.*\bmonto\s*total\b.*$/gim, '')
+    .replace(/\b(?:monto\s*)?total\b\s*[:\-]?\s*(?:[€$£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)?\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyFinal)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyUltimate)}`;
 
   // Clear any text selection to avoid clients including selected amounts
   try {
