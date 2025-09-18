@@ -13,6 +13,13 @@ export const ReservationsSearch = ({
   onSearchChange,
   resultCount
 }: ReservationsSearchProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Prevent form submission or page reload
+    }
+  };
+
   return (
     <div className="flex items-center gap-4">
       <div className="relative flex-1 max-w-sm">
@@ -21,7 +28,9 @@ export const ReservationsSearch = ({
           placeholder="Buscar por huésped, email, habitación o ID..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="pl-10"
+          autoComplete="off"
         />
       </div>
       <div className="text-sm text-muted-foreground">

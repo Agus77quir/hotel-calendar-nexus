@@ -31,34 +31,35 @@ const ReservationsPage = () => {
   });
 
   const filteredReservations = reservations.filter(reservation => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    const searchLower = searchTerm.toLowerCase();
-    
-    console.log('Search term:', searchTerm);
-    console.log('Total reservations:', reservations.length);
-    
-    // Text search filter
-    const matchesSearch = searchTerm === '' || (
-      (guest?.first_name || '').toLowerCase().includes(searchLower) ||
-      (guest?.last_name || '').toLowerCase().includes(searchLower) ||
-      (guest?.email || '').toLowerCase().includes(searchLower) ||
-      (room?.number || '').toLowerCase().includes(searchLower) ||
-      reservation.id.toLowerCase().includes(searchLower)
-    );
+    try {
+      if (!reservation) return false;
+      
+      const guest = guests.find(g => g && g.id === reservation.guest_id);
+      const room = rooms.find(r => r && r.id === reservation.room_id);
+      const searchLower = searchTerm.toLowerCase().trim();
+      
+      // Text search filter
+      const matchesSearch = searchTerm === '' || (
+        (guest?.first_name || '').toLowerCase().includes(searchLower) ||
+        (guest?.last_name || '').toLowerCase().includes(searchLower) ||
+        (guest?.email || '').toLowerCase().includes(searchLower) ||
+        (room?.number || '').toLowerCase().includes(searchLower) ||
+        (reservation.id || '').toLowerCase().includes(searchLower)
+      );
 
-    // Date filter
-    let matchesDate = true;
-    if (dateFilters.dateFrom && dateFilters.dateTo) {
-      const checkIn = reservation.check_in;
-      const checkOut = reservation.check_out;
-      matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+      // Date filter
+      let matchesDate = true;
+      if (dateFilters.dateFrom && dateFilters.dateTo && reservation.check_in && reservation.check_out) {
+        const checkIn = reservation.check_in;
+        const checkOut = reservation.check_out;
+        matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+      }
+
+      return matchesSearch && matchesDate;
+    } catch (error) {
+      console.error('Error filtering reservation:', reservation?.id, error);
+      return false;
     }
-
-    const result = matchesSearch && matchesDate;
-    console.log('Filtering reservation:', reservation.id, 'matches:', result);
-    
-    return result;
   });
 
   const handleSaveReservation = async (reservationData: any) => {
