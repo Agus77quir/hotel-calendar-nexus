@@ -38,8 +38,6 @@ const sanitizeNoAmounts = (text: string): string => {
     .replace(/(?:\$|€|\b(?:ar\$|u\$s|usd|eur|ars)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
     .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
     .replace(/^.*\btotal\b(?!.*hu[eé]sped).*$/gim, '')
-    .replace(/^.*\bmonto\s*total\b.*$/gim, '')
-    .replace(/^.*\btotal\b.*$/gim, '')
     .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
     .replace(/\s{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
@@ -63,8 +61,10 @@ export const sendReservationToWhatsApp = (
 Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
-• Habitación: #${roomNumber}
-• ${reservation.guests_count} huéspedes
+• Tipo de habitación: ${room.type}
+• 1 Habitación
+#${roomNumber}
+• ${reservation.guests_count} huéspedes total
 • Check in: 13 hs
 • Check out: 10 hs
 
@@ -139,8 +139,9 @@ Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
-• Habitaciones: ${roomNumbersText}
-• ${totalGuests} huéspedes
+• ${reservations.length} Habitaciones: ${roomNumbersText}
+• ${totalGuests} huéspedes total
+
 • Check in: 13 hs
 • Check out: 10 hs
 

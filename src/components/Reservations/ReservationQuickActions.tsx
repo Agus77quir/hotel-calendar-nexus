@@ -13,7 +13,7 @@ import {
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 import { sendReservationConfirmationAutomatically } from '@/services/automatedEmailService';
-import { sendReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
+import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
 import { useState } from 'react';
 
@@ -125,7 +125,7 @@ export const ReservationQuickActions = ({
 
   const handleSendWhatsApp = () => {
     try {
-      sendReservationToWhatsAppSanitized(reservation, guest, room);
+      sendReservationToWhatsApp(reservation, guest, room);
       toast({
         title: "📱 WhatsApp enviado",
         description: `Mensaje enviado a ${guest.phone}`,

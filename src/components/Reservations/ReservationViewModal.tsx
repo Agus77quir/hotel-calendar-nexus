@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { openEmailClient } from '@/services/emailTemplateService';
-import { sendReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
+import { sendReservationToWhatsApp } from '@/services/whatsappService';
 import { generateReservationPDF } from '@/services/pdfService';
 import { formatDisplayDate } from '@/utils/dateUtils';
 
@@ -82,7 +82,7 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
   };
 
   const handleSendWhatsApp = () => {
-    sendReservationToWhatsAppSanitized(reservation, guest, room);
+    sendReservationToWhatsApp(reservation, guest, room);
   };
 
   const handleDownloadPDF = async () => {

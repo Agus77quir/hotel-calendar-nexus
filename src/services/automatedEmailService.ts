@@ -41,37 +41,29 @@ export const sendReservationConfirmationAutomatically = async (
 Detalle de su reserva:
 • Número de reserva: ${reservationNumber}
 • Fecha de llegada: ${arrivalDate}
-• Habitación: ${room.number}
-• Huéspedes: ${reservation.guests_count}
+• Tipo de habitación: ${room.type}
 • Check in: 13 hs
 • Check out: 10 hs
 
 Saludos cordiales,
 Concesionaria Nardini SRL`;
 
-    const lines = message.split('\n');
-    const isGuestCountLine = (line: string) => {
-      const lnorm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return /(huespedes?|hu(e|é)sped(?:es)?)/.test(lnorm) && /\d/.test(lnorm);
-    };
+    const safeBody = message
+      .split('\n')
+      .filter((line) => {
+        const l = line.toLowerCase();
+        if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
+        if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
+        if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
+        if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
+        return true;
+      })
+      .join('\n');
 
-    const filtered = lines.filter((line) => {
-      const l = line.toLowerCase();
-      const lnorm = l.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      if (/[€$£]/.test(line)) return false;
-      if (/(?:\bar\$|\bu\$s\b|\busd\b|\beur\b|\bars\b|\bclp\b|\bmxn\b)/i.test(lnorm)) return false;
-      if (/\b(pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b/i.test(lnorm) && /[0-9.,]/.test(line)) return false;
-      if (/\b(monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|senal|señal|anticipo|saldo|balance|restante|resto|costo|coste)\b/i.test(lnorm)) return false;
-      if (/\btotal\b/i.test(line) && !isGuestCountLine(line)) return false;
-      return true;
-    });
-
-    const safeBodyFinal = filtered
-      .join('\n')
-      .replace(/(?:[$€£]|\b(?:ar\$|u\$s|usd|eur|ars|clp|mxn)\b)\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/\b(?:pesos?|dolares?|dólares?|euros?|reales?|soles?|guaran[ií]es?|bol[ií]vares?)\b\s*[0-9]+(?:[.,\s][0-9]{3})*(?:[.,][0-9]{2})?/gim, '')
-      .replace(/^\s*[•-]?\s*(?:monto|importe|precio|tarifa|pago(?:s)?|pagado|abonado|señ[aa]l?|senal|anticipo|saldo|balance|restante|resto|costo|coste|total).*$/gim, '')
-      .replace(/\b(hu[eé]sped(?:es)?)\s*total\b/gi, '$1')
+    const safeBodyCleaned = safeBody
+      .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
+      .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
+      .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
       .replace(/\s{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
@@ -80,7 +72,7 @@ Concesionaria Nardini SRL`;
       to_email: guest.email,
       to_name: guestName,
       subject,
-      message: safeBodyFinal,
+      message: safeBodyCleaned,
       reservation_number: reservationNumber,
       hotel_name: 'Hostería Anillaco',
       check_in: arrivalDate,

@@ -43,7 +43,7 @@ export const MultiReservationViewModal = ({
   if (!guest || reservations.length === 0) return null;
   const isMobile = useIsMobile();
 
-  
+  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
 
   const getStatusColor = (status: string) => {
@@ -88,6 +88,7 @@ export const MultiReservationViewModal = ({
     console.log('=== MULTIPLE RESERVATION EMAIL BUTTON CLICKED ===');
     console.log('Reservations count:', reservations.length);
     console.log('Total guests:', totalGuests);
+    console.log('Total amount:', totalAmount);
     console.log('Available rooms for email:', rooms.length);
     
     // FORZAR el uso de la función de múltiples reservas
@@ -98,6 +99,7 @@ export const MultiReservationViewModal = ({
     console.log('=== MULTIPLE RESERVATION WHATSAPP BUTTON CLICKED ===');
     console.log('Reservations count:', reservations.length);
     console.log('Total guests:', totalGuests);
+    console.log('Total amount:', totalAmount);
     console.log('Available rooms for WhatsApp:', rooms.length);
     
     // FORZAR el uso de la función de múltiples reservas
