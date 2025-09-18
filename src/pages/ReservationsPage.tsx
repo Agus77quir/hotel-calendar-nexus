@@ -6,6 +6,7 @@ import { ReservationFilters } from '@/components/Reservations/ReservationFilters
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
@@ -168,55 +169,73 @@ const ReservationsPage = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 p-2 md:p-4">
-      <ReservationsHeader
-        reservations={reservations}
-        guests={guests}
-        rooms={rooms}
-        onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
-      />
-
-      <ReservationFilters
-        onFiltersChange={setDateFilters}
-        onClearFilters={() => setDateFilters({})}
-      />
-
-      <Card>
-        <CardHeader className="pb-3 md:pb-6">
-          <ReservationsSearch
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            resultCount={filteredReservations.length}
+    <ErrorBoundary
+      fallback={
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800">Error al cargar las reservas. Por favor, recarga la página.</p>
+        </div>
+      }
+    >
+      <div className="space-y-4 md:space-y-6 p-2 md:p-4">
+        <ErrorBoundary>
+          <ReservationsHeader
+            reservations={reservations || []}
+            guests={guests || []}
+            rooms={rooms || []}
+            onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
           />
-        </CardHeader>
-        <CardContent className="p-2 md:p-6">
-          <ReservationsTable
-            reservations={filteredReservations}
-            guests={guests}
-            rooms={rooms}
-            onEdit={(reservation) => setReservationModal({
-              isOpen: true,
-              mode: 'edit',
-              reservation
-            })}
-            onDelete={handleDeleteReservation}
-            onNewReservationForGuest={handleNewReservationForGuest}
-            onStatusChange={handleStatusChange}
-          />
-        </CardContent>
-      </Card>
+        </ErrorBoundary>
 
-      <ReservationModal
-        isOpen={reservationModal.isOpen}
-        onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveReservation}
-        rooms={rooms}
-        guests={guests}
-        reservation={reservationModal.reservation}
-        mode={reservationModal.mode}
-        preselectedGuestId={reservationModal.preselectedGuestId}
-      />
-    </div>
+        <ErrorBoundary>
+          <ReservationFilters
+            onFiltersChange={setDateFilters}
+            onClearFilters={() => setDateFilters({})}
+          />
+        </ErrorBoundary>
+
+        <Card>
+          <CardHeader className="pb-3 md:pb-6">
+            <ErrorBoundary>
+              <ReservationsSearch
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                resultCount={filteredReservations.length}
+              />
+            </ErrorBoundary>
+          </CardHeader>
+          <CardContent className="p-2 md:p-6">
+            <ErrorBoundary>
+              <ReservationsTable
+                reservations={filteredReservations || []}
+                guests={guests || []}
+                rooms={rooms || []}
+                onEdit={(reservation) => setReservationModal({
+                  isOpen: true,
+                  mode: 'edit',
+                  reservation
+                })}
+                onDelete={handleDeleteReservation}
+                onNewReservationForGuest={handleNewReservationForGuest}
+                onStatusChange={handleStatusChange}
+              />
+            </ErrorBoundary>
+          </CardContent>
+        </Card>
+
+        <ErrorBoundary>
+          <ReservationModal
+            isOpen={reservationModal.isOpen}
+            onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+            onSave={handleSaveReservation}
+            rooms={rooms || []}
+            guests={guests || []}
+            reservation={reservationModal.reservation}
+            mode={reservationModal.mode}
+            preselectedGuestId={reservationModal.preselectedGuestId}
+          />
+        </ErrorBoundary>
+      </div>
+    </ErrorBoundary>
   );
 };
 

@@ -55,51 +55,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('[Auth] Inicializando autenticación...');
-    let rafId: number | null = null;
-    let timeoutId: number | null = null;
-
-    const finalize = () => {
-      setIsInitialized(true);
-      console.log('[Auth] Inicialización completada');
-    };
-
-    try {
-      rafId = requestAnimationFrame(() => {
-        try {
-          const savedUser = localStorage.getItem('hotelUser');
-          if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            setUser(parsedUser);
-            console.log('[Auth] Usuario restaurado desde localStorage:', parsedUser?.email);
-          } else {
-            console.log('[Auth] No hay usuario guardado en localStorage');
-          }
-        } catch (error) {
-          console.error('[Auth] Error leyendo/parsing localStorage:', error);
-          try {
-            localStorage.removeItem('hotelUser');
-          } catch (storageError) {
-            console.error('[Auth] Error limpiando localStorage:', storageError);
-          }
-        } finally {
-          finalize();
+    
+    const initializeAuth = () => {
+      try {
+        const savedUser = localStorage.getItem('hotelUser');
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          console.log('[Auth] Usuario restaurado desde localStorage:', parsedUser?.email);
+        } else {
+          console.log('[Auth] No hay usuario guardado en localStorage');
         }
-      });
-
-      // Fallback por si requestAnimationFrame nunca dispara
-      timeoutId = window.setTimeout(() => {
-        console.warn('[Auth] Fallback de inicialización activado');
-        finalize();
-      }, 1500);
-    } catch (error) {
-      console.error('[Auth] Error programando inicialización:', error);
-      finalize();
-    }
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (timeoutId) clearTimeout(timeoutId);
+      } catch (error) {
+        console.error('[Auth] Error leyendo/parsing localStorage:', error);
+        try {
+          localStorage.removeItem('hotelUser');
+        } catch (storageError) {
+          console.error('[Auth] Error limpiando localStorage:', storageError);
+        }
+      } finally {
+        setIsInitialized(true);
+        console.log('[Auth] Inicialización completada');
+      }
     };
+
+    // Initialize immediately for better UX
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

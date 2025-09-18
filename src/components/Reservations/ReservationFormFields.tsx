@@ -106,14 +106,16 @@ export const ReservationFormFields = ({
         <CardContent className="space-y-4">
           <div className="w-full">
             <Label className="block mb-2">Buscar Huésped *</Label>
-            <GuestSearchInput
-              guests={guests}
-              rooms={allRooms}
-              reservations={reservations}
-              selectedGuestId={formData.guest_id}
-              onGuestSelect={(guestId) => onFormChange('guest_id', guestId)}
-              placeholder="Buscar huésped por nombre o habitación..."
-            />
+            <div className="relative">
+              <GuestSearchInput
+                guests={guests || []}
+                rooms={allRooms || []}
+                reservations={reservations || []}
+                selectedGuestId={formData.guest_id || ''}
+                onGuestSelect={(guestId) => onFormChange('guest_id', guestId)}
+                placeholder="Buscar huésped por nombre o habitación..."
+              />
+            </div>
           </div>
 
           {!formData.guest_id && (
