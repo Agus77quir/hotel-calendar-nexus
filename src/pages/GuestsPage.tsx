@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,44 +31,37 @@ const GuestsPage = () => {
     mode: 'create',
   });
 
-  const filteredGuests = guests.filter(guest => {
-    const searchLower = searchTerm.toLowerCase();
-    console.log('Guest search term:', searchTerm);
-    console.log('Total guests:', guests.length);
+  const filteredGuests = useMemo(() => {
+    if (!guests?.length) return [];
     
-    const matches = searchTerm === '' || (
-      (guest.first_name || '').toLowerCase().includes(searchLower) ||
-      (guest.last_name || '').toLowerCase().includes(searchLower) ||
-      (guest.email || '').toLowerCase().includes(searchLower) ||
-      (guest.phone || '').toLowerCase().includes(searchLower) ||
-      (guest.document || '').toLowerCase().includes(searchLower) ||
-      (guest.nationality || '').toLowerCase().includes(searchLower)
-    );
+    const searchLower = searchTerm.toLowerCase().trim();
     
-    console.log('Guest filter result:', guest.first_name, matches);
-    return matches;
-  });
+    return guests.filter(guest => {
+      return searchTerm === '' || (
+        (guest.first_name || '').toLowerCase().includes(searchLower) ||
+        (guest.last_name || '').toLowerCase().includes(searchLower) ||
+        (guest.email || '').toLowerCase().includes(searchLower) ||
+        (guest.phone || '').toLowerCase().includes(searchLower) ||
+        (guest.document || '').toLowerCase().includes(searchLower) ||
+        (guest.nationality || '').toLowerCase().includes(searchLower)
+      );
+    });
+  }, [guests, searchTerm]);
 
   const associatedGuests = guests.filter(guest => guest.is_associated).length;
   const regularGuests = guests.length - associatedGuests;
 
   const handleSaveGuest = async (guestData: any) => {
     try {
-      console.log('GuestsPage: Starting guest save operation', { mode: guestModal.mode, data: guestData });
-      
       if (guestModal.mode === 'create') {
-        console.log('GuestsPage: Creating new guest');
         const newGuest = await addGuest(guestData);
-        console.log('GuestsPage: Guest created successfully', newGuest);
         
         toast({
           title: "Huésped creado",
           description: `${guestData.first_name} ${guestData.last_name} ha sido creado exitosamente.`,
         });
       } else if (guestModal.guest) {
-        console.log('GuestsPage: Updating existing guest', guestModal.guest.id);
         const updatedGuest = await updateGuest({ id: guestModal.guest.id, ...guestData });
-        console.log('GuestsPage: Guest updated successfully', updatedGuest);
         
         toast({
           title: "Huésped actualizado",
@@ -78,7 +71,7 @@ const GuestsPage = () => {
       
       setGuestModal({ isOpen: false, mode: 'create' });
     } catch (error) {
-      console.error('GuestsPage: Error in guest save operation:', error);
+      console.error('Error in guest operation:', error);
       
       toast({
         title: "Error",
@@ -90,7 +83,6 @@ const GuestsPage = () => {
 
   const handleDeleteGuest = (id: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este huésped?')) {
-      console.log('GuestsPage: Deleting guest', id);
       deleteGuest(id);
     }
   };
