@@ -277,17 +277,17 @@ export const MultiRoomReservationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="flex items-center gap-2 text-lg">
+      <DialogContent className="fixed inset-0 z-50 w-screen h-screen sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[95vw] sm:max-w-4xl sm:max-h-[90vh] sm:inset-auto overflow-y-auto bg-background border-0 sm:border shadow-lg rounded-none sm:rounded-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5" />
             Reserva Múltiple para {guest.first_name} {guest.last_name}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 p-1 sm:p-2">
           {/* Fechas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="checkin">Check-in</Label>
               <Input
@@ -296,7 +296,7 @@ export const MultiRoomReservationModal = ({
                 value={checkIn}
                 min={today}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full"
+                className="touch-manipulation h-12 sm:h-auto"
               />
             </div>
             <div className="space-y-2">
@@ -307,47 +307,47 @@ export const MultiRoomReservationModal = ({
                 value={checkOut}
                 min={checkIn || today}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full"
+                className="touch-manipulation h-12 sm:h-auto"
               />
             </div>
           </div>
 
           {/* Habitaciones disponibles */}
           <div>
-            <h3 className="text-lg font-medium mb-4">Seleccionar Habitaciones</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Seleccionar Habitaciones</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 max-h-60 sm:max-h-80 overflow-y-auto">
               {availableRooms.map((room) => (
                 <Card key={room.id} className={`cursor-pointer transition-colors ${
-                  selectedRooms.includes(room.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
+                  selectedRooms.includes(room.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-gray-50'
                 }`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3 flex-1">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3 flex-1">
                         <Checkbox
                           checked={selectedRooms.includes(room.id)}
                           onCheckedChange={() => handleRoomToggle(room.id)}
                         />
                         <div>
-                          <div className="font-medium">Habitación {room.number}</div>
-                          <div className="text-sm text-muted-foreground capitalize">
+                          <div className="font-medium text-sm sm:text-base">Habitación {room.number}</div>
+                          <div className="text-xs sm:text-sm text-gray-500 capitalize">
                             {room.type.replace('-', ' ')}
                           </div>
                         </div>
                       </div>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         ${Number(room.price).toLocaleString()}
                       </Badge>
                     </div>
 
                     {selectedRooms.includes(room.id) && (
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <Label className="text-sm">Huéspedes:</Label>
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <Label className="text-xs sm:text-sm">Huéspedes:</Label>
                         <Select
                           value={(guestsCount[room.id] || 1).toString()}
                           onValueChange={(value) => handleGuestsCountChange(room.id, value)}
                         >
-                          <SelectTrigger className="w-24">
+                          <SelectTrigger className="w-20 sm:w-24 touch-manipulation h-10 sm:h-auto">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -358,7 +358,7 @@ export const MultiRoomReservationModal = ({
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">/ {room.capacity}</span>
+                        <span className="text-xs sm:text-sm text-gray-500">/ {room.capacity}</span>
                       </div>
                     )}
                   </CardContent>
@@ -370,26 +370,26 @@ export const MultiRoomReservationModal = ({
           {/* Sección de Descuentos */}
           {selectedRooms.length > 0 && (
             <Card>
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Percent className="h-5 w-5 text-green-600" />
-                  <h3 className="text-lg font-medium">Descuentos</h3>
+              <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                  <Percent className="h-4 sm:h-5 w-4 sm:w-5 text-green-600" />
+                  <h3 className="text-base sm:text-lg font-medium">Descuentos</h3>
                 </div>
 
                 {/* Información del huésped */}
                 <div className="space-y-3">
-                  <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="text-sm">
-                      <p className="text-primary font-medium">
+                  <div className="flex items-start gap-2 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="text-xs sm:text-sm">
+                      <p className="text-blue-800 font-medium">
                         {guest.first_name} {guest.last_name}
                         {guest.is_associated && (
-                          <Badge variant="outline" className="ml-2">
+                          <Badge variant="outline" className="ml-2 text-xs">
                             Asociado
                           </Badge>
                         )}
                       </p>
                       {guest.is_associated && guest.discount_percentage > 0 && (
-                        <p className="text-primary/80 mt-1">
+                        <p className="text-blue-700 mt-1 text-xs sm:text-sm">
                           Descuento por defecto: {guest.discount_percentage}%
                         </p>
                       )}
@@ -398,7 +398,7 @@ export const MultiRoomReservationModal = ({
 
                   {/* Checkbox para huésped asociado */}
                   {guest.is_associated && (
-                    <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center space-x-2 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
                       <Checkbox
                         id="apply-associated-discount"
                         checked={discountPercentage > 0}
@@ -406,7 +406,7 @@ export const MultiRoomReservationModal = ({
                       />
                       <div className="flex items-center gap-2">
                         <UserCheck className="h-4 w-4 text-green-600" />
-                        <Label htmlFor="apply-associated-discount" className="cursor-pointer text-green-800 font-medium">
+                        <Label htmlFor="apply-associated-discount" className="text-xs sm:text-sm cursor-pointer text-green-800 font-medium">
                           Aplicar descuento de huésped asociado
                         </Label>
                       </div>
@@ -416,12 +416,12 @@ export const MultiRoomReservationModal = ({
 
                 {/* Selector de descuento */}
                 <div className="space-y-2">
-                  <Label>Descuento para estas reservas</Label>
+                  <Label className="text-xs sm:text-sm">Descuento para estas reservas</Label>
                   <Select
                     value={discountPercentage.toString()}
                     onValueChange={handleDiscountChange}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="touch-manipulation h-12 sm:h-auto">
                       <SelectValue placeholder="Seleccionar descuento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -434,7 +434,7 @@ export const MultiRoomReservationModal = ({
                   </Select>
                   
                   {discountPercentage > 0 && (
-                    <div className="text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                    <div className="text-xs sm:text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200">
                       💰 Descuento del {discountPercentage}% aplicado a todas las habitaciones
                     </div>
                   )}
@@ -445,40 +445,40 @@ export const MultiRoomReservationModal = ({
 
           {/* Resumen con descuentos */}
           {selectedRooms.length > 0 && checkIn && checkOut && (
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4">
-                <div className="space-y-3">
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-3 sm:p-4">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-primary">
+                      <div className="font-medium text-blue-900 text-sm sm:text-base">
                         {selectedRooms.length} habitación(es) seleccionada(s)
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-blue-700">
                         {formatDisplayDate(checkIn)} - {formatDisplayDate(checkOut)}
                       </div>
                     </div>
                   </div>
 
                   {/* Desglose de precios */}
-                  <div className="space-y-2 border-t pt-3">
-                    <div className="flex justify-between text-sm">
+                  <div className="space-y-2 border-t pt-2 sm:pt-3">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span>Subtotal:</span>
                       <span>${totalCalculation.subtotal.toLocaleString()}</span>
                     </div>
                     
                     {totalCalculation.discount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
+                      <div className="flex justify-between text-xs sm:text-sm text-green-600">
                         <span>Descuento ({discountPercentage}%):</span>
                         <span>-${totalCalculation.discount.toLocaleString()}</span>
                       </div>
                     )}
                     
                     <div className="flex items-center justify-between border-t pt-2">
-                      <div className="flex items-center gap-2 text-primary">
-                        <DollarSign className="h-5 w-5" />
-                        <span className="text-xl font-bold">Total:</span>
+                      <div className="flex items-center gap-2 text-blue-900">
+                        <DollarSign className="h-4 sm:h-5 w-4 sm:w-5" />
+                        <span className="text-lg sm:text-xl font-bold">Total:</span>
                       </div>
-                      <span className={`text-xl font-bold ${totalCalculation.discount > 0 ? 'text-green-600' : 'text-primary'}`}>
+                      <span className={`text-lg sm:text-xl font-bold ${totalCalculation.discount > 0 ? 'text-green-600' : 'text-blue-900'}`}>
                         ${totalCalculation.total.toLocaleString()}
                       </span>
                     </div>
@@ -489,24 +489,22 @@ export const MultiRoomReservationModal = ({
           )}
         </div>
 
-        {/* Footer buttons - Always visible and properly positioned */}
-        <div className="sticky bottom-0 bg-background border-t pt-4 mt-6">
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={handleClose}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={selectedRooms.length === 0 || !checkIn || !checkOut || isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Creando...' : `Crear ${selectedRooms.length} Reserva(s)`}
-            </Button>
-          </div>
+        {/* Footer buttons */}
+        <div className="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={handleClose}
+            className="touch-manipulation h-12 sm:h-auto px-4 sm:px-6"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={selectedRooms.length === 0 || !checkIn || !checkOut || isSubmitting}
+            className="touch-manipulation h-12 sm:h-auto px-4 sm:px-6"
+          >
+            {isSubmitting ? 'Creando...' : `Crear ${selectedRooms.length} Reserva(s)`}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
