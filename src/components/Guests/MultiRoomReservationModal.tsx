@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,17 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarDays, Users, DollarSign, Percent, UserCheck } from 'lucide-react';
-import { Room, Guest, Reservation } from '@/types/hotel';
+import { Room, Guest } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
-import { hasDateOverlap } from '@/utils/reservationValidation';
 
 interface MultiRoomReservationModalProps {
   isOpen: boolean;
   onClose: () => void;
   guest: Guest;
   rooms: Room[];
-  reservations: Reservation[];
   onCreateReservations: (reservationsData: any[]) => Promise<void>;
 }
 
@@ -28,7 +26,6 @@ export const MultiRoomReservationModal = ({
   onClose,
   guest,
   rooms,
-  reservations,
   onCreateReservations
 }: MultiRoomReservationModalProps) => {
   const { toast } = useToast();
@@ -40,48 +37,7 @@ export const MultiRoomReservationModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
-
-  // Filter rooms considering availability and date overlaps
-  const getAvailableRooms = () => {
-    if (!checkIn || !checkOut) {
-      return rooms.filter(room => room.status === 'available');
-    }
-
-    return rooms.filter(room => {
-      if (room.status !== 'available') return false;
-      
-      // Check if room has overlapping reservations for the selected dates
-      const hasOverlap = hasDateOverlap(
-        room.id,
-        checkIn,
-        checkOut,
-        reservations
-      );
-      
-      return !hasOverlap;
-    });
-  };
-
-  const availableRooms = getAvailableRooms();
-
-  // Clear selected rooms that are no longer available when dates change
-  useEffect(() => {
-    const currentAvailableRoomIds = availableRooms.map(room => room.id);
-    const conflictingRooms = selectedRooms.filter(roomId => !currentAvailableRoomIds.includes(roomId));
-    
-    if (conflictingRooms.length > 0) {
-      setSelectedRooms(prev => prev.filter(roomId => currentAvailableRoomIds.includes(roomId)));
-      
-      // Remove guests count for conflicting rooms
-      setGuestsCount(prev => {
-        const newGuestsCount = { ...prev };
-        conflictingRooms.forEach(roomId => {
-          delete newGuestsCount[roomId];
-        });
-        return newGuestsCount;
-      });
-    }
-  }, [checkIn, checkOut]);
+  const availableRooms = rooms.filter(room => room.status === 'available');
 
   const discountOptions = [
     { value: '0', label: 'Sin descuento (0%)' },
@@ -189,25 +145,6 @@ export const MultiRoomReservationModal = ({
       toast({
         title: "Error",
         description: "La fecha de check-out debe ser posterior al check-in",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate that selected rooms are still available
-    const conflictingRooms = selectedRooms.filter(roomId => {
-      return hasDateOverlap(roomId, checkIn, checkOut, reservations);
-    });
-
-    if (conflictingRooms.length > 0) {
-      const conflictingRoomNumbers = conflictingRooms.map(roomId => {
-        const room = rooms.find(r => r.id === roomId);
-        return room?.number || roomId;
-      }).join(', ');
-
-      toast({
-        title: "Error",
-        description: `Las siguientes habitaciones ya están reservadas para estas fechas: ${conflictingRoomNumbers}`,
         variant: "destructive",
       });
       return;

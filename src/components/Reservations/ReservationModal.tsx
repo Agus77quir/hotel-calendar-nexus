@@ -8,7 +8,6 @@ import { ReservationFormFields } from './ReservationFormFields';
 import { ReservationValidationAlert } from './ReservationValidationAlert';
 import { NewGuestForm } from './NewGuestForm';
 import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
-import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDisplayDate } from '@/utils/dateUtils';
@@ -276,29 +275,21 @@ export const ReservationModal = ({
                   </div>
                 )}
 
-                <ErrorBoundary
-                  fallback={
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-red-800 text-sm">Error al cargar el formulario de reserva. Por favor, intenta nuevamente.</p>
-                    </div>
-                  }
-                >
-                  <ReservationFormFields
-                    formData={formData}
-                    guests={guests || []}
-                    reservations={reservations || []}
-                    availableRooms={availableRooms || []}
-                    selectedRoom={selectedRoom}
-                    selectedGuest={selectedGuest}
-                    maxCapacity={maxCapacity}
-                    availabilityError={availabilityError}
-                    today={today}
-                    totals={totals}
-                    onFormChange={handleFormChange}
-                    onDateChange={handleDateChange}
-                    onRoomChange={handleRoomChange}
-                  />
-                </ErrorBoundary>
+                <ReservationFormFields
+                  formData={formData}
+                  guests={guests}
+                  reservations={reservations}
+                  availableRooms={availableRooms}
+                  selectedRoom={selectedRoom}
+                  selectedGuest={selectedGuest}
+                  maxCapacity={maxCapacity}
+                  availabilityError={availabilityError}
+                  today={today}
+                  totals={totals}
+                  onFormChange={handleFormChange}
+                  onDateChange={handleDateChange}
+                  onRoomChange={handleRoomChange}
+                />
               </div>
             )}
           </div>
@@ -332,8 +323,7 @@ export const ReservationModal = ({
             setSelectedGuestForMultiRoom(null);
           }}
           guest={selectedGuestForMultiRoom}
-          rooms={rooms || []}
-          reservations={reservations || []}
+          rooms={rooms}
           onCreateReservations={handleCreateMultipleReservations}
         />
       )}

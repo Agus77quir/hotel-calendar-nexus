@@ -6,7 +6,6 @@ import { ReservationFilters } from '@/components/Reservations/ReservationFilters
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
 import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,35 +30,34 @@ const ReservationsPage = () => {
   });
 
   const filteredReservations = reservations.filter(reservation => {
-    try {
-      if (!reservation) return false;
-      
-      const guest = guests.find(g => g && g.id === reservation.guest_id);
-      const room = rooms.find(r => r && r.id === reservation.room_id);
-      const searchLower = searchTerm.toLowerCase().trim();
-      
-      // Text search filter
-      const matchesSearch = searchTerm === '' || (
-        (guest?.first_name || '').toLowerCase().includes(searchLower) ||
-        (guest?.last_name || '').toLowerCase().includes(searchLower) ||
-        (guest?.email || '').toLowerCase().includes(searchLower) ||
-        (room?.number || '').toLowerCase().includes(searchLower) ||
-        (reservation.id || '').toLowerCase().includes(searchLower)
-      );
+    const guest = guests.find(g => g.id === reservation.guest_id);
+    const room = rooms.find(r => r.id === reservation.room_id);
+    const searchLower = searchTerm.toLowerCase();
+    
+    console.log('Search term:', searchTerm);
+    console.log('Total reservations:', reservations.length);
+    
+    // Text search filter
+    const matchesSearch = searchTerm === '' || (
+      (guest?.first_name || '').toLowerCase().includes(searchLower) ||
+      (guest?.last_name || '').toLowerCase().includes(searchLower) ||
+      (guest?.email || '').toLowerCase().includes(searchLower) ||
+      (room?.number || '').toLowerCase().includes(searchLower) ||
+      reservation.id.toLowerCase().includes(searchLower)
+    );
 
-      // Date filter
-      let matchesDate = true;
-      if (dateFilters.dateFrom && dateFilters.dateTo && reservation.check_in && reservation.check_out) {
-        const checkIn = reservation.check_in;
-        const checkOut = reservation.check_out;
-        matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
-      }
-
-      return matchesSearch && matchesDate;
-    } catch (error) {
-      console.error('Error filtering reservation:', reservation?.id, error);
-      return false;
+    // Date filter
+    let matchesDate = true;
+    if (dateFilters.dateFrom && dateFilters.dateTo) {
+      const checkIn = reservation.check_in;
+      const checkOut = reservation.check_out;
+      matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
     }
+
+    const result = matchesSearch && matchesDate;
+    console.log('Filtering reservation:', reservation.id, 'matches:', result);
+    
+    return result;
   });
 
   const handleSaveReservation = async (reservationData: any) => {
@@ -170,73 +168,55 @@ const ReservationsPage = () => {
   }
 
   return (
-    <ErrorBoundary
-      fallback={
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800">Error al cargar las reservas. Por favor, recarga la página.</p>
-        </div>
-      }
-    >
-      <div className="space-y-4 md:space-y-6 p-2 md:p-4">
-        <ErrorBoundary>
-          <ReservationsHeader
-            reservations={reservations || []}
-            guests={guests || []}
-            rooms={rooms || []}
-            onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
-          />
-        </ErrorBoundary>
+    <div className="space-y-4 md:space-y-6 p-2 md:p-4">
+      <ReservationsHeader
+        reservations={reservations}
+        guests={guests}
+        rooms={rooms}
+        onNewReservation={() => setReservationModal({ isOpen: true, mode: 'create' })}
+      />
 
-        <ErrorBoundary>
-          <ReservationFilters
-            onFiltersChange={setDateFilters}
-            onClearFilters={() => setDateFilters({})}
-          />
-        </ErrorBoundary>
+      <ReservationFilters
+        onFiltersChange={setDateFilters}
+        onClearFilters={() => setDateFilters({})}
+      />
 
-        <Card>
-          <CardHeader className="pb-3 md:pb-6">
-            <ErrorBoundary>
-              <ReservationsSearch
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                resultCount={filteredReservations.length}
-              />
-            </ErrorBoundary>
-          </CardHeader>
-          <CardContent className="p-2 md:p-6">
-            <ErrorBoundary>
-              <ReservationsTable
-                reservations={filteredReservations || []}
-                guests={guests || []}
-                rooms={rooms || []}
-                onEdit={(reservation) => setReservationModal({
-                  isOpen: true,
-                  mode: 'edit',
-                  reservation
-                })}
-                onDelete={handleDeleteReservation}
-                onNewReservationForGuest={handleNewReservationForGuest}
-                onStatusChange={handleStatusChange}
-              />
-            </ErrorBoundary>
-          </CardContent>
-        </Card>
-
-        <ErrorBoundary>
-          <ReservationModal
-            isOpen={reservationModal.isOpen}
-            onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
-            onSave={handleSaveReservation}
-            rooms={rooms || []}
-            guests={guests || []}
-            reservation={reservationModal.reservation}
-            mode={reservationModal.mode}
-            preselectedGuestId={reservationModal.preselectedGuestId}
+      <Card>
+        <CardHeader className="pb-3 md:pb-6">
+          <ReservationsSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            resultCount={filteredReservations.length}
           />
-        </ErrorBoundary>
-      </div>
-    </ErrorBoundary>
+        </CardHeader>
+        <CardContent className="p-2 md:p-6">
+          <ReservationsTable
+            reservations={filteredReservations}
+            guests={guests}
+            rooms={rooms}
+            onEdit={(reservation) => setReservationModal({
+              isOpen: true,
+              mode: 'edit',
+              reservation
+            })}
+            onDelete={handleDeleteReservation}
+            onNewReservationForGuest={handleNewReservationForGuest}
+            onStatusChange={handleStatusChange}
+          />
+        </CardContent>
+      </Card>
+
+      <ReservationModal
+        isOpen={reservationModal.isOpen}
+        onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+        onSave={handleSaveReservation}
+        rooms={rooms}
+        guests={guests}
+        reservation={reservationModal.reservation}
+        mode={reservationModal.mode}
+        preselectedGuestId={reservationModal.preselectedGuestId}
+      />
+    </div>
   );
 };
 

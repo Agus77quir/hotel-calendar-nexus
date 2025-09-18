@@ -37,50 +37,37 @@ export const GuestSearchInput = ({
       return;
     }
 
-    try {
-      const searchLower = searchTerm.toLowerCase();
-      
-      // Search by guest name with null checks
-      const guestMatches = guests.filter(guest => {
-        if (!guest) return false;
-        const firstName = (guest.first_name || '').toLowerCase();
-        const lastName = (guest.last_name || '').toLowerCase();
-        const fullName = `${firstName} ${lastName}`.toLowerCase();
-        
-        return firstName.includes(searchLower) ||
-               lastName.includes(searchLower) ||
-               fullName.includes(searchLower);
-      });
-
-      // Search by room number with null checks
-      const roomMatches = rooms
-        .filter(room => room && room.number && room.number.toLowerCase().includes(searchLower))
-        .map(room => {
-          try {
-            // Find current reservation for this room
-            const currentReservation = reservations.find(r => 
-              r && r.room_id === room.id && 
-              (r.status === 'confirmed' || r.status === 'checked-in')
-            );
-            return currentReservation ? guests.find(g => g && g.id === currentReservation.guest_id) : null;
-          } catch (error) {
-            console.error('Error processing room match:', error);
-            return null;
-          }
-        })
-        .filter(Boolean) as Guest[];
-
-      // Combine results and remove duplicates
-      const allMatches = [...guestMatches, ...roomMatches];
-      const uniqueGuests = allMatches.filter((guest, index, self) => 
-        guest && index === self.findIndex(g => g && g.id === guest.id)
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Search by guest name
+    const guestMatches = guests.filter(guest => {
+      return (
+        guest.first_name.toLowerCase().includes(searchLower) ||
+        guest.last_name.toLowerCase().includes(searchLower) ||
+        `${guest.first_name} ${guest.last_name}`.toLowerCase().includes(searchLower)
       );
+    });
 
-      setFilteredGuests(uniqueGuests.slice(0, 8)); // Limit to 8 results
-    } catch (error) {
-      console.error('Error filtering guests:', error);
-      setFilteredGuests([]);
-    }
+    // Search by room number (find guests with current reservations in matching rooms)
+    const roomMatches = rooms
+      .filter(room => room.number.toLowerCase().includes(searchLower))
+      .map(room => {
+        // Find current reservation for this room
+        const currentReservation = reservations.find(r => 
+          r.room_id === room.id && 
+          (r.status === 'confirmed' || r.status === 'checked-in')
+        );
+        return currentReservation ? guests.find(g => g.id === currentReservation.guest_id) : null;
+      })
+      .filter(Boolean) as Guest[];
+
+    // Combine results and remove duplicates
+    const allMatches = [...guestMatches, ...roomMatches];
+    const uniqueGuests = allMatches.filter((guest, index, self) => 
+      index === self.findIndex(g => g.id === guest.id)
+    );
+
+    setFilteredGuests(uniqueGuests.slice(0, 8)); // Limit to 8 results
   }, [searchTerm, guests, rooms, reservations]);
 
   const handleGuestSelect = (guest: Guest) => {

@@ -26,9 +26,7 @@ export const hasDateOverlap = (
     const existingCheckIn = existingReservation.check_in;
     const existingCheckOut = existingReservation.check_out;
     
-    // Check for overlap: new reservation overlaps with existing if:
-    // - new check-in is before existing check-out AND
-    // - new check-out is after existing check-in
+    // Check for overlap: new reservation starts before existing ends after existing starts
     const overlap = checkIn < existingCheckOut && checkOut > existingCheckIn;
     
     console.log('Comparing with existing reservation:', existingReservation.id, 

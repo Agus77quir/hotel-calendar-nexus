@@ -565,7 +565,6 @@ export const ReservationsTable = ({
           onClose={() => setMultiRoomModal({ isOpen: false })}
           guest={multiRoomModal.guest}
           rooms={rooms}
-          reservations={reservations}
           onCreateReservations={handleMultiRoomReservations}
         />
       )}

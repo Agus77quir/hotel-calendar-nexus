@@ -23,31 +23,23 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
       return;
     }
 
-    try {
-      const filtered = guests.filter((guest) => {
-        if (!guest) return false;
-        
-        const searchLower = searchTerm.toLowerCase().trim();
-        const firstName = (guest.first_name || '').toLowerCase();
-        const lastName = (guest.last_name || '').toLowerCase();
-        const email = (guest.email || '').toLowerCase();
-        const phone = String(guest.phone || '').toLowerCase();
-        const document = String(guest.document || '').toLowerCase();
-        
-        return (
-          firstName.includes(searchLower) ||
-          lastName.includes(searchLower) ||
-          email.includes(searchLower) ||
-          phone.includes(searchLower) ||
-          document.includes(searchLower)
-        );
-      }).slice(0, 8); // Limitar a 8 resultados
+    const filtered = guests.filter((guest) => {
+      const searchLower = searchTerm.toLowerCase().trim();
+      const firstName = (guest.first_name || '').toLowerCase();
+      const lastName = (guest.last_name || '').toLowerCase();
+      const email = (guest.email || '').toLowerCase();
+      const phone = String(guest.phone || '').toLowerCase();
+      const document = String(guest.document || '').toLowerCase();
+      return (
+        firstName.includes(searchLower) ||
+        lastName.includes(searchLower) ||
+        email.includes(searchLower) ||
+        phone.includes(searchLower) ||
+        document.includes(searchLower)
+      );
+    }).slice(0, 8); // Limitar a 8 resultados
 
-      setFilteredGuests(filtered);
-    } catch (error) {
-      console.error('Error filtering guests in FloatingGuestSearch:', error);
-      setFilteredGuests([]);
-    }
+    setFilteredGuests(filtered);
   }, [searchTerm, guests]);
 
   if (!isOpen) return null;
