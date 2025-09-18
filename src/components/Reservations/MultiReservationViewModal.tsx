@@ -88,7 +88,6 @@ export const MultiReservationViewModal = ({
     console.log('=== MULTIPLE RESERVATION EMAIL BUTTON CLICKED ===');
     console.log('Reservations count:', reservations.length);
     console.log('Total guests:', totalGuests);
-    console.log('Total amount:', totalAmount);
     console.log('Available rooms for email:', rooms.length);
     
     // FORZAR el uso de la función de múltiples reservas
