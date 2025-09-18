@@ -127,6 +127,7 @@ export const GuestSearchInput = ({
                 setIsOpen(true);
               }}
               onFocus={() => setIsOpen(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); } }}
               className="pl-10"
             />
           </div>
