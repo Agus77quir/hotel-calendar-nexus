@@ -92,8 +92,8 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               </div>
               <CardTitle className="text-base sm:text-lg">Nuevo Huésped</CardTitle>
             </div>
@@ -118,10 +118,11 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                   value={formData.first_name}
                   onChange={(e) => handleInputChange('first_name', e.target.value)}
                   disabled={isSubmitting}
-                  className={`${errors.first_name ? 'border-destructive' : ''} iphone-input touch-manipulation`}
+                  className={`${errors.first_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                  style={{ fontSize: '16px' }}
                 />
                 {errors.first_name && (
-                  <p className="text-destructive text-xs mt-1">{errors.first_name}</p>
+                  <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
                 )}
               </div>
               <div>
@@ -131,10 +132,11 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                   value={formData.last_name}
                   onChange={(e) => handleInputChange('last_name', e.target.value)}
                   disabled={isSubmitting}
-                  className={`${errors.last_name ? 'border-destructive' : ''} iphone-input touch-manipulation`}
+                  className={`${errors.last_name ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                  style={{ fontSize: '16px' }}
                 />
                 {errors.last_name && (
-                  <p className="text-destructive text-xs mt-1">{errors.last_name}</p>
+                  <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
                 )}
               </div>
             </div>
@@ -147,11 +149,12 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isSubmitting}
-                className={`${errors.email ? 'border-destructive' : ''} iphone-input touch-manipulation`}
+                className={`${errors.email ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
                 placeholder="ejemplo@correo.com"
               />
               {errors.email && (
-                <p className="text-destructive text-xs mt-1">{errors.email}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
               )}
             </div>
 
@@ -165,10 +168,11 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 disabled={isSubmitting}
-                className={`${errors.phone ? 'border-destructive' : ''} iphone-input touch-manipulation`}
+                className={`${errors.phone ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
               />
               {errors.phone && (
-                <p className="text-destructive text-xs mt-1">{errors.phone}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
               )}
             </div>
 
@@ -182,10 +186,11 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 value={formData.document}
                 onChange={(e) => handleInputChange('document', e.target.value)}
                 disabled={isSubmitting}
-                className={`${errors.document ? 'border-destructive' : ''} iphone-input touch-manipulation`}
+                className={`${errors.document ? 'border-red-500' : ''} h-11 sm:h-10 text-base touch-manipulation`}
+                style={{ fontSize: '16px' }}
               />
               {errors.document && (
-                <p className="text-destructive text-xs mt-1">{errors.document}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.document}</p>
               )}
             </div>
 
@@ -195,14 +200,14 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 variant="outline" 
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="iphone-button w-full sm:w-auto order-2 sm:order-1"
+                className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium order-2 sm:order-1"
               >
                 Cancelar
               </Button>
               <Button 
-                type="submit"
+                onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="iphone-button w-full sm:w-auto bg-primary hover:bg-primary/90 order-1 sm:order-2"
+                className="w-full sm:w-auto h-12 sm:h-11 px-6 touch-manipulation text-base sm:text-sm font-medium bg-primary hover:bg-primary/90 order-1 sm:order-2"
               >
                 {isSubmitting ? 'Guardando...' : 'Crear Huésped'}
               </Button>
