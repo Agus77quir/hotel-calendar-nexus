@@ -16,7 +16,6 @@ import HistoryPage from "./pages/HistoryPage";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { AppLayout } from "@/components/Layout/AppLayout";
-import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -26,24 +25,22 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ErrorBoundary>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<AppLayout><Outlet /></AppLayout>}>
-                <Route index element={<Index />} />
-                <Route path="guests" element={<GuestsPage />} />
-                <Route path="rooms" element={<RoomsPage />} />
-                <Route path="reservations" element={<ReservationsPage />} />
-                <Route path="checkin-checkout" element={<CheckInOutPage />} />
-                <Route path="calendar" element={<CalendarPage />} />
-                <Route path="audit" element={<AuditPage />} />
-                <Route path="history" element={<HistoryPage />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<AppLayout><Outlet /></AppLayout>}>
+              <Route index element={<Index />} />
+              <Route path="guests" element={<GuestsPage />} />
+              <Route path="rooms" element={<RoomsPage />} />
+              <Route path="reservations" element={<ReservationsPage />} />
+              <Route path="checkin-checkout" element={<CheckInOutPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="audit" element={<AuditPage />} />
+              <Route path="history" element={<HistoryPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

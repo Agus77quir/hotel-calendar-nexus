@@ -21,7 +21,6 @@ export const ReservationsSearch = ({
           placeholder="Buscar por huésped, email, habitación o ID..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); } }}
           className="pl-10"
         />
       </div>
