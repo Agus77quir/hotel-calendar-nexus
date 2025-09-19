@@ -29,19 +29,34 @@ const ReservationsPage = () => {
     mode: 'create',
   });
 
-  const filteredReservations = reservations.filter(reservation => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    const searchLower = searchTerm.toLowerCase();
-    
-    // Text search filter
-    const matchesSearch = (
-      guest?.first_name.toLowerCase().includes(searchLower) ||
-      guest?.last_name.toLowerCase().includes(searchLower) ||
-      guest?.email.toLowerCase().includes(searchLower) ||
-      room?.number.includes(searchLower) ||
-      reservation.id.includes(searchLower)
-    );
+  const filteredReservations = reservations.filter((reservation) => {
+    const guest = guests.find((g) => g.id === reservation.guest_id);
+    const room = rooms.find((r) => r.id === reservation.room_id);
+    const searchLower = (searchTerm ?? '').toLowerCase().trim();
+
+    // If no search text, only apply date filter
+    if (!searchLower) {
+      if (dateFilters.dateFrom && dateFilters.dateTo) {
+        const checkIn = reservation.check_in;
+        const checkOut = reservation.check_out;
+        return checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+      }
+      return true;
+    }
+
+    // Safe lowercase comparisons
+    const firstName = (guest?.first_name ?? '').toLowerCase();
+    const lastName = (guest?.last_name ?? '').toLowerCase();
+    const email = (guest?.email ?? '').toLowerCase();
+    const roomNumber = (room?.number ?? '').toLowerCase();
+    const resId = (reservation.id ?? '').toLowerCase();
+
+    const matchesSearch =
+      firstName.includes(searchLower) ||
+      lastName.includes(searchLower) ||
+      email.includes(searchLower) ||
+      roomNumber.includes(searchLower) ||
+      resId.includes(searchLower);
 
     // Date filter
     let matchesDate = true;
