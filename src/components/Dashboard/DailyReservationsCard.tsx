@@ -59,17 +59,17 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
       
       if (!guest) return false;
       
-      const guestFullName = `${guest.first_name || ''} ${guest.last_name || ''}`.toLowerCase();
-      const guestEmail = (guest.email || '').toLowerCase();
-      const roomNumberLower = String(room?.number || '').toLowerCase();
-      const reservationId = String(reservation.id || '').toLowerCase();
+      const guestFullName = `${guest.first_name} ${guest.last_name}`.toLowerCase();
+      const guestEmail = guest.email.toLowerCase();
+      const roomNumber = room?.number || '';
+      const reservationId = reservation.id.toLowerCase();
       
       return (
-        (guest.first_name || '').toLowerCase().includes(searchLower) ||
-        (guest.last_name || '').toLowerCase().includes(searchLower) ||
+        guest.first_name.toLowerCase().includes(searchLower) ||
+        guest.last_name.toLowerCase().includes(searchLower) ||
         guestFullName.includes(searchLower) ||
         guestEmail.includes(searchLower) ||
-        roomNumberLower.includes(searchLower) ||
+        roomNumber.includes(searchLower) ||
         reservationId.includes(searchLower)
       );
     });
@@ -139,8 +139,6 @@ export const DailyReservationsCard = ({ reservations, rooms, guests, selectedDat
               placeholder="Buscar por huésped, email, habitación..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
-              autoComplete="off"
               className="pl-10"
             />
           </div>

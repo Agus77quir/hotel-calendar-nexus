@@ -214,7 +214,7 @@ export const MultiRoomReservationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="fixed inset-0 z-50 w-screen h-screen sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[95vw] sm:max-w-4xl sm:max-h-[90vh] sm:inset-auto overflow-y-auto bg-background border-0 sm:border shadow-lg rounded-none sm:rounded-lg">
+      <DialogContent className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto bg-background border shadow-lg rounded-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5" />

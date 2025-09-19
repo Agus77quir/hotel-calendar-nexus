@@ -43,8 +43,7 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { openEmailClient, openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendReservationToWhatsApp } from '@/services/whatsappService';
-import { sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
+import { sendReservationToWhatsApp, sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -180,7 +179,7 @@ export const ReservationsTable = ({
     if (reservationGroup.length > 1) {
       // Es una reserva múltiple
       console.log('Sending MULTIPLE reservation WhatsApp');
-      sendMultipleReservationToWhatsAppSanitized(reservationGroup, guest, rooms);
+      sendMultipleReservationToWhatsApp(reservationGroup, guest, rooms);
       toast({
         title: "WhatsApp enviado",
         description: `Mensaje de reservas múltiples enviado a ${guest.phone}`,

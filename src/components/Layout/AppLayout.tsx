@@ -91,7 +91,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className={`min-h-screen flex w-full relative flex-col justify-center ${isIPhone ? 'iphone-safe-area iphone-full-height' : ''}`}>
+      <div className={`min-h-screen flex w-full relative flex-col ${isIPhone ? 'iphone-safe-area iphone-full-height' : ''}`}>
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10 z-0"

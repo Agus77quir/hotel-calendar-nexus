@@ -42,7 +42,7 @@ Detalle de su reserva:
 • Tipo de habitación: ${room.type}
 • 1 Habitación
 #${roomNumber}
-• Huéspedes: ${reservation.guests_count}
+• ${reservation.guests_count} huéspedes total
 • Check in: 13 hs
 • Check out: 10 hs
 
@@ -97,6 +97,7 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
+  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
 
   const subject = `Confirmación de Reserva Múltiple - Hostería Anillaco - ${reservationNumber}`;
   
@@ -109,7 +110,8 @@ Detalle de su reserva:
 • Fecha de llegada: ${arrivalDate}
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
-• Huéspedes: ${totalGuests}
+• ${totalGuests} huéspedes total
+• Monto total: $${totalAmount.toLocaleString()}
 
 • Check in: 13 hs
 • Check out: 10 hs
@@ -129,36 +131,8 @@ export const openEmailClient = (
 ) => {
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
   
-  // Sanitize: remove any monetary or payment related lines robustly
-  const safeBody = body
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
-  
-  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
-  const safeBodyCleaned = safeBody
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
-  
-  // Clear any text selection to avoid clients including selected amounts
-  try {
-    (document.activeElement as HTMLElement | null)?.blur?.();
-    window.getSelection()?.removeAllRanges();
-  } catch {}
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
@@ -171,36 +145,8 @@ export const openMultipleReservationEmailClient = (
 ) => {
   const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
-  // Sanitize: remove any monetary or payment related lines robustly
-  const safeBody = body
-    .split('\n')
-    .filter((line) => {
-      const l = line.toLowerCase();
-      if (l.includes('$') || /(\bar\$|\busd\b|\beur\b|\bars\b|u\$s)/i.test(l)) return false;
-      if (/(pesos?|dólares?|euros?)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (/(monto\s*total|total\s*a\s*a?pagar|total\s*general|total\s*:|precio|importe|tarifa|pago|pagos|seña|señal|anticipo|saldo)/i.test(l) && /[\d.,]/.test(l)) return false;
-      if (l.includes('total') && /\d/.test(l) && !/(huésped|huesped)/i.test(l)) return false;
-      return true;
-    })
-    .join('\n');
-
-  // Extra scrubbing to remove any remaining monetary fragments within allowed lines
-  const safeBodyCleaned = safeBody
-    .replace(/(\$|\b(?:ar\$|usd|eur|ars|u\$s)\b)\s*[\d.,]+/gi, '')
-    .replace(/\b(?:pesos?|dólares?|euros?)\b\s*[\d.,]+/gi, '')
-    .replace(/\b(?:total(?:\s*general)?|precio|importe|tarifa|pago(?:s)?|saldo|anticipo|señ[aa]?)\b\s*:?\s*[\d.,]+[^\n]*/gim, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBodyCleaned)}`;
-
-  // Clear any text selection to avoid clients including selected amounts
-  try {
-    (document.activeElement as HTMLElement | null)?.blur?.();
-    window.getSelection()?.removeAllRanges();
-  } catch {}
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
