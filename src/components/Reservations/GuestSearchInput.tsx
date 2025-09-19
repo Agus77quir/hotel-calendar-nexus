@@ -40,18 +40,21 @@ export const GuestSearchInput = ({
     const searchLower = searchTerm.toLowerCase();
     
     // Search by guest name
-    const guestMatches = guests.filter(guest => {
+    const guestMatches = guests.filter((guest) => {
+      const first = (guest.first_name || '').toLowerCase();
+      const last = (guest.last_name || '').toLowerCase();
+      const full = `${guest.first_name || ''} ${guest.last_name || ''}`.toLowerCase();
       return (
-        guest.first_name.toLowerCase().includes(searchLower) ||
-        guest.last_name.toLowerCase().includes(searchLower) ||
-        `${guest.first_name} ${guest.last_name}`.toLowerCase().includes(searchLower)
+        first.includes(searchLower) ||
+        last.includes(searchLower) ||
+        full.includes(searchLower)
       );
     });
 
     // Search by room number (find guests with current reservations in matching rooms)
     const roomMatches = rooms
-      .filter(room => room.number.toLowerCase().includes(searchLower))
-      .map(room => {
+      .filter((room) => String(room.number ?? '').toLowerCase().includes(searchLower))
+      .map((room) => {
         // Find current reservation for this room
         const currentReservation = reservations.find(r => 
           r.room_id === room.id && 
@@ -153,7 +156,7 @@ export const GuestSearchInput = ({
                           <div
                             key={guest.id}
                             className="p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                            onClick={() => handleGuestSelect(guest)}
+                            onPointerDown={(e) => { e.preventDefault(); handleGuestSelect(guest); }}
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">

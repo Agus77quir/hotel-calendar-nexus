@@ -23,21 +23,24 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
       return;
     }
 
-    const filtered = guests.filter((guest) => {
-      const searchLower = searchTerm.toLowerCase().trim();
-      const firstName = (guest.first_name || '').toLowerCase();
-      const lastName = (guest.last_name || '').toLowerCase();
-      const email = (guest.email || '').toLowerCase();
-      const phone = String(guest.phone || '').toLowerCase();
-      const document = String(guest.document || '').toLowerCase();
-      return (
-        firstName.includes(searchLower) ||
-        lastName.includes(searchLower) ||
-        email.includes(searchLower) ||
-        phone.includes(searchLower) ||
-        document.includes(searchLower)
-      );
-    }).slice(0, 8); // Limitar a 8 resultados
+    const list = Array.isArray(guests) ? guests : [];
+    const filtered = list
+      .filter((guest) => {
+        const searchLower = searchTerm.toLowerCase().trim();
+        const firstName = (guest.first_name || '').toLowerCase();
+        const lastName = (guest.last_name || '').toLowerCase();
+        const email = (guest.email || '').toLowerCase();
+        const phone = String(guest.phone || '').toLowerCase();
+        const document = String(guest.document || '').toLowerCase();
+        return (
+          firstName.includes(searchLower) ||
+          lastName.includes(searchLower) ||
+          email.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          document.includes(searchLower)
+        );
+      })
+      .slice(0, 8); // Limitar a 8 resultados
 
     setFilteredGuests(filtered);
   }, [searchTerm, guests]);
