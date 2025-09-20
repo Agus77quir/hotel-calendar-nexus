@@ -32,7 +32,7 @@ const ReservationsPage = () => {
   const filteredReservations = reservations.filter((reservation) => {
     const guest = guests.find((g) => g.id === reservation.guest_id);
     const room = rooms.find((r) => r.id === reservation.room_id);
-    const searchLower = (searchTerm ?? '').toLowerCase().trim();
+    const searchLower = String(searchTerm ?? '').toLowerCase().trim();
 
     // If no search text, only apply date filter
     if (!searchLower) {
@@ -44,12 +44,13 @@ const ReservationsPage = () => {
       return true;
     }
 
-    // Safe lowercase comparisons
-    const firstName = (guest?.first_name ?? '').toLowerCase();
-    const lastName = (guest?.last_name ?? '').toLowerCase();
-    const email = (guest?.email ?? '').toLowerCase();
-    const roomNumber = (room?.number ?? '').toLowerCase();
-    const resId = (reservation.id ?? '').toLowerCase();
+    // Safe lowercase comparisons (coerce to string to avoid runtime errors)
+    const lower = (v: unknown) => String(v ?? '').toLowerCase();
+    const firstName = lower(guest?.first_name);
+    const lastName = lower(guest?.last_name);
+    const email = lower(guest?.email);
+    const roomNumber = lower(room?.number);
+    const resId = lower(reservation.id);
 
     const matchesSearch =
       firstName.includes(searchLower) ||
