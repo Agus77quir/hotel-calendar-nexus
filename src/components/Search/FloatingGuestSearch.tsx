@@ -48,10 +48,26 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
+                  type="search"
                   placeholder="Buscar huéspedes por nombre, email, teléfono o documento..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchTerm || ''}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    const value = e.target.value;
+                    setSearchTerm(value);
+                  }}
+                  onInput={(e) => {
+                    const value = (e.target as HTMLInputElement).value;
+                    setSearchTerm(value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                   className="pl-12 pr-4 h-12 text-lg"
+                  autoComplete="off"
+                  spellCheck="false"
                   autoFocus
                 />
               </div>

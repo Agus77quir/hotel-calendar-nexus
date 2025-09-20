@@ -120,14 +120,29 @@ export const GuestSearchInput = ({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
+              type="search"
               placeholder={placeholder}
-              value={searchTerm}
+              value={searchTerm || ''}
               onChange={(e) => {
-                setSearchTerm(e.target.value);
+                e.preventDefault();
+                const value = e.target.value;
+                setSearchTerm(value);
                 setIsOpen(true);
+              }}
+              onInput={(e) => {
+                const value = (e.target as HTMLInputElement).value;
+                setSearchTerm(value);
+                setIsOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
               }}
               onFocus={() => setIsOpen(true)}
               className="pl-10"
+              autoComplete="off"
+              spellCheck="false"
             />
           </div>
 
