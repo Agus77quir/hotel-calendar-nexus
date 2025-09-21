@@ -4,7 +4,7 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { ReservationFilters } from '@/components/Reservations/ReservationFilters';
 import { ReservationsHeader } from '@/components/Reservations/ReservationsHeader';
-
+import { ReservationsSearch } from '@/components/Reservations/ReservationsSearch';
 import { ReservationsTable } from '@/components/Reservations/ReservationsTable';
 import { Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +13,7 @@ const ReservationsPage = () => {
   // Real-time updates are handled automatically in useHotelData
   const { reservations, guests, rooms, addReservation, updateReservation, deleteReservation, isLoading } = useHotelData();
   const { toast } = useToast();
-  
+  const [searchTerm, setSearchTerm] = useState('');
   const [dateFilters, setDateFilters] = useState<{
     dateFrom?: string;
     dateTo?: string;
@@ -31,20 +31,52 @@ const ReservationsPage = () => {
 
   const filteredReservations = useMemo(() => {
     try {
+      const searchLower = String(searchTerm ?? '').toLowerCase().trim();
+
       return reservations.filter((reservation) => {
-        // Only apply date filter
+        const guest = guests.find((g) => g.id === reservation.guest_id);
+        const room = rooms.find((r) => r.id === reservation.room_id);
+
+        // If no search text, only apply date filter
+        if (!searchLower) {
+          if (dateFilters.dateFrom && dateFilters.dateTo) {
+            const checkIn = reservation.check_in ?? '';
+            const checkOut = reservation.check_out ?? '';
+            return checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+          }
+          return true;
+        }
+
+        // Safe lowercase comparisons (coerce to string to avoid runtime errors)
+        const lower = (v: unknown) => String(v ?? '').toLowerCase();
+        const firstName = lower(guest?.first_name);
+        const lastName = lower(guest?.last_name);
+        const email = lower(guest?.email);
+        const roomNumber = lower(room?.number);
+        const resId = lower(reservation.id);
+
+        const matchesSearch =
+          firstName.includes(searchLower) ||
+          lastName.includes(searchLower) ||
+          email.includes(searchLower) ||
+          roomNumber.includes(searchLower) ||
+          resId.includes(searchLower);
+
+        // Date filter
+        let matchesDate = true;
         if (dateFilters.dateFrom && dateFilters.dateTo) {
           const checkIn = reservation.check_in ?? '';
           const checkOut = reservation.check_out ?? '';
-          return checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
+          matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
         }
-        return true;
+
+        return matchesSearch && matchesDate;
       });
     } catch (err) {
       console.error('[Reservations] filter error:', err);
       return reservations;
     }
-  }, [reservations, dateFilters]);
+  }, [reservations, guests, rooms, searchTerm, dateFilters]);
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
@@ -168,6 +200,13 @@ const ReservationsPage = () => {
       />
 
       <Card>
+        <CardHeader className="pb-3 md:pb-6">
+          <ReservationsSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            resultCount={filteredReservations.length}
+          />
+        </CardHeader>
         <CardContent className="p-2 md:p-6">
           <ReservationsTable
             reservations={filteredReservations}
