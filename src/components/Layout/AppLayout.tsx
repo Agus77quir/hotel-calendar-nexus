@@ -8,13 +8,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useIsIPhone } from '@/hooks/use-mobile';
-
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const isIPhone = useIsIPhone();
 
   // Update current date and time every second
   useEffect(() => {
@@ -25,34 +22,36 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // iPhone-specific optimizations
+  // Mobile optimizations for all devices
   useEffect(() => {
-    if (isIPhone) {
-      // Optimize viewport for iPhone
-      const viewport = document.querySelector('meta[name=viewport]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-      
-      // Add iPhone-specific styles
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-      
-      // Handle orientation changes
-      const handleOrientationChange = () => {
-        setTimeout(() => {
-          document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-        }, 100);
-      };
-      
-      window.addEventListener('orientationchange', handleOrientationChange);
-      window.addEventListener('resize', handleOrientationChange);
-      
-      return () => {
-        window.removeEventListener('orientationchange', handleOrientationChange);
-        window.removeEventListener('resize', handleOrientationChange);
-      };
+    // Optimize viewport for all mobile devices
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
     }
-  }, [isIPhone]);
+    
+    // Add mobile-specific styles for all devices
+    const setVH = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+    
+    setVH();
+    
+    // Handle orientation changes and resize for all devices
+    const handleViewportChange = () => {
+      setTimeout(() => {
+        setVH();
+      }, 100);
+    };
+    
+    window.addEventListener('orientationchange', handleViewportChange);
+    window.addEventListener('resize', handleViewportChange);
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleViewportChange);
+      window.removeEventListener('resize', handleViewportChange);
+    };
+  }, []);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -91,7 +90,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className={`min-h-screen flex w-full relative flex-col justify-center ${isIPhone ? 'iphone-safe-area iphone-full-height' : ''}`}>
+      <div className="min-h-screen flex w-full relative flex-col justify-center mobile-safe-area mobile-full-height">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10 z-0"
@@ -101,93 +100,48 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="flex flex-1 relative z-10">
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className={`${isIPhone ? 'h-16 sticky-header' : 'h-14 sm:h-16 md:h-20'} flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-3 md:px-6 shadow-lg touch-manipulation`}>
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
+            <header className="h-14 sm:h-16 lg:h-18 flex items-center justify-between border-b bg-white/95 backdrop-blur-sm px-2 sm:px-4 md:px-6 shadow-lg sticky top-0 z-50 min-h-14 touch-manipulation">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0 flex-1">
                 <SidebarTrigger>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className={`
-                      group relative overflow-hidden
-                      ${isIPhone ? 'p-6 min-h-20 min-w-20' : 'p-6 sm:p-7 md:p-8 min-h-16 min-w-16 sm:min-h-20 sm:min-w-20 md:min-h-24 md:min-w-24'} 
-                      flex-shrink-0 touch-manipulation
-                      bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800
-                      hover:from-purple-700 hover:via-pink-600 hover:to-red-600
-                      active:from-green-600 active:via-cyan-600 active:to-blue-700
-                      text-white font-bold
-                      shadow-2xl shadow-blue-600/50
-                      hover:shadow-3xl hover:shadow-purple-600/70
-                      active:shadow-2xl active:shadow-green-600/60
-                      border-3 border-white/40
-                      hover:border-white/60 active:border-white/80
-                      transition-all duration-300 ease-out
-                      transform hover:scale-115 active:scale-100
-                      hover:rotate-6 active:rotate-[-6deg]
-                      animate-pulse hover:animate-none
-                      rounded-2xl
-                      before:absolute before:inset-0 
-                      before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent
-                      before:translate-x-[-100%] hover:before:translate-x-[100%]
-                      before:transition-transform before:duration-700
-                      after:absolute after:inset-0 after:rounded-2xl
-                      after:shadow-[inset_0_2px_0_rgba(255,255,255,0.5)]
-                      backdrop-blur-sm
-                    `}
+                    className="group relative overflow-hidden p-2 sm:p-3 h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 touch-manipulation bg-gradient-to-br from-primary via-primary/80 to-primary/60 hover:from-primary/80 hover:via-primary/60 hover:to-primary/40 text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
                   >
-                    <Menu className={`
-                      ${isIPhone ? 'h-16 w-16' : 'h-10 w-10 sm:h-12 sm:w-12 md:h-20 md:w-20'} 
-                      drop-shadow-2xl
-                      transition-all duration-300 ease-out
-                      group-hover:rotate-90 group-active:rotate-180
-                      group-hover:scale-130 group-active:scale-115
-                      filter group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,1.5)]
-                      group-active:drop-shadow-[0_0_30px_rgba(255,255,255,1.8)]
-                      stroke-[5] group-hover:stroke-[6] group-active:stroke-[5.5]
-                      text-white group-hover:text-yellow-100 group-active:text-green-100
-                    `} />
-                    
-                    {/* Enhanced glow effect */}
-                    <div className="absolute -inset-3 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-90 group-active:opacity-100 transition-opacity duration-300 -z-10 animate-pulse"></div>
-                    
-                    {/* Secondary glow */}
-                    <div className="absolute -inset-5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-30 group-hover:opacity-60 group-active:opacity-70 transition-opacity duration-300 -z-20"></div>
-                    
-                    {/* Ripple effect on click */}
-                    <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-active:opacity-100 group-active:animate-ping transition-opacity duration-200"></div>
-                    
-                    {/* Enhanced sparkle effects */}
-                    <div className="absolute top-2 right-2 h-4 w-4 bg-yellow-300 rounded-full opacity-70 group-hover:opacity-100 group-hover:animate-ping"></div>
-                    <div className="absolute bottom-3 left-3 h-3 w-3 bg-white rounded-full opacity-50 group-hover:opacity-90 group-hover:animate-pulse"></div>
-                    <div className="absolute top-4 left-4 h-2 w-2 bg-cyan-300 rounded-full opacity-60 group-hover:opacity-100 group-hover:animate-bounce"></div>
-                    <div className="absolute bottom-1 right-4 h-2 w-2 bg-pink-300 rounded-full opacity-40 group-hover:opacity-80 group-hover:animate-pulse"></div>
+                    <Menu className="h-5 w-5 sm:h-6 sm:w-6 transition-transform group-hover:rotate-90" />
                   </Button>
                 </SidebarTrigger>
                 
-                <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 overflow-hidden flex-1">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 overflow-hidden flex-1">
                   <img 
                     src="/lovable-uploads/3658ca09-e189-41d7-823c-dffeb5310531.png" 
                     alt="NARDINI SRL" 
-                    className={`${isIPhone ? 'h-8' : 'h-6 sm:h-8 md:h-12'} w-auto object-contain flex-shrink-0`}
+                    className="h-6 sm:h-8 lg:h-10 w-auto object-contain flex-shrink-0"
                   />
-                  <span className={`font-bold text-blue-600 truncate ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm md:text-lg'}`}>
-                    <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Gestión de Hoteles</span>
-                    <span className={isIPhone ? 'hidden' : 'sm:hidden'}>Hotel</span>
+                  <span className="font-bold text-primary truncate text-sm sm:text-base lg:text-lg">
+                    <span className="hidden sm:inline">Gestión de Hoteles</span>
+                    <span className="sm:hidden">Hotel</span>
                   </span>
                 </div>
               </div>
 
-              {/* Simplified info section - only role and date */}
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 mr-2 sm:mr-3">
-                <div className="flex items-center gap-1 text-blue-600">
-                  <User className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
-                  <span className={`font-medium ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm'} truncate`}>
+              {/* User info section - role and date */}
+              <div className="flex items-center gap-2 sm:gap-3 mr-2 sm:mr-3 text-xs sm:text-sm">
+                <div className="flex items-center gap-1 text-primary">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="font-medium truncate hidden xs:inline">
                     {getRoleDisplayName(user?.role || '')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Clock className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
-                  <span className={`font-mono ${isIPhone ? 'text-sm' : 'text-xs sm:text-sm'}`}>
-                    {format(currentDateTime, isIPhone ? 'dd/MM HH:mm' : 'dd/MM/yyyy HH:mm', { locale: es })}
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="font-mono">
+                    <span className="hidden sm:inline">
+                      {format(currentDateTime, 'dd/MM/yyyy HH:mm', { locale: es })}
+                    </span>
+                    <span className="sm:hidden">
+                      {format(currentDateTime, 'dd/MM HH:mm', { locale: es })}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -196,20 +150,16 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className={`bg-white/80 hover:bg-white flex items-center gap-1 flex-shrink-0 touch-manipulation ${
-                    isIPhone ? 'text-sm px-3 py-2 h-10 min-h-11' : 'text-xs px-2 sm:px-3 md:px-4 h-7 sm:h-8 md:h-10'
-                  }`}
+                  className="bg-white/80 hover:bg-white flex items-center gap-1 sm:gap-2 flex-shrink-0 touch-manipulation text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-10 min-h-8"
                   title="Cerrar Sesión"
                   size="sm"
                 >
-                  <LogOut className={`${isIPhone ? 'h-4 w-4' : 'h-3 w-3 sm:h-4 sm:w-4'}`} />
-                  <span className={isIPhone ? 'inline' : 'hidden sm:inline'}>Cerrar</span>
+                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">Cerrar</span>
                 </Button>
               </div>
             </header>
-            <main className={`flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm smooth-scroll ${
-              isIPhone ? 'p-3 keyboard-adjust' : 'p-2 sm:p-3 md:p-6'
-            }`}>
+            <main className="flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm p-2 sm:p-4 md:p-6 keyboard-adjust smooth-scroll">
               {children}
             </main>
           </div>
