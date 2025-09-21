@@ -97,7 +97,6 @@ export const generateMultipleReservationEmailTemplate = (
   console.log('Email room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
-  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
 
   const subject = `Confirmación de Reserva Múltiple - Hostería Anillaco - ${reservationNumber}`;
   
@@ -111,7 +110,6 @@ Detalle de su reserva:
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
 • ${totalGuests} huéspedes total
-• Monto total: $${totalAmount.toLocaleString()}
 
 • Check in: 13 hs
 • Check out: 10 hs
@@ -131,8 +129,14 @@ export const openEmailClient = (
 ) => {
   const { subject, body } = generateConfirmationEmailTemplate(guest, reservation, room);
   
+  // Sanitize: remove any price lines just in case
+  const safeBody = body
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');
@@ -145,8 +149,14 @@ export const openMultipleReservationEmailClient = (
 ) => {
   const { subject, body } = generateMultipleReservationEmailTemplate(guest, reservations, rooms);
   
+  // Sanitize: remove any price lines just in case
+  const safeBody = body
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  
   // Crear enlace mailto
-  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoLink = `mailto:${guest.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(safeBody)}`;
   
   // Abrir cliente de email
   window.open(mailtoLink, '_blank');

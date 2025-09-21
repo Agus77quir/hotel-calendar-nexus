@@ -52,7 +52,10 @@ Concesionaria Nardini SRL`;
       to_email: guest.email,
       to_name: guestName,
       subject,
-      message,
+      message: message
+        .split('\n')
+        .filter(line => !line.includes('$'))
+        .join('\n'),
       reservation_number: reservationNumber,
       hotel_name: 'Hostería Anillaco',
       check_in: arrivalDate,

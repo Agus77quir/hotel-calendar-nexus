@@ -49,7 +49,11 @@ Saludos cordiales,
 Concesionaria Nardini SRL`;
 
   // Crear enlace de WhatsApp
-  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
+  const cleanMessage = message
+    .split('\n')
+    .filter(line => !line.includes('$'))
+    .join('\n');
+  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMessage)}`;
   
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');
@@ -100,7 +104,6 @@ export const sendMultipleReservationToWhatsApp = (
   console.log('Room numbers text:', roomNumbersText);
 
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
-  const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
   
   const message = `Estimado/a ${guestName},
 
@@ -112,7 +115,6 @@ Detalle de su reserva:
 • Fecha de salida: ${departureDate}
 • ${reservations.length} Habitaciones: ${roomNumbersText}
 • ${totalGuests} huéspedes total
-• Monto total: $${totalAmount.toLocaleString()}
 
 • Check in: 13 hs
 • Check out: 10 hs
@@ -123,7 +125,17 @@ Concesionaria Nardini SRL`;
   console.log('FINAL MESSAGE TO SEND:', message);
 
   // Crear enlace de WhatsApp
-  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(message)}`;
+  const cleanMultiMessage = message
+    .split('\n')
+    .filter((line) => {
+      const l = line.toLowerCase();
+      // Remover cualquier línea relacionada a precios o pagos
+      if (l.includes('$') || l.includes('usd') || l.includes('eur') || l.includes('ars')) return false;
+      if (/(monto\s*total|total\s*a\s*pagar|precio|importe|tarifa|seña|anticipo|saldo)/i.test(l)) return false;
+      return true;
+    })
+    .join('\n');
+  const whatsappLink = `https://wa.me/${guest.phone}?text=${encodeURIComponent(cleanMultiMessage)}`;
   
   // Abrir WhatsApp
   window.open(whatsappLink, '_blank');

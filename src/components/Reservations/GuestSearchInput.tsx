@@ -1,12 +1,11 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, User, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Guest, Room, Reservation } from '@/types/hotel';
-import { cn } from '@/lib/utils';
 
 interface GuestSearchInputProps {
   guests: Guest[];
@@ -28,59 +27,44 @@ export const GuestSearchInput = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [filteredGuests, setFilteredGuests] = useState<Guest[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Get selected guest for display
   const selectedGuest = guests.find(g => g.id === selectedGuestId);
 
   useEffect(() => {
-    if (!searchTerm || searchTerm.trim() === '') {
+    if (searchTerm.trim() === '') {
       setFilteredGuests([]);
       return;
     }
 
     const searchLower = searchTerm.toLowerCase();
     
-    // Safely handle guest data that might be null/undefined
-    const guestMatches = (guests || []).filter(guest => {
-      if (!guest) return false;
-      
-      const firstName = String(guest.first_name || '').toLowerCase();
-      const lastName = String(guest.last_name || '').toLowerCase();
-      const fullName = `${firstName} ${lastName}`.trim();
-      
+    // Search by guest name
+    const guestMatches = guests.filter(guest => {
       return (
-        firstName.includes(searchLower) ||
-        lastName.includes(searchLower) ||
-        fullName.includes(searchLower)
+        guest.first_name.toLowerCase().includes(searchLower) ||
+        guest.last_name.toLowerCase().includes(searchLower) ||
+        `${guest.first_name} ${guest.last_name}`.toLowerCase().includes(searchLower)
       );
     });
 
-    // Search by room number - safely handle room and reservation data
-    const roomMatches = (rooms || [])
-      .filter(room => {
-        if (!room || !room.number) return false;
-        return String(room.number).toLowerCase().includes(searchLower);
-      })
+    // Search by room number (find guests with current reservations in matching rooms)
+    const roomMatches = rooms
+      .filter(room => room.number.toLowerCase().includes(searchLower))
       .map(room => {
-        if (!reservations || reservations.length === 0) return null;
-        
         // Find current reservation for this room
         const currentReservation = reservations.find(r => 
-          r && r.room_id === room.id && 
+          r.room_id === room.id && 
           (r.status === 'confirmed' || r.status === 'checked-in')
         );
-        
-        if (!currentReservation) return null;
-        
-        return guests.find(g => g && g.id === currentReservation.guest_id) || null;
+        return currentReservation ? guests.find(g => g.id === currentReservation.guest_id) : null;
       })
       .filter(Boolean) as Guest[];
 
     // Combine results and remove duplicates
     const allMatches = [...guestMatches, ...roomMatches];
     const uniqueGuests = allMatches.filter((guest, index, self) => 
-      guest && index === self.findIndex(g => g && g.id === guest.id)
+      index === self.findIndex(g => g.id === guest.id)
     );
 
     setFilteredGuests(uniqueGuests.slice(0, 8)); // Limit to 8 results
@@ -135,43 +119,15 @@ export const GuestSearchInput = ({
         <div className="relative">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <input
-              ref={inputRef}
-              type="search"
+            <Input
               placeholder={placeholder}
-              value={searchTerm || ''}
+              value={searchTerm}
               onChange={(e) => {
-                const value = e.target.value;
-                setSearchTerm(value);
-                if (value.trim()) {
-                  setIsOpen(true);
-                }
+                setSearchTerm(e.target.value);
+                setIsOpen(true);
               }}
-              onFocus={() => {
-                if (searchTerm && searchTerm.trim()) {
-                  setIsOpen(true);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-                if (e.key === 'Escape') {
-                  setIsOpen(false);
-                  setSearchTerm('');
-                }
-              }}
-              className={cn(
-                "flex h-10 w-full rounded-md border border-input bg-background pl-10 py-2 text-base ring-offset-background",
-                "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
-                "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-              )}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
+              onFocus={() => setIsOpen(true)}
+              className="pl-10"
             />
           </div>
 
