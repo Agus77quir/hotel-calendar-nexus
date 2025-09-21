@@ -23,14 +23,19 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
       return;
     }
 
-    const filtered = guests.filter(guest => {
-      const searchLower = searchTerm.toLowerCase();
+    const filtered = guests.filter((guest) => {
+      const searchLower = searchTerm.toLowerCase().trim();
+      const firstName = (guest.first_name || '').toLowerCase();
+      const lastName = (guest.last_name || '').toLowerCase();
+      const email = (guest.email || '').toLowerCase();
+      const phone = String(guest.phone || '').toLowerCase();
+      const document = String(guest.document || '').toLowerCase();
       return (
-        guest.first_name.toLowerCase().includes(searchLower) ||
-        guest.last_name.toLowerCase().includes(searchLower) ||
-        guest.email.toLowerCase().includes(searchLower) ||
-        guest.phone.includes(searchTerm) ||
-        guest.document.includes(searchTerm)
+        firstName.includes(searchLower) ||
+        lastName.includes(searchLower) ||
+        email.includes(searchLower) ||
+        phone.includes(searchLower) ||
+        document.includes(searchLower)
       );
     }).slice(0, 8); // Limitar a 8 resultados
 
@@ -51,8 +56,10 @@ export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProp
                   placeholder="Buscar huéspedes por nombre, email, teléfono o documento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                   className="pl-12 pr-4 h-12 text-lg"
                   autoFocus
+                  autoComplete="off"
                 />
               </div>
               <Button variant="ghost" size="icon" onClick={onClose}>

@@ -43,7 +43,7 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { openEmailClient, openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendReservationToWhatsApp, sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
+import { sendReservationToWhatsAppSanitized, sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
 
 interface ReservationsTableProps {
   reservations: Reservation[];
@@ -179,7 +179,7 @@ export const ReservationsTable = ({
     if (reservationGroup.length > 1) {
       // Es una reserva múltiple
       console.log('Sending MULTIPLE reservation WhatsApp');
-      sendMultipleReservationToWhatsApp(reservationGroup, guest, rooms);
+      sendMultipleReservationToWhatsAppSanitized(reservationGroup, guest, rooms);
       toast({
         title: "WhatsApp enviado",
         description: `Mensaje de reservas múltiples enviado a ${guest.phone}`,
@@ -190,7 +190,7 @@ export const ReservationsTable = ({
       const reservation = reservationGroup[0];
       const room = rooms.find(r => r.id === reservation.room_id);
       if (room) {
-        sendReservationToWhatsApp(reservation, guest, room);
+        sendReservationToWhatsAppSanitized(reservation, guest, room);
         toast({
           title: "WhatsApp enviado",
           description: `Mensaje enviado a ${guest.phone}`,
@@ -564,6 +564,7 @@ export const ReservationsTable = ({
           onClose={() => setMultiRoomModal({ isOpen: false })}
           guest={multiRoomModal.guest}
           rooms={rooms}
+          reservations={reservations}
           onCreateReservations={handleMultiRoomReservations}
         />
       )}

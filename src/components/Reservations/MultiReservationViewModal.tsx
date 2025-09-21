@@ -19,8 +19,9 @@ import {
 import { Reservation, Guest, Room } from '@/types/hotel';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { openMultipleReservationEmailClient } from '@/services/emailTemplateService';
-import { sendMultipleReservationToWhatsApp } from '@/services/whatsappService';
+import { sendMultipleReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
 import { generateReservationPDF } from '@/services/pdfService';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MultiReservationViewModalProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export const MultiReservationViewModal = ({
   onEdit 
 }: MultiReservationViewModalProps) => {
   if (!guest || reservations.length === 0) return null;
+  const isMobile = useIsMobile();
 
   const totalAmount = reservations.reduce((sum, res) => sum + Number(res.total_amount), 0);
   const totalGuests = reservations.reduce((sum, res) => sum + res.guests_count, 0);
@@ -101,7 +103,7 @@ export const MultiReservationViewModal = ({
     console.log('Available rooms for WhatsApp:', rooms.length);
     
     // FORZAR el uso de la función de múltiples reservas
-    sendMultipleReservationToWhatsApp(reservations, guest, rooms);
+    sendMultipleReservationToWhatsAppSanitized(reservations, guest, rooms);
   };
 
   const handleDownloadPDF = async () => {
@@ -110,7 +112,7 @@ export const MultiReservationViewModal = ({
       const firstReservation = reservations[0];
       const firstRoom = rooms.find(r => r.id === firstReservation.room_id);
       if (firstRoom) {
-        await generateReservationPDF(firstReservation, guest, firstRoom);
+        await generateReservationPDF(firstReservation, guest, firstRoom, { hideAmounts: true });
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -237,10 +239,8 @@ export const MultiReservationViewModal = ({
                   <p className="text-sm text-muted-foreground">Total de huéspedes</p>
                   <p className="font-medium">{totalGuests}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total general</p>
-                  <p className="font-semibold text-green-600">${totalAmount.toLocaleString()}</p>
-                </div>
+                  {/* Monto total oculto en reservas múltiples para evitar compartir importes */}
+
               </div>
 
               <Separator className="my-4" />
@@ -261,7 +261,7 @@ export const MultiReservationViewModal = ({
                         <div>
                           <div className="text-sm font-medium">{formatRoomType(room.type)}</div>
                           <div className="text-xs text-gray-500">
-                            {reservation.guests_count} huéspedes • ${Number(reservation.total_amount).toLocaleString()}
+                            {reservation.guests_count} huéspedes
                           </div>
                         </div>
                       </div>

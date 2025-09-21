@@ -1,7 +1,7 @@
 
 import { Guest, Room, Reservation } from '@/types/hotel';
 import { sendReservationConfirmationAutomatically } from './automatedEmailService';
-import { sendReservationToWhatsApp } from './whatsappService';
+import { sendReservationToWhatsAppSanitized } from './whatsappSanitized';
 
 interface ReservationAutomationOptions {
   sendEmail?: boolean;
@@ -47,7 +47,7 @@ export const handleReservationAutomation = async (
   // Auto-send WhatsApp message (optional)
   if (options.sendWhatsApp && guest.phone) {
     try {
-      sendReservationToWhatsApp(reservation, guest, room);
+      sendReservationToWhatsAppSanitized(reservation, guest, room);
       results.whatsAppSent = true;
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);

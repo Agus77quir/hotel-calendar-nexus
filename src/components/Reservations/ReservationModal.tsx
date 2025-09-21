@@ -324,6 +324,7 @@ export const ReservationModal = ({
           }}
           guest={selectedGuestForMultiRoom}
           rooms={rooms}
+          reservations={reservations}
           onCreateReservations={handleCreateMultipleReservations}
         />
       )}
