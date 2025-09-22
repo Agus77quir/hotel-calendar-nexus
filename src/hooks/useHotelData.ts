@@ -114,7 +114,7 @@ export const useHotelData = () => {
     },
     staleTime: 0, // Sin caché para actualizaciones inmediatas
     refetchOnMount: true,
-    refetchOnWindowFocus: true, // Activar refetch en focus para mejor sincronización
+    refetchOnWindowFocus: false,
   });
 
   // Estadísticas calculadas
@@ -364,24 +364,15 @@ export const useHotelData = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('❌ ERROR CREANDO RESERVA:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       console.log('✅ RESERVA CREADA:', data);
       return data;
     },
     onSuccess: async () => {
       console.log('✅ NUEVA RESERVA CREADA - REFRESCANDO DATOS');
-      // Invalidar y refetch inmediatamente
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      await queryClient.refetchQueries({ queryKey: ['reservations'] });
-      await queryClient.refetchQueries({ queryKey: ['rooms'] });
-    },
-    onError: (error) => {
-      console.error('❌ ERROR EN MUTACIÓN RESERVA:', error);
     },
   });
 
