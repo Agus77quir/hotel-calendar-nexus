@@ -51,7 +51,7 @@ export const useHotelData = () => {
       console.log('✅ HUÉSPEDES CARGADOS:', processedData.length);
       return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0, // Sin caché para actualizaciones inmediatas
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -79,7 +79,7 @@ export const useHotelData = () => {
       console.log('✅ HABITACIONES CARGADAS:', processedData.length);
       return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0, // Sin caché para actualizaciones inmediatas  
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -112,7 +112,7 @@ export const useHotelData = () => {
 
       return processedData;
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 0, // Sin caché para actualizaciones inmediatas
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
