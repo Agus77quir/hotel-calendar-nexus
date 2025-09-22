@@ -55,6 +55,7 @@ export const formatDisplayDate = (dateString: string): string => {
 
 // Valida que una fecha no sea anterior a hoy (en timezone de Buenos Aires)
 export const isDateBeforeToday = (dateString: string): boolean => {
+  if (!dateString) return false;
   const today = getTodayInBuenosAires();
   return dateString < today;
 };

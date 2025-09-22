@@ -219,8 +219,9 @@ export const useReservationForm = ({
   const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
     console.log(`Date change for ${field}:`, value, 'today:', today);
     
-    if (field === 'check_in' && value < today) {
-      setAvailabilityError('No se pueden hacer reservas para fechas anteriores a hoy');
+    // Validar solo si es check_in y la fecha es realmente anterior (no igual)
+    if (field === 'check_in' && value && value < today) {
+      setAvailabilityError('La fecha de check-in no puede ser anterior a hoy');
       return;
     }
 

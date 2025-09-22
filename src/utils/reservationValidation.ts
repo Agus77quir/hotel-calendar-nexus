@@ -43,7 +43,7 @@ export const validateReservationDates = (checkIn: string, checkOut: string, toda
   
   const todayDate = today || getTodayInBuenosAires();
   
-  // Validate that check-in is not before today
+  // Validate that check-in is not before today (allow same day)
   if (checkIn < todayDate) return false;
   
   return checkOut > checkIn;
