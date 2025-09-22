@@ -53,7 +53,7 @@ export const useReservationForm = ({
     return `${nextYear}-${nextMonth}-${nextDay}`;
   };
 
-  // Validate all required fields
+  // Validate all required fields - ENHANCED VALIDATION
   const validateForm = () => {
     const errors: string[] = [];
     
@@ -85,6 +85,7 @@ export const useReservationForm = ({
       errors.push('La fecha de check-out debe ser posterior a la fecha de check-in');
     }
     
+    // ENHANCED: Critical room availability check
     if (formData.room_id && formData.check_in && formData.check_out) {
       const hasOverlap = hasDateOverlap(
         formData.room_id, 
@@ -94,7 +95,9 @@ export const useReservationForm = ({
         reservation?.id
       );
       if (hasOverlap) {
-        errors.push('La habitación ya está reservada para estas fechas');
+        const room = rooms.find(r => r.id === formData.room_id);
+        const roomNumber = room?.number || formData.room_id;
+        errors.push(`La habitación ${roomNumber} ya está reservada para estas fechas. Seleccione otra habitación disponible.`);
       }
     }
     
@@ -186,11 +189,12 @@ export const useReservationForm = ({
     }
   }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
-  // Handle room change and set guest count to maximum capacity
+  // Handle room change and set guest count to maximum capacity - ENHANCED
   const handleRoomChange = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
     
+    // ENHANCED: Strict date overlap validation before allowing room selection
     if (formData.check_in && formData.check_out) {
       const hasOverlap = hasDateOverlap(
         roomId, 
@@ -200,7 +204,10 @@ export const useReservationForm = ({
         reservation?.id
       );
       if (hasOverlap) {
-        setAvailabilityError('Habitación ya reservada, elija otra');
+        const roomNumber = room?.number || roomId;
+        const errorMsg = `Habitación ${roomNumber} ya está reservada para las fechas ${formData.check_in} a ${formData.check_out}. Seleccione otra habitación disponible.`;
+        setAvailabilityError(errorMsg);
+        console.error('Room overlap detected:', errorMsg);
         return;
       }
     }
@@ -213,6 +220,7 @@ export const useReservationForm = ({
     }));
     
     setAvailabilityError('');
+    console.log('Room selected successfully:', roomId, 'capacity:', newMaxCapacity);
   };
 
   // Handle date changes - CORREGIDO para mantener fechas exactas

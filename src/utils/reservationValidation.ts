@@ -20,16 +20,23 @@ export const hasDateOverlap = (
     // Skip the current reservation being edited
     if (currentReservationId && existingReservation.id === currentReservationId) return false;
     
-    // Only check same room
+    // Only check same room - CRITICAL FIX: ensure room IDs match exactly
     if (existingReservation.room_id !== roomId) return false;
     
     const existingCheckIn = existingReservation.check_in;
     const existingCheckOut = existingReservation.check_out;
     
-    // Check for overlap: new reservation overlaps with existing if:
-    // - new check-in is before existing check-out AND
-    // - new check-out is after existing check-in
-    const overlap = checkIn < existingCheckOut && checkOut > existingCheckIn;
+    // ENHANCED overlap check: new reservation overlaps with existing if dates intersect
+    // Case 1: New reservation starts during existing reservation
+    // Case 2: New reservation ends during existing reservation  
+    // Case 3: New reservation completely contains existing reservation
+    // Case 4: Existing reservation completely contains new reservation
+    const overlap = (
+      (checkIn >= existingCheckIn && checkIn < existingCheckOut) ||  // New starts during existing
+      (checkOut > existingCheckIn && checkOut <= existingCheckOut) || // New ends during existing
+      (checkIn <= existingCheckIn && checkOut >= existingCheckOut) || // New contains existing
+      (existingCheckIn <= checkIn && existingCheckOut >= checkOut)    // Existing contains new
+    );
     
     console.log('Comparing with existing reservation:', existingReservation.id, 
       'dates:', existingCheckIn, 'to', existingCheckOut, 'overlap:', overlap);

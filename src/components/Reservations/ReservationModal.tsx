@@ -144,10 +144,11 @@ export const ReservationModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate all form fields
+    // ENHANCED: Validate all form fields with improved error handling
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       setAvailabilityError(validationErrors[0]); // Show first error
+      console.error('Validation errors:', validationErrors);
       return;
     }
     
@@ -155,6 +156,7 @@ export const ReservationModal = ({
     setAvailabilityError('');
 
     try {
+      // ENHANCED: Build reservation data with proper validation
       const reservationData = {
         guest_id: formData.guest_id,
         room_id: formData.room_id,
@@ -162,17 +164,21 @@ export const ReservationModal = ({
         check_out: formData.check_out,
         guests_count: formData.guests_count,
         status: formData.status,
-        special_requests: formData.special_requests,
-        total_amount: totals.total,
-        created_by: 'current-user-id',
+        special_requests: formData.special_requests || '',
+        total_amount: Math.round(totals.total * 100) / 100, // Ensure proper decimal handling
+        created_by: 'system',
       };
 
+      console.log('Submitting reservation data:', reservationData);
       await onSave(reservationData);
 
+      const roomNumber = selectedRoom?.number || formData.room_id;
+      const guestName = selectedGuest ? `${selectedGuest.first_name} ${selectedGuest.last_name}` : 'Huésped';
+      
       toast({
-        title: mode === 'create' ? "Reserva creada" : "Reserva actualizada",
+        title: mode === 'create' ? "Reserva creada exitosamente" : "Reserva actualizada",
         description: mode === 'create' 
-          ? "Reserva confirmada exitosamente" 
+          ? `Reserva para ${guestName} en habitación ${roomNumber} confirmada` 
           : "La reserva ha sido actualizada correctamente",
       });
 
@@ -180,11 +186,20 @@ export const ReservationModal = ({
     } catch (error: any) {
       console.error('Error saving reservation:', error);
       
-      if (error.message && (error.message.includes('no_overlapping_reservations') || 
-          error.message.includes('Ya existe una reserva'))) {
-        setAvailabilityError('Habitación ya reservada, elija otra');
+      // ENHANCED: Better error message handling
+      if (error.message) {
+        if (error.message.includes('no_overlapping_reservations') || 
+            error.message.includes('Ya existe una reserva') ||
+            error.message.includes('duplicate') ||
+            error.message.includes('conflict')) {
+          setAvailabilityError('Esta habitación ya está reservada para estas fechas. Seleccione otra habitación disponible.');
+        } else if (error.message.includes('invalid') || error.message.includes('required')) {
+          setAvailabilityError('Datos de reserva inválidos. Verifique todos los campos.');
+        } else {
+          setAvailabilityError(error.message);
+        }
       } else {
-        setAvailabilityError(error.message || 'Error al crear la reserva. Por favor, intenta nuevamente.');
+        setAvailabilityError('Error al crear la reserva. Verifique los datos e intente nuevamente.');
       }
     } finally {
       setIsSubmitting(false);

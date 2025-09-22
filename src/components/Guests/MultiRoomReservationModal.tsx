@@ -194,9 +194,13 @@ export const MultiRoomReservationModal = ({
       return;
     }
 
-    // Validate that selected rooms are still available
+    // ENHANCED: Validate that selected rooms are still available with detailed checking
     const conflictingRooms = selectedRooms.filter(roomId => {
-      return hasDateOverlap(roomId, checkIn, checkOut, reservations);
+      const hasOverlap = hasDateOverlap(roomId, checkIn, checkOut, reservations);
+      if (hasOverlap) {
+        console.error(`Room ${roomId} has date overlap for ${checkIn} to ${checkOut}`);
+      }
+      return hasOverlap;
     });
 
     if (conflictingRooms.length > 0) {
@@ -206,8 +210,8 @@ export const MultiRoomReservationModal = ({
       }).join(', ');
 
       toast({
-        title: "Error",
-        description: `Las siguientes habitaciones ya están reservadas para estas fechas: ${conflictingRoomNumbers}`,
+        title: "Error de disponibilidad",
+        description: `Las siguientes habitaciones ya están reservadas para las fechas ${checkIn} a ${checkOut}: ${conflictingRoomNumbers}. Seleccione otras habitaciones disponibles.`,
         variant: "destructive",
       });
       return;
