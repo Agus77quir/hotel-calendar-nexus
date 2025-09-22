@@ -33,7 +33,7 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest, addReservation } = useHotelData();
+  const { reservations, addGuest, updateGuest, addReservation, addReservationsBulk } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);
   const [selectedGuestForMultiRoom, setSelectedGuestForMultiRoom] = useState<Guest | null>(null);
@@ -124,19 +124,14 @@ export const ReservationModal = ({
 
   const handleCreateMultipleReservations = async (reservationsData: any[]) => {
     try {
-      // Crear todas las reservas sin mostrar mensajes individuales
-      for (const reservationData of reservationsData) {
-        await addReservation(reservationData);
-      }
-      
-      // El mensaje consolidado se maneja en el MultiRoomReservationModal
-      // No mostrar ningún mensaje aquí para evitar duplicados
+      // Crear todas las reservas en una sola llamada (bulk)
+      await addReservationsBulk(reservationsData);
       
       // Cerrar ambos modales
       setShowMultiRoomModal(false);
       onClose();
     } catch (error) {
-      console.error('Error creating multiple reservations:', error);
+      console.error('Error creating multiple reservations (bulk):', error);
       throw error; // Re-throw para que el modal de múltiples habitaciones maneje el error
     }
   };

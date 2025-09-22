@@ -387,6 +387,39 @@ export const useHotelData = () => {
     },
   });
 
+  // Inserción masiva de reservas en una sola llamada (más fiable para múltiples)
+  const addReservationsBulkMutation = useMutation({
+    mutationFn: async (
+      reservationsData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>[]
+    ) => {
+      console.log('🔄 CREANDO RESERVAS (BULK):', reservationsData.length);
+      const payload = reservationsData.map((r) => ({
+        ...r,
+        created_by: user?.email || 'sistema',
+      }));
+
+      const { error } = await supabase.from('reservations').insert(payload);
+      if (error) throw error;
+
+      console.log('✅ RESERVAS CREADAS (BULK)');
+      return { success: true } as const;
+    },
+    onSuccess: async () => {
+      console.log('✅ RESERVAS MÚLTIPLES CREADAS - REFRESCANDO DATOS');
+      await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+    onError: (error) => {
+      console.error('❌ ERROR CREANDO RESERVAS (BULK):', error);
+      toast({
+        title: 'Error',
+        description:
+          'No se pudieron crear las reservas. Verifique la disponibilidad e intente nuevamente.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const deleteReservationMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data: reservation } = await supabase
@@ -432,5 +465,6 @@ export const useHotelData = () => {
     addReservation: addReservationMutation.mutateAsync,
     updateReservation: updateReservationMutation.mutateAsync,
     deleteReservation: deleteReservationMutation.mutateAsync,
+    addReservationsBulk: addReservationsBulkMutation.mutateAsync,
   };
 };
