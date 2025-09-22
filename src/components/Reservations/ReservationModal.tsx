@@ -124,20 +124,26 @@ export const ReservationModal = ({
 
   const handleCreateMultipleReservations = async (reservationsData: any[]) => {
     try {
-      // Crear todas las reservas sin mostrar mensajes individuales
+      console.log('🔄 CREANDO RESERVAS MÚLTIPLES:', reservationsData.length, 'reservas');
+      
+      // Crear todas las reservas de manera secuencial para evitar conflictos
+      const createdReservations = [];
       for (const reservationData of reservationsData) {
-        await addReservation(reservationData);
+        console.log('🔄 Creando reserva individual:', reservationData);
+        const result = await addReservation(reservationData);
+        createdReservations.push(result);
+        console.log('✅ Reserva individual creada:', result);
       }
       
-      // El mensaje consolidado se maneja en el MultiRoomReservationModal
-      // No mostrar ningún mensaje aquí para evitar duplicados
+      console.log('✅ TODAS LAS RESERVAS MÚLTIPLES CREADAS:', createdReservations.length);
       
       // Cerrar ambos modales
       setShowMultiRoomModal(false);
       onClose();
     } catch (error) {
-      console.error('Error creating multiple reservations:', error);
-      throw error; // Re-throw para que el modal de múltiples habitaciones maneje el error
+      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      // Propagar el error para que el modal de múltiples habitaciones lo maneje
+      throw error;
     }
   };
 

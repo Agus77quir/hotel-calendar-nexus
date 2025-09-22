@@ -253,10 +253,12 @@ export const MultiRoomReservationModal = ({
       });
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ ERROR COMPLETO RESERVAS MÚLTIPLES:', error);
+      const errorMessage = error?.message || 'Error desconocido';
       toast({
         title: "Error",
-        description: "No se pudieron crear las reservas. Intenta nuevamente.",
+        description: `No se pudieron crear las reservas múltiples: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
