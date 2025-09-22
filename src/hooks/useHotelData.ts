@@ -354,25 +354,36 @@ export const useHotelData = () => {
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
-      
-      const { data, error } = await supabase
+
+      // Importante: evitar .select().single() después del insert para no fallar si el RLS
+      // impide devolver la fila recién creada. Sólo insertamos y validamos el error.
+      const { error } = await supabase
         .from('reservations')
-        .insert([{
-          ...reservationData,
-          created_by: user?.email || 'sistema'
-        }])
-        .select()
-        .single();
-      
+        .insert([
+          {
+            ...reservationData,
+            created_by: user?.email || 'sistema',
+          },
+        ]);
+
       if (error) throw error;
-      
-      console.log('✅ RESERVA CREADA:', data);
-      return data;
+
+      console.log('✅ RESERVA CREADA (sin select post-insert)');
+      // No necesitamos el registro aquí; el listado se refresca con invalidateQueries
+      return { success: true } as const;
     },
     onSuccess: async () => {
       console.log('✅ NUEVA RESERVA CREADA - REFRESCANDO DATOS');
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+    onError: (error) => {
+      console.error('❌ ERROR CREANDO RESERVA:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear la reserva. Verifique los datos e intente nuevamente.',
+        variant: 'destructive',
+      });
     },
   });
 
