@@ -132,7 +132,9 @@ export const ReservationModal = ({
       onClose();
     } catch (error) {
       console.error('Error creating multiple reservations (bulk):', error);
-      throw error; // Re-throw para que el modal de múltiples habitaciones maneje el error
+      // El toast de error ya lo maneja el hook; no relanzamos para evitar mensaje duplicado
+      // y mantener una experiencia más clara.
+      return;
     }
   };
 

@@ -379,15 +379,16 @@ export const useHotelData = () => {
     },
     onError: (error) => {
       console.error('❌ ERROR CREANDO RESERVA:', error);
+      // Mensaje más claro y sin estilo destructivo
+      const msg = (error as any)?.message?.toString?.() || 'Revise los datos e intente nuevamente.';
       toast({
-        title: 'Error',
-        description: 'No se pudo crear la reserva. Verifique los datos e intente nuevamente.',
-        variant: 'destructive',
+        title: 'No se pudo crear la reserva',
+        description: msg.includes('no_overlapping_reservations') ? 'La habitación ya está reservada para esas fechas.' : msg,
       });
     },
   });
 
-  // Inserción masiva de reservas en una sola llamada (más fiable para múltiples)
+  // Inserción masiva de reservas en una sola llamada (con fallback a inserciones individuales)
   const addReservationsBulkMutation = useMutation({
     mutationFn: async (
       reservationsData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>[]
@@ -398,11 +399,34 @@ export const useHotelData = () => {
         created_by: user?.email || 'sistema',
       }));
 
-      const { error } = await supabase.from('reservations').insert(payload);
-      if (error) throw error;
+      // Intento 1: inserción en bloque
+      const bulkResult = await supabase.from('reservations').insert(payload);
+      if (!bulkResult.error) {
+        console.log('✅ RESERVAS CREADAS (BULK)');
+        return { success: true, created: reservationsData.length } as const;
+      }
 
-      console.log('✅ RESERVAS CREADAS (BULK)');
-      return { success: true } as const;
+      console.warn('⚠️ BULK FALLÓ, CAMBIO A INSERCIÓN INDIVIDUAL:', bulkResult.error);
+
+      // Intento 2: inserción una por una (permite éxito parcial)
+      let created = 0;
+      const failures: { item: any; error: any }[] = [];
+      for (const item of payload) {
+        const { error } = await supabase.from('reservations').insert([item]);
+        if (error) {
+          failures.push({ item, error });
+        } else {
+          created += 1;
+        }
+      }
+
+      if (created === 0) {
+        // Si ninguna pudo crearse, propaga el error original para manejarlo arriba
+        throw bulkResult.error as any;
+      }
+
+      console.log(`✅ RESERVAS CREADAS INDIVIDUALMENTE: ${created}, ❌ fallidas: ${failures.length}`);
+      return { success: true, created, partial: failures.length > 0 } as const;
     },
     onSuccess: async () => {
       console.log('✅ RESERVAS MÚLTIPLES CREADAS - REFRESCANDO DATOS');
@@ -411,11 +435,28 @@ export const useHotelData = () => {
     },
     onError: (error) => {
       console.error('❌ ERROR CREANDO RESERVAS (BULK):', error);
+
+      // Humanizar errores comunes
+      const message = (() => {
+        const msg = (error as any)?.message?.toString?.() || String(error);
+        if (msg.includes('no_overlapping_reservations') || msg.toLowerCase().includes('overlap') || msg.toLowerCase().includes('conflict')) {
+          return 'Una o más habitaciones ya están reservadas para esas fechas.';
+        }
+        if (msg.includes('invalid_dates')) {
+          return 'La fecha de check-out debe ser posterior al check-in.';
+        }
+        if (msg.includes('duplicate') || msg.includes('pkey') || msg.includes('23505')) {
+          return 'Conflicto interno de ID. Intente nuevamente.';
+        }
+        if (msg.includes('foreign key') || msg.includes('23503')) {
+          return 'Datos inválidos (huésped o habitación inexistente).';
+        }
+        return 'Verifique la disponibilidad y los datos e intente nuevamente.';
+      })();
+
       toast({
-        title: 'Error',
-        description:
-          'No se pudieron crear las reservas. Verifique la disponibilidad e intente nuevamente.',
-        variant: 'destructive',
+        title: 'No se pudieron crear todas las reservas',
+        description: message,
       });
     },
   });

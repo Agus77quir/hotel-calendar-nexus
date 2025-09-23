@@ -259,9 +259,8 @@ export const MultiRoomReservationModal = ({
       onClose();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "No se pudieron crear las reservas. Intenta nuevamente.",
-        variant: "destructive",
+        title: "No se crearon las reservas",
+        description: "Verifique disponibilidad y datos. Si el problema persiste, intente nuevamente.",
       });
     } finally {
       setIsSubmitting(false);
