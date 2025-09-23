@@ -163,21 +163,25 @@ export const MultiRoomReservationModal = ({
     };
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    console.log('🚀 INICIANDO SUBMIT DE RESERVAS MÚLTIPLES');
+    console.log('📋 HABITACIONES SELECCIONADAS:', selectedRooms);
+    console.log('📅 FECHAS:', checkIn, '-', checkOut);
+    
     if (selectedRooms.length === 0) {
       toast({
-        title: "Error",
+        title: "Seleccione habitaciones",
         description: "Debe seleccionar al menos una habitación",
-        variant: "destructive",
       });
       return;
     }
 
     if (!checkIn || !checkOut) {
       toast({
-        title: "Error", 
+        title: "Fechas requeridas", 
         description: "Debe seleccionar fechas de check-in y check-out",
-        variant: "destructive",
       });
       return;
     }
@@ -187,18 +191,17 @@ export const MultiRoomReservationModal = ({
     
     if (checkOutDate <= checkInDate) {
       toast({
-        title: "Error",
+        title: "Fechas inválidas",
         description: "La fecha de check-out debe ser posterior al check-in",
-        variant: "destructive",
       });
       return;
     }
 
-    // ENHANCED: Validate that selected rooms are still available with detailed checking
+    // Validar disponibilidad detallada
     const conflictingRooms = selectedRooms.filter(roomId => {
       const hasOverlap = hasDateOverlap(roomId, checkIn, checkOut, reservations);
       if (hasOverlap) {
-        console.error(`Room ${roomId} has date overlap for ${checkIn} to ${checkOut}`);
+        console.error(`❌ HABITACIÓN ${roomId} TIENE CONFLICTO DE FECHAS`);
       }
       return hasOverlap;
     });
@@ -210,9 +213,8 @@ export const MultiRoomReservationModal = ({
       }).join(', ');
 
       toast({
-        title: "Error de disponibilidad",
-        description: `Las siguientes habitaciones ya están reservadas para las fechas ${checkIn} a ${checkOut}: ${conflictingRoomNumbers}. Seleccione otras habitaciones disponibles.`,
-        variant: "destructive",
+        title: "Habitaciones no disponibles",
+        description: `Las habitaciones ${conflictingRoomNumbers} ya están reservadas para estas fechas.`,
       });
       return;
     }
@@ -221,7 +223,6 @@ export const MultiRoomReservationModal = ({
 
     try {
       const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
-      const totalCalculation = calculateTotal();
       
       const reservationsData = selectedRooms.map(roomId => {
         const room = rooms.find(r => r.id === roomId);
@@ -241,27 +242,16 @@ export const MultiRoomReservationModal = ({
         };
       });
 
+      console.log('📤 ENVIANDO RESERVAS MÚLTIPLES:', reservationsData);
+      
       await onCreateReservations(reservationsData);
+      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE');
       
-      // Crear un mensaje único para todas las reservas
-      const roomNumbers = selectedRooms.map(roomId => {
-        const room = rooms.find(r => r.id === roomId);
-        return room?.number || roomId;
-      }).join(', ');
-      
-      const totalGuests = Object.values(guestsCount).reduce((sum, count) => sum + count, 0);
-      
-      toast({
-        title: "Reservas múltiples creadas",
-        description: `Se crearon ${selectedRooms.length} reservas para ${guest.first_name} ${guest.last_name} en las habitaciones ${roomNumbers} (${totalGuests} huéspedes en total) desde ${formatDisplayDate(checkIn)} hasta ${formatDisplayDate(checkOut)}`,
-      });
-      
+      // El toast de éxito se maneja en el componente padre
       onClose();
     } catch (error) {
-      toast({
-        title: "No se crearon las reservas",
-        description: "Verifique disponibilidad y datos. Si el problema persiste, intente nuevamente.",
-      });
+      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      // El error ya se maneja en useHotelData, no necesitamos toast aquí
     } finally {
       setIsSubmitting(false);
     }
@@ -493,24 +483,27 @@ export const MultiRoomReservationModal = ({
         </div>
 
         {/* Footer buttons - Always visible and properly positioned */}
-        <div className="sticky bottom-0 bg-background border-t pt-4 mt-6">
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={handleClose}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={selectedRooms.length === 0 || !checkIn || !checkOut || isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Creando...' : `Crear ${selectedRooms.length} Reserva(s)`}
-            </Button>
+        <form onSubmit={handleSubmit}>
+          <div className="sticky bottom-0 bg-background border-t pt-4 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={handleClose}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit"
+                disabled={selectedRooms.length === 0 || !checkIn || !checkOut || isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                {isSubmitting ? 'Creando...' : `Crear ${selectedRooms.length} Reserva(s)`}
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

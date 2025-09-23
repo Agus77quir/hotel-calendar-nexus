@@ -355,36 +355,31 @@ export const useHotelData = () => {
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
 
-      // Importante: evitar .select().single() después del insert para no fallar si el RLS
-      // impide devolver la fila recién creada. Sólo insertamos y validamos el error.
       const { error } = await supabase
         .from('reservations')
         .insert([
           {
             ...reservationData,
-            created_by: user?.email || 'sistema',
+            created_by: user?.email || 'admin',
           },
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR EN INSERT:', error);
+        throw error;
+      }
 
-      console.log('✅ RESERVA CREADA (sin select post-insert)');
-      // No necesitamos el registro aquí; el listado se refresca con invalidateQueries
+      console.log('✅ RESERVA CREADA EXITOSAMENTE');
       return { success: true } as const;
     },
     onSuccess: async () => {
-      console.log('✅ NUEVA RESERVA CREADA - REFRESCANDO DATOS');
+      console.log('✅ REFRESCANDO DATOS DESPUÉS DE CREAR RESERVA');
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
     onError: (error) => {
-      console.error('❌ ERROR CREANDO RESERVA:', error);
-      // Mensaje más claro y sin estilo destructivo
-      const msg = (error as any)?.message?.toString?.() || 'Revise los datos e intente nuevamente.';
-      toast({
-        title: 'No se pudo crear la reserva',
-        description: msg.includes('no_overlapping_reservations') ? 'La habitación ya está reservada para esas fechas.' : msg,
-      });
+      console.error('❌ ERROR EN MUTACIÓN DE RESERVA:', error);
+      // No mostrar toast aquí - se maneja en el componente
     },
   });
 
@@ -434,30 +429,8 @@ export const useHotelData = () => {
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
     onError: (error) => {
-      console.error('❌ ERROR CREANDO RESERVAS (BULK):', error);
-
-      // Humanizar errores comunes
-      const message = (() => {
-        const msg = (error as any)?.message?.toString?.() || String(error);
-        if (msg.includes('no_overlapping_reservations') || msg.toLowerCase().includes('overlap') || msg.toLowerCase().includes('conflict')) {
-          return 'Una o más habitaciones ya están reservadas para esas fechas.';
-        }
-        if (msg.includes('invalid_dates')) {
-          return 'La fecha de check-out debe ser posterior al check-in.';
-        }
-        if (msg.includes('duplicate') || msg.includes('pkey') || msg.includes('23505')) {
-          return 'Conflicto interno de ID. Intente nuevamente.';
-        }
-        if (msg.includes('foreign key') || msg.includes('23503')) {
-          return 'Datos inválidos (huésped o habitación inexistente).';
-        }
-        return 'Verifique la disponibilidad y los datos e intente nuevamente.';
-      })();
-
-      toast({
-        title: 'No se pudieron crear todas las reservas',
-        description: message,
-      });
+      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      // No mostrar toast aquí - se maneja en el componente
     },
   });
 

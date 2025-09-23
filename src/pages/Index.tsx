@@ -61,18 +61,31 @@ const Index = () => {
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
+      console.log('💾 GUARDANDO RESERVA DESDE INDEX:', reservationData);
+      
       await addReservation(reservationData);
+      
       toast({
         title: "Reserva creada exitosamente",
         description: "La reserva ha sido guardada correctamente",
       });
+      
       setReservationModal({ isOpen: false, mode: 'create' });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear la reserva",
-        variant: "destructive",
-      });
+      console.error('❌ ERROR GUARDANDO RESERVA EN INDEX:', error);
+      
+      const errorMessage = error.message || 'Error desconocido';
+      if (errorMessage.includes('no_overlapping_reservations')) {
+        toast({
+          title: "Habitación no disponible",
+          description: "La habitación ya está reservada para estas fechas.",
+        });
+      } else {
+        toast({
+          title: "No se pudo guardar",
+          description: "Verifique los datos e intente nuevamente.",
+        });
+      }
     }
   };
 

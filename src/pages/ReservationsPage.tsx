@@ -62,10 +62,10 @@ const ReservationsPage = () => {
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
-      let savedReservation;
+      console.log('💾 GUARDANDO RESERVA EN PÁGINA:', reservationData);
       
       if (reservationModal.mode === 'create') {
-        savedReservation = await addReservation(reservationData);
+        await addReservation(reservationData);
         
         toast({
           title: "Reserva creada exitosamente",
@@ -84,13 +84,26 @@ const ReservationsPage = () => {
         setReservationModal({ isOpen: false, mode: 'create' });
       }
     } catch (error: any) {
-      console.error('Error saving reservation:', error);
+      console.error('❌ ERROR GUARDANDO RESERVA EN PÁGINA:', error);
       
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo guardar la reserva. Intenta nuevamente.",
-        variant: "destructive",
-      });
+      // Mostrar mensaje de error específico
+      const errorMessage = error.message || 'Error desconocido';
+      if (errorMessage.includes('no_overlapping_reservations')) {
+        toast({
+          title: "Habitación no disponible",
+          description: "La habitación ya está reservada para estas fechas.",
+        });
+      } else if (errorMessage.includes('invalid_dates')) {
+        toast({
+          title: "Fechas inválidas",
+          description: "Verifique las fechas de check-in y check-out.",
+        });
+      } else {
+        toast({
+          title: "No se pudo guardar",
+          description: "Verifique los datos e intente nuevamente.",
+        });
+      }
     }
   };
 

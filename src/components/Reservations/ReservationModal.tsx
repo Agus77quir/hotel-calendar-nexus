@@ -124,28 +124,42 @@ export const ReservationModal = ({
 
   const handleCreateMultipleReservations = async (reservationsData: any[]) => {
     try {
-      // Crear todas las reservas en una sola llamada (bulk)
+      console.log('🔄 CREANDO RESERVAS MÚLTIPLES DESDE MODAL:', reservationsData.length);
+      
       await addReservationsBulk(reservationsData);
+      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE');
+      
+      // Mostrar mensaje de éxito
+      toast({
+        title: "Reservas múltiples creadas",
+        description: `Se crearon ${reservationsData.length} reservas exitosamente`,
+      });
       
       // Cerrar ambos modales
       setShowMultiRoomModal(false);
       onClose();
     } catch (error) {
-      console.error('Error creating multiple reservations (bulk):', error);
-      // El toast de error ya lo maneja el hook; no relanzamos para evitar mensaje duplicado
-      // y mantener una experiencia más clara.
-      return;
+      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      
+      // Mostrar mensaje de error
+      toast({
+        title: "No se crearon las reservas",
+        description: "Verifique disponibilidad y datos e intente nuevamente.",
+      });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // ENHANCED: Validate all form fields with improved error handling
+    console.log('🚀 INICIANDO SUBMIT DE RESERVA:', mode);
+    console.log('📋 DATOS DEL FORMULARIO:', formData);
+    
+    // Validación completa del formulario
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
-      setAvailabilityError(validationErrors[0]); // Show first error
-      console.error('Validation errors:', validationErrors);
+      setAvailabilityError(validationErrors[0]);
+      console.error('❌ ERRORES DE VALIDACIÓN:', validationErrors);
       return;
     }
     
@@ -153,7 +167,7 @@ export const ReservationModal = ({
     setAvailabilityError('');
 
     try {
-      // ENHANCED: Build reservation data with proper validation
+      // Construir datos de reserva con validación
       const reservationData = {
         guest_id: formData.guest_id,
         room_id: formData.room_id,
@@ -162,41 +176,29 @@ export const ReservationModal = ({
         guests_count: formData.guests_count,
         status: formData.status,
         special_requests: formData.special_requests || '',
-        total_amount: Math.round(totals.total * 100) / 100, // Ensure proper decimal handling
-        created_by: 'system',
+        total_amount: Math.round(totals.total * 100) / 100,
+        created_by: 'admin',
       };
 
-      console.log('Submitting reservation data:', reservationData);
-      await onSave(reservationData);
-
-      const roomNumber = selectedRoom?.number || formData.room_id;
-      const guestName = selectedGuest ? `${selectedGuest.first_name} ${selectedGuest.last_name}` : 'Huésped';
+      console.log('📤 ENVIANDO DATOS DE RESERVA:', reservationData);
       
-      toast({
-        title: mode === 'create' ? "Reserva creada exitosamente" : "Reserva actualizada",
-        description: mode === 'create' 
-          ? `Reserva para ${guestName} en habitación ${roomNumber} confirmada` 
-          : "La reserva ha sido actualizada correctamente",
-      });
+      // Llamar a onSave que ejecutará la mutación
+      await onSave(reservationData);
+      console.log('✅ RESERVA GUARDADA EXITOSAMENTE');
 
+      // El toast y cierre se maneja en la página padre
       onClose();
     } catch (error: any) {
-      console.error('Error saving reservation:', error);
+      console.error('❌ ERROR AL GUARDAR RESERVA:', error);
       
-      // ENHANCED: Better error message handling
-      if (error.message) {
-        if (error.message.includes('no_overlapping_reservations') || 
-            error.message.includes('Ya existe una reserva') ||
-            error.message.includes('duplicate') ||
-            error.message.includes('conflict')) {
-          setAvailabilityError('Esta habitación ya está reservada para estas fechas. Seleccione otra habitación disponible.');
-        } else if (error.message.includes('invalid') || error.message.includes('required')) {
-          setAvailabilityError('Datos de reserva inválidos. Verifique todos los campos.');
-        } else {
-          setAvailabilityError(error.message);
-        }
+      // Mostrar error específico sin propagar
+      const errorMessage = error.message || 'Error desconocido';
+      if (errorMessage.includes('no_overlapping_reservations')) {
+        setAvailabilityError('Esta habitación ya está reservada para estas fechas.');
+      } else if (errorMessage.includes('invalid_dates')) {
+        setAvailabilityError('Las fechas seleccionadas no son válidas.');
       } else {
-        setAvailabilityError('Error al crear la reserva. Verifique los datos e intente nuevamente.');
+        setAvailabilityError('No se pudo guardar la reserva. Verifique los datos.');
       }
     } finally {
       setIsSubmitting(false);
@@ -307,21 +309,23 @@ export const ReservationModal = ({
           </div>
 
           {!showNewGuestForm && (
-            <div className="fixed bottom-8 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-6 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
-              <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isFormValid() || isSubmitting}
-              >
-                {isSubmitting 
-                  ? 'Procesando...' 
-                  : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
-                }
-              </Button>
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="fixed bottom-8 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-6 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
+                <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  className="px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isFormValid() || isSubmitting}
+                >
+                  {isSubmitting 
+                    ? 'Procesando...' 
+                    : mode === 'create' ? 'Crear Reserva' : 'Actualizar Reserva'
+                  }
+                </Button>
+              </div>
+            </form>
           )}
         </DialogContent>
       </Dialog>
