@@ -268,6 +268,7 @@ export const MultiRoomReservationModal = ({
           check_out: checkOut,
           guests_count: guestsCount[roomId] || 1,
           status: 'confirmed',
+          special_requests: '',
           total_amount: roomTotal,
         };
       });
