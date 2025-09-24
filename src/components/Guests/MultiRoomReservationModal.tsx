@@ -80,6 +80,15 @@ export const MultiRoomReservationModal = ({
         });
         return newGuestsCount;
       });
+
+      // Notify which rooms were removed due to conflicts with the selected dates
+      const conflictingRoomNumbers = conflictingRooms
+        .map(roomId => rooms.find(r => r.id === roomId)?.number || roomId)
+        .join(', ');
+      toast({
+        title: 'Habitaciones no disponibles para estas fechas',
+        description: `Se quitaron: ${conflictingRoomNumbers}.`,
+      });
     }
   }, [checkIn, checkOut]);
 
@@ -103,6 +112,19 @@ export const MultiRoomReservationModal = ({
         setGuestsCount(newGuestsCount);
         return newSelected;
       } else {
+        // Prevent selecting rooms with conflicts for chosen dates
+        if (checkIn && checkOut) {
+          const conflict = hasDateOverlap(roomId, checkIn, checkOut, reservations);
+          if (conflict) {
+            const room = rooms.find(r => r.id === roomId);
+            toast({
+              title: 'Habitación no disponible',
+              description: `La habitación ${room?.number ?? ''} ya está reservada para estas fechas.`,
+            });
+            return prev; // do not add conflicting room
+          }
+        }
+
         // Set default guests count for newly selected room
         const room = rooms.find(r => r.id === roomId);
         if (room) {
