@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarDays, Users, DollarSign, Percent, UserCheck } from 'lucide-react';
 import { Room, Guest, Reservation } from '@/types/hotel';
-import { formatDisplayDate } from '@/utils/dateUtils';
+import { formatDisplayDate, getTodayInBuenosAires } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { hasDateOverlap } from '@/utils/reservationValidation';
 
@@ -39,7 +39,7 @@ export const MultiRoomReservationModal = ({
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayInBuenosAires();
 
   // Filter rooms considering availability and date overlaps
   const getAvailableRooms = () => {
@@ -182,6 +182,15 @@ export const MultiRoomReservationModal = ({
       toast({
         title: "Fechas requeridas", 
         description: "Debe seleccionar fechas de check-in y check-out",
+      });
+      return;
+    }
+
+    // Validar que el check-in no sea anterior a hoy (zona horaria Buenos Aires)
+    if (checkIn < today) {
+      toast({
+        title: "Fechas inválidas",
+        description: "La fecha de check-in no puede ser anterior a hoy",
       });
       return;
     }

@@ -13,34 +13,30 @@ export const hasDateOverlap = (
   
   console.log('Checking overlap for room:', roomId, 'dates:', checkIn, 'to', checkOut);
   
+  // VALIDACIÓN ALINEADA CON BACKEND (intervalos inclusivos en ambos extremos)
+  // Se considera solapado cuando NO se cumple: (nuevo.check_out < existente.check_in) OR (nuevo.check_in > existente.check_out)
+  // Esto marca como conflicto los casos en que las fechas son adyacentes (igualdad) para evitar rechazos del backend.
   return reservations.some(existingReservation => {
-    // Skip cancelled reservations
+    // Ignorar reservas canceladas
     if (existingReservation.status === 'cancelled') return false;
     
-    // Skip the current reservation being edited
+    // Ignorar la reserva actual si estamos editando
     if (currentReservationId && existingReservation.id === currentReservationId) return false;
     
-    // Only check same room - CRITICAL FIX: ensure room IDs match exactly
+    // Comparar solo misma habitación
     if (existingReservation.room_id !== roomId) return false;
     
     const existingCheckIn = existingReservation.check_in;
     const existingCheckOut = existingReservation.check_out;
-    
-    // ENHANCED overlap check: new reservation overlaps with existing if dates intersect
-    // Case 1: New reservation starts during existing reservation
-    // Case 2: New reservation ends during existing reservation  
-    // Case 3: New reservation completely contains existing reservation
-    // Case 4: Existing reservation completely contains new reservation
-    const overlap = (
-      (checkIn >= existingCheckIn && checkIn < existingCheckOut) ||  // New starts during existing
-      (checkOut > existingCheckIn && checkOut <= existingCheckOut) || // New ends during existing
-      (checkIn <= existingCheckIn && checkOut >= existingCheckOut) || // New contains existing
-      (existingCheckIn <= checkIn && existingCheckOut >= checkOut)    // Existing contains new
-    );
-    
-    console.log('Comparing with existing reservation:', existingReservation.id, 
-      'dates:', existingCheckIn, 'to', existingCheckOut, 'overlap:', overlap);
-    
+
+    const noOverlap = (checkOut < existingCheckIn) || (checkIn > existingCheckOut);
+    const overlap = !noOverlap;
+
+    console.log('Comparando contra reserva:', existingReservation.id,
+      'existente:', existingCheckIn, 'a', existingCheckOut,
+      'nuevo:', checkIn, 'a', checkOut,
+      'solapa:', overlap);
+
     return overlap;
   });
 };
