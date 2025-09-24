@@ -177,7 +177,6 @@ export const ReservationModal = ({
         status: formData.status,
         special_requests: formData.special_requests || '',
         total_amount: Math.round(totals.total * 100) / 100,
-        created_by: 'admin',
       };
 
       console.log('📤 ENVIANDO DATOS DE RESERVA:', reservationData);

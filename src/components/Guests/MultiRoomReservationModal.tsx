@@ -238,7 +238,6 @@ export const MultiRoomReservationModal = ({
           guests_count: guestsCount[roomId] || 1,
           status: 'confirmed',
           total_amount: roomTotal,
-          created_by: 'admin',
         };
       });
 

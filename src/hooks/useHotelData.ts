@@ -360,7 +360,6 @@ export const useHotelData = () => {
         .insert([
           {
             ...reservationData,
-            created_by: user?.email || 'admin',
           },
         ]);
 
@@ -391,7 +390,6 @@ export const useHotelData = () => {
       console.log('🔄 CREANDO RESERVAS (BULK):', reservationsData.length);
       const payload = reservationsData.map((r) => ({
         ...r,
-        created_by: user?.email || 'sistema',
       }));
 
       // Intento 1: inserción en bloque
