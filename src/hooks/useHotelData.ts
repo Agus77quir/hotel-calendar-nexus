@@ -355,11 +355,41 @@ export const useHotelData = () => {
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
 
-      const { data, error } = await supabase
+      // Obtener un ID secuencial del servidor (evita colisiones de PK)
+      let nextId: string | null = null;
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_next_sequential_id', { table_name: 'reservations' });
+        if (rpcError) {
+          console.warn('⚠️ Error al obtener ID secuencial, se usará fallback:', rpcError);
+        } else {
+          nextId = rpcData as unknown as string;
+        }
+      } catch (e) {
+        console.warn('⚠️ Excepción al obtener ID secuencial, se usará fallback:', e);
+      }
+
+      const fallbackId = `R-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const insertData: any = { id: nextId ?? fallbackId, ...reservationData };
+
+      // Intento de inserción principal
+      let { data, error } = await supabase
         .from('reservations')
-        .insert([reservationData])
+        .insert([insertData])
         .select()
         .single();
+
+      // Si hay colisión de PK, reintentar una vez con un nuevo fallback ID único
+      if (error && (error as any).code === '23505') {
+        console.warn('⚠️ Colisión de PK detectada, reintentando con nuevo ID');
+        const retryData: any = { id: `R-${Date.now()}-${Math.floor(Math.random() * 10000)}`, ...reservationData };
+        const retry = await supabase
+          .from('reservations')
+          .insert([retryData])
+          .select()
+          .single();
+        data = retry.data;
+        error = retry.error as any;
+      }
 
       if (error) {
         console.error('❌ ERROR EN INSERT:', error);
