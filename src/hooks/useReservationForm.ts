@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
+import { useToast } from '@/hooks/use-toast';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
 import { getTodayInBuenosAires, getTomorrowInBuenosAires, calculateDaysDifference, formatSelectedDateForBuenosAires } from '@/utils/dateUtils';
 import { calculateRoomPrice } from '@/utils/pricingUtils';
@@ -36,8 +37,10 @@ export const useReservationForm = ({
   const [availabilityError, setAvailabilityError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Usar fecha actual en timezone de Buenos Aires
+// Usar fecha actual en timezone de Buenos Aires
   const today = getTodayInBuenosAires();
+
+  const { toast } = useToast();
 
   // Auto-suggest check-out date (default to 1 night stay)
   const getDefaultCheckOut = (checkIn: string) => {
@@ -205,8 +208,13 @@ export const useReservationForm = ({
       );
       if (hasOverlap) {
         const roomNumber = room?.number || roomId;
-        const errorMsg = `Habitación ${roomNumber} ya está reservada para las fechas ${formData.check_in} a ${formData.check_out}. Seleccione otra habitación disponible.`;
+        const errorMsg = `La habitación ${roomNumber} ya está reservada para ${formData.check_in} a ${formData.check_out}.`;
         setAvailabilityError(errorMsg);
+        toast({
+          title: 'Habitación no disponible',
+          description: errorMsg,
+          variant: 'destructive',
+        });
         console.error('Room overlap detected:', errorMsg);
         return;
       }
@@ -254,8 +262,14 @@ export const useReservationForm = ({
           reservation?.id
         );
         if (hasOverlap) {
+          const room = rooms.find(r => r.id === newFormData.room_id);
+          const roomNumber = room?.number || newFormData.room_id;
           newFormData.room_id = '';
           newFormData.guests_count = 1; // Reset to default when room is cleared
+          toast({
+            title: 'Habitación no disponible',
+            description: `La habitación ${roomNumber} no está disponible para las nuevas fechas seleccionadas. Por favor elija otra.`,
+          });
         }
       }
       

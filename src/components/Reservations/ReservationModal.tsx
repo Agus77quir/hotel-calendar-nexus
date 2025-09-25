@@ -290,6 +290,7 @@ export const ReservationModal = ({
 
                 <ReservationFormFields
                   formData={formData}
+                  rooms={rooms}
                   guests={guests}
                   reservations={reservations}
                   availableRooms={availableRooms}

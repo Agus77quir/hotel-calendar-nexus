@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsIOS } from '@/hooks/use-mobile';
 import { formatSelectedDateForBuenosAires, parseStringToDate } from '@/utils/dateUtils';
+import { hasDateOverlap } from '@/utils/reservationValidation';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -29,6 +30,7 @@ interface ReservationFormFieldsProps {
     special_requests: string;
     discount_percentage: number;
   };
+  rooms: Room[];
   availableRooms: Room[];
   guests: Guest[];
   reservations: Reservation[];
@@ -45,6 +47,7 @@ interface ReservationFormFieldsProps {
 
 export const ReservationFormFields = ({
   formData,
+  rooms,
   availableRooms,
   guests,
   reservations,
@@ -90,8 +93,8 @@ export const ReservationFormFields = ({
     }
   };
 
-  // Get all rooms for search functionality
-  const allRooms = [...availableRooms];
+// Get all rooms for search functionality
+  const allRooms = rooms;
 
   return (
     <div className="space-y-6">
@@ -285,43 +288,59 @@ export const ReservationFormFields = ({
                 <SelectValue placeholder="Seleccionar habitación disponible" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                {availableRooms
+                {rooms
                   .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-                  .map((room) => (
-                  <SelectItem key={room.id} value={room.id} className="py-3">
-                    <div className="flex items-center justify-between w-full min-w-0">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Bed className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          <span className="font-mono text-lg font-semibold text-blue-800">
-                            #{formatRoomNumber(room.number)}
-                          </span>
-                        </div>
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-medium text-gray-900 truncate">
-                            {formatRoomType(room.type)}
-                          </span>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              ${room.price}/noche
-                            </span>
+                  .map((room) => {
+                    const hasDates = !!(formData.check_in && formData.check_out);
+                    const isFree = hasDates
+                      ? !hasDateOverlap(room.id, formData.check_in, formData.check_out, reservations)
+                      : room.status === 'available';
+                    const isAvailable = room.status === 'available' && isFree;
+                    return (
+                      <SelectItem key={room.id} value={room.id} className={cn("py-3", !isAvailable && "opacity-60")}> 
+                        <div className="flex items-center justify-between w-full min-w-0">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Bed className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                              <span className="font-mono text-lg font-semibold text-blue-800">
+                                #{formatRoomNumber(room.number)}
+                              </span>
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="font-medium text-gray-900 truncate">
+                                {formatRoomType(room.type)}
+                              </span>
+                              <div className="flex items-center gap-3 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  ${room.price}/noche
+                                </span>
+                              </div>
+                            </div>
                           </div>
+                          {isAvailable ? (
+                            <Badge 
+                              variant="secondary" 
+                              className="ml-2 bg-green-100 text-green-800 border-green-200 flex-shrink-0"
+                            >
+                              Disponible
+                            </Badge>
+                          ) : (
+                            <Badge 
+                              variant="secondary" 
+                              className="ml-2 bg-red-100 text-red-800 border-red-200 flex-shrink-0"
+                            >
+                              No disponible
+                            </Badge>
+                          )}
                         </div>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className="ml-2 bg-green-100 text-green-800 border-green-200 flex-shrink-0"
-                      >
-                        Disponible
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>
