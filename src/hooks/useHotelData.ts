@@ -355,21 +355,19 @@ export const useHotelData = () => {
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reservations')
-        .insert([
-          {
-            ...reservationData,
-          },
-        ]);
+        .insert([reservationData])
+        .select()
+        .single();
 
       if (error) {
         console.error('❌ ERROR EN INSERT:', error);
         throw error;
       }
 
-      console.log('✅ RESERVA CREADA EXITOSAMENTE');
-      return { success: true } as const;
+      console.log('✅ RESERVA CREADA EXITOSAMENTE:', data);
+      return data;
     },
     onSuccess: async () => {
       console.log('✅ REFRESCANDO DATOS DESPUÉS DE CREAR RESERVA');
@@ -388,25 +386,28 @@ export const useHotelData = () => {
       reservationsData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>[]
     ) => {
       console.log('🔄 CREANDO RESERVAS (BULK):', reservationsData.length);
-      const payload = reservationsData.map((r) => ({
-        ...r,
-      }));
-
+      
       // Intento 1: inserción en bloque
-      const bulkResult = await supabase.from('reservations').insert(payload);
-      if (!bulkResult.error) {
-        console.log('✅ RESERVAS CREADAS (BULK)');
-        return { success: true, created: reservationsData.length } as const;
+      const { data, error: bulkError } = await supabase
+        .from('reservations')
+        .insert(reservationsData)
+        .select();
+        
+      if (!bulkError && data) {
+        console.log('✅ RESERVAS CREADAS (BULK):', data.length);
+        return { success: true, created: data.length };
       }
 
-      console.warn('⚠️ BULK FALLÓ, CAMBIO A INSERCIÓN INDIVIDUAL:', bulkResult.error);
+      console.warn('⚠️ BULK FALLÓ, CAMBIO A INSERCIÓN INDIVIDUAL:', bulkError);
 
       // Intento 2: inserción una por una (permite éxito parcial)
       let created = 0;
       const failures: { item: any; error: any }[] = [];
-      for (const item of payload) {
+      
+      for (const item of reservationsData) {
         const { error } = await supabase.from('reservations').insert([item]);
         if (error) {
+          console.error('❌ ERROR INDIVIDUAL:', error);
           failures.push({ item, error });
         } else {
           created += 1;
@@ -414,12 +415,12 @@ export const useHotelData = () => {
       }
 
       if (created === 0) {
-        // Si ninguna pudo crearse, propaga el error original para manejarlo arriba
-        throw bulkResult.error as any;
+        // Si ninguna pudo crearse, propaga el error original
+        throw bulkError || new Error('No se pudieron crear las reservas');
       }
 
       console.log(`✅ RESERVAS CREADAS INDIVIDUALMENTE: ${created}, ❌ fallidas: ${failures.length}`);
-      return { success: true, created, partial: failures.length > 0 } as const;
+      return { success: true, created, partial: failures.length > 0 };
     },
     onSuccess: async () => {
       console.log('✅ RESERVAS MÚLTIPLES CREADAS - REFRESCANDO DATOS');
