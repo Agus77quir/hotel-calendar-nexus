@@ -123,21 +123,22 @@ export const MultiReservationViewModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-3 pr-16 pb-2">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex-1 min-w-0">
-              <DialogTitle className="text-xl">
-                Reservas Múltiples de {guest.first_name} {guest.last_name}
-              </DialogTitle>
-              <div className="flex items-center gap-3 mt-2">
-                <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                  {reservations.length} Habitaciones
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {totalGuests} huéspedes total
-                </span>
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="text-xl flex items-center gap-2">
+                  Reservas Múltiples de {guest.first_name} {guest.last_name}
+                  <Badge variant="secondary" className="text-xs">Reserva Múltiple</Badge>
+                </DialogTitle>
+                <div className="flex items-center gap-3 mt-2">
+                  <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                    {reservations.length} Habitaciones
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {totalGuests} huéspedes total
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
         </DialogHeader>
 
         <div className="space-y-6">
