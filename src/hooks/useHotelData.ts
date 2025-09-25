@@ -355,18 +355,19 @@ export const useHotelData = () => {
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
 
-      // Realizamos el INSERT sin .select() para evitar fallos por permisos de SELECT con RLS
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reservations')
-        .insert([reservationData]);
+        .insert([reservationData])
+        .select()
+        .single();
 
       if (error) {
         console.error('❌ ERROR EN INSERT:', error);
         throw error;
       }
 
-      console.log('✅ RESERVA CREADA EXITOSAMENTE');
-      return true;
+      console.log('✅ RESERVA CREADA EXITOSAMENTE:', data);
+      return data;
     },
     onSuccess: async () => {
       console.log('✅ REFRESCANDO DATOS DESPUÉS DE CREAR RESERVA');
