@@ -126,13 +126,16 @@ export const ReservationModal = ({
     try {
       console.log('🔄 CREANDO RESERVAS MÚLTIPLES DESDE MODAL:', reservationsData.length);
       
-      await addReservationsBulk(reservationsData);
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE');
+      const result = await addReservationsBulk(reservationsData);
+      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE:', result);
+      
+      // Esperar un momento para que se actualicen los datos
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Mostrar mensaje de éxito
       toast({
         title: "Reservas múltiples creadas",
-        description: `Se crearon ${reservationsData.length} reservas exitosamente`,
+        description: `Se crearon ${result.created} reservas exitosamente`,
       });
       
       // Cerrar ambos modales

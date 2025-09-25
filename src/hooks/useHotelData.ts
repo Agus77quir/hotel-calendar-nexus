@@ -395,35 +395,46 @@ export const useHotelData = () => {
         
       if (!bulkError && data) {
         console.log('✅ RESERVAS CREADAS (BULK):', data.length);
-        return { success: true, created: data.length };
+        return { success: true, data: data, created: data.length };
       }
 
       console.warn('⚠️ BULK FALLÓ, CAMBIO A INSERCIÓN INDIVIDUAL:', bulkError);
 
       // Intento 2: inserción una por una (permite éxito parcial)
-      let created = 0;
+      const createdReservations: any[] = [];
       const failures: { item: any; error: any }[] = [];
       
       for (const item of reservationsData) {
-        const { error } = await supabase.from('reservations').insert([item]);
+        const { data: individualData, error } = await supabase
+          .from('reservations')
+          .insert([item])
+          .select()
+          .single();
+          
         if (error) {
           console.error('❌ ERROR INDIVIDUAL:', error);
           failures.push({ item, error });
         } else {
-          created += 1;
+          createdReservations.push(individualData);
         }
       }
 
-      if (created === 0) {
+      if (createdReservations.length === 0) {
         // Si ninguna pudo crearse, propaga el error original
         throw bulkError || new Error('No se pudieron crear las reservas');
       }
 
-      console.log(`✅ RESERVAS CREADAS INDIVIDUALMENTE: ${created}, ❌ fallidas: ${failures.length}`);
-      return { success: true, created, partial: failures.length > 0 };
+      console.log(`✅ RESERVAS CREADAS INDIVIDUALMENTE: ${createdReservations.length}, ❌ fallidas: ${failures.length}`);
+      return { 
+        success: true, 
+        data: createdReservations,
+        created: createdReservations.length, 
+        partial: failures.length > 0 
+      };
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       console.log('✅ RESERVAS MÚLTIPLES CREADAS - REFRESCANDO DATOS');
+      console.log('📊 RESULTADO:', result);
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
