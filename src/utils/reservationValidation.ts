@@ -13,9 +13,9 @@ export const hasDateOverlap = (
   
   console.log('Checking overlap for room:', roomId, 'dates:', checkIn, 'to', checkOut);
   
-  // VALIDACIÓN ALINEADA CON BACKEND (intervalos inclusivos en ambos extremos)
-  // Se considera solapado cuando NO se cumple: (nuevo.check_out < existente.check_in) OR (nuevo.check_in > existente.check_out)
-  // Esto marca como conflicto los casos en que las fechas son adyacentes (igualdad) para evitar rechazos del backend.
+  // VALIDACIÓN ALINEADA CON BACKEND (intervalos mitad-abiertos [check_in, check_out))
+  // Se considera solapado SOLO cuando los rangos se intersectan estrictamente.
+  // Las fechas adyacentes (nuevo.check_in === existente.check_out o nuevo.check_out === existente.check_in) son válidas y NO solapan.
   return reservations.some(existingReservation => {
     // Ignorar reservas canceladas
     if (existingReservation.status === 'cancelled') return false;
@@ -29,7 +29,7 @@ export const hasDateOverlap = (
     const existingCheckIn = existingReservation.check_in;
     const existingCheckOut = existingReservation.check_out;
 
-    const noOverlap = (checkOut < existingCheckIn) || (checkIn > existingCheckOut);
+    const noOverlap = (checkOut <= existingCheckIn) || (checkIn >= existingCheckOut);
     const overlap = !noOverlap;
 
     console.log('Comparando contra reserva:', existingReservation.id,
