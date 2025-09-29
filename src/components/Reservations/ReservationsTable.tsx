@@ -64,7 +64,7 @@ export const ReservationsTable = ({
   onNewReservationForGuest,
   onStatusChange,
 }: ReservationsTableProps) => {
-  const { updateGuest, addReservation, addReservationGroup } = useHotelData();
+  const { updateGuest, addReservation, addReservationsBulk } = useHotelData();
   const { toast } = useToast();
   const { user } = useAuth();
   const [viewModal, setViewModal] = useState<{
@@ -218,29 +218,15 @@ export const ReservationsTable = ({
     }
   };
 
-  const handleMultiRoomReservations = async (data: {
-    guestId: string;
-    checkIn: string;
-    checkOut: string;
-    roomsData: { roomId: string; guestsCount: number; totalAmount: number }[];
-    specialRequests?: string;
-  }) => {
+  const handleMultiRoomReservations = async (reservationsData: any[]) => {
     try {
-      const result = await addReservationGroup(data);
-      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO:', result);
+      // Usar la función bulk en lugar de crear una por una
+      const result = await addReservationsBulk(reservationsData);
+      console.log('✅ RESERVAS MÚLTIPLES CREADAS:', result);
       
+      // Esperar un momento para que se actualicen los datos
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      toast({
-        title: "Reserva múltiple creada",
-        description: `Se creó una reserva con ${data.roomsData.length} habitaciones`,
-      });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la reserva múltiple",
-        variant: "destructive",
-      });
       throw error;
     }
   };
