@@ -127,7 +127,7 @@ export const MultiReservationViewModal = ({
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl flex items-center gap-2">
                   Reservas Múltiples de {guest.first_name} {guest.last_name}
-                  <Badge variant="secondary" className="text-xs">Reserva Múltiple</Badge>
+                  <Badge variant="secondary" className="text-xs">Reserva Múltiple • {reservations.length} Habitación(es)</Badge>
                 </DialogTitle>
                 <div className="flex items-center gap-3 mt-2">
                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">

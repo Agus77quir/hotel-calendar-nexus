@@ -101,7 +101,7 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl flex items-center gap-2">
                 Reserva de {guest.first_name} {guest.last_name}
-                <Badge variant="secondary" className="text-xs">Reserva Simple</Badge>
+                <Badge variant="secondary" className="text-xs">Reserva Simple • 1 Habitación</Badge>
               </DialogTitle>
               <div className="flex items-center gap-3 mt-2">
                 <Badge className={`${getStatusColor(reservation.status)} border`}>
