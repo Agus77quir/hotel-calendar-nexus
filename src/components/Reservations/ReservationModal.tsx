@@ -33,7 +33,7 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest, addReservation, addReservationsBulk } = useHotelData();
+  const { reservations, addGuest, updateGuest, addReservation, addReservationGroup } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);
   const [selectedGuestForMultiRoom, setSelectedGuestForMultiRoom] = useState<Guest | null>(null);
@@ -122,32 +122,36 @@ export const ReservationModal = ({
     }
   };
 
-  const handleCreateMultipleReservations = async (reservationsData: any[]) => {
+  const handleCreateMultipleReservations = async (multiRoomData: {
+    guestId: string;
+    checkIn: string;
+    checkOut: string;
+    roomsData: { roomId: string; guestsCount: number; totalAmount: number }[];
+    specialRequests?: string;
+  }) => {
     try {
-      console.log('🔄 CREANDO RESERVAS MÚLTIPLES DESDE MODAL:', reservationsData.length);
+      console.log('🔄 CREANDO GRUPO DE RESERVAS MÚLTIPLES:', multiRoomData.roomsData.length, 'habitaciones');
       
-      const result = await addReservationsBulk(reservationsData);
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE:', result);
+      const result = await addReservationGroup(multiRoomData);
+      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO:', result);
       
-      // Esperar un momento para que se actualicen los datos
+      // Esperar para actualización
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mostrar mensaje de éxito
       toast({
-        title: "Reservas múltiples creadas",
-        description: `Se crearon ${result.created} reservas exitosamente`,
+        title: "Reserva múltiple creada",
+        description: `Se creó una reserva con ${multiRoomData.roomsData.length} habitaciones`,
       });
       
-      // Cerrar ambos modales
       setShowMultiRoomModal(false);
       onClose();
     } catch (error) {
-      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      console.error('❌ ERROR CREANDO GRUPO DE RESERVAS:', error);
       
-      // Mostrar mensaje de error
       toast({
-        title: "No se crearon las reservas",
+        title: "No se pudo crear la reserva múltiple",
         description: "Verifique disponibilidad y datos e intente nuevamente.",
+        variant: "destructive",
       });
     }
   };

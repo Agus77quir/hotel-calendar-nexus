@@ -24,6 +24,19 @@ export interface Room {
   created_at: string;
 }
 
+export interface ReservationGroup {
+  id: string;
+  guest_id: string;
+  check_in: string;
+  check_out: string;
+  rooms_count: number;
+  total_amount: number;
+  status: 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
+  special_requests?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Reservation {
   id: string;
   guest_id: string;
@@ -37,6 +50,7 @@ export interface Reservation {
   created_at: string;
   created_by?: string;
   updated_at: string;
+  group_id?: string; // Link to reservation_groups
 }
 
 export interface User {
