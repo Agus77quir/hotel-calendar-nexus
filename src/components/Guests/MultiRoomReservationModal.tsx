@@ -41,36 +41,33 @@ export const MultiRoomReservationModal = ({
 
   const today = getTodayInBuenosAires();
 
-  // Filter rooms considering availability and date overlaps
-  const getAvailableRooms = () => {
-    if (!checkIn || !checkOut) {
-      return rooms.filter(room => room.status === 'available');
-    }
-
-    return rooms.filter(room => {
-      if (room.status !== 'available') return false;
-      
-      // Check if room has overlapping reservations for the selected dates
-      const hasOverlap = hasDateOverlap(
-        room.id,
-        checkIn,
-        checkOut,
-        reservations
-      );
-      
-      return !hasOverlap;
-    });
+  // Check if a room is available for the selected dates
+  const isRoomAvailable = (roomId: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room || room.status !== 'available') return false;
+    
+    if (!checkIn || !checkOut) return true;
+    
+    // Check if room has overlapping reservations for the selected dates
+    const hasOverlap = hasDateOverlap(
+      roomId,
+      checkIn,
+      checkOut,
+      reservations
+    );
+    
+    return !hasOverlap;
   };
 
-  const availableRooms = getAvailableRooms();
+  // Show all available rooms, with availability status
+  const displayRooms = rooms.filter(room => room.status === 'available');
 
   // Clear selected rooms that are no longer available when dates change
   useEffect(() => {
-    const currentAvailableRoomIds = availableRooms.map(room => room.id);
-    const conflictingRooms = selectedRooms.filter(roomId => !currentAvailableRoomIds.includes(roomId));
+    const conflictingRooms = selectedRooms.filter(roomId => !isRoomAvailable(roomId));
     
     if (conflictingRooms.length > 0) {
-      setSelectedRooms(prev => prev.filter(roomId => currentAvailableRoomIds.includes(roomId)));
+      setSelectedRooms(prev => prev.filter(roomId => isRoomAvailable(roomId)));
       
       // Remove guests count for conflicting rooms
       setGuestsCount(prev => {
@@ -339,55 +336,73 @@ export const MultiRoomReservationModal = ({
           {/* Habitaciones disponibles */}
           <div>
             <h3 className="text-lg font-medium mb-4">Seleccionar Habitaciones</h3>
+            {!checkIn || !checkOut ? (
+              <div className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg border border-dashed mb-4">
+                Seleccione las fechas de check-in y check-out para ver la disponibilidad de habitaciones
+              </div>
+            ) : null}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-              {availableRooms.map((room) => (
-                <Card key={room.id} className={`cursor-pointer transition-colors ${
-                  selectedRooms.includes(room.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
-                }`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <Checkbox
-                          checked={selectedRooms.includes(room.id)}
-                          onCheckedChange={() => handleRoomToggle(room.id)}
-                        />
-                        <div>
-                          <div className="font-medium">Habitación {room.number}</div>
-                          <div className="text-sm text-muted-foreground capitalize">
-                            {room.type.replace('-', ' ')}
+              {displayRooms.map((room) => {
+                const available = isRoomAvailable(room.id);
+                return (
+                  <Card key={room.id} className={`transition-colors ${
+                    !available ? 'opacity-60 bg-muted/20' : 
+                    selectedRooms.includes(room.id) ? 'ring-2 ring-primary bg-primary/5' : 
+                    'hover:bg-muted/50 cursor-pointer'
+                  }`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <Checkbox
+                            checked={selectedRooms.includes(room.id)}
+                            onCheckedChange={() => handleRoomToggle(room.id)}
+                            disabled={!available}
+                          />
+                          <div>
+                            <div className="font-medium">Habitación {room.number}</div>
+                            <div className="text-sm text-muted-foreground capitalize">
+                              {room.type.replace('-', ' ')}
+                            </div>
                           </div>
                         </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge variant="outline">
+                            ${Number(room.price).toLocaleString()}
+                          </Badge>
+                          {checkIn && checkOut && (
+                            <Badge variant={available ? "default" : "destructive"} className="text-xs">
+                              {available ? "Disponible" : "Ocupada"}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Badge variant="outline">
-                        ${Number(room.price).toLocaleString()}
-                      </Badge>
-                    </div>
 
-                    {selectedRooms.includes(room.id) && (
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <Label className="text-sm">Huéspedes:</Label>
-                        <Select
-                          value={(guestsCount[room.id] || 1).toString()}
-                          onValueChange={(value) => handleGuestsCountChange(room.id, value)}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: room.capacity }, (_, i) => i + 1).map((num) => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="text-sm text-muted-foreground">/ {room.capacity}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {selectedRooms.includes(room.id) && (
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm">Huéspedes:</Label>
+                          <Select
+                            value={(guestsCount[room.id] || 1).toString()}
+                            onValueChange={(value) => handleGuestsCountChange(room.id, value)}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: room.capacity }, (_, i) => i + 1).map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-muted-foreground">/ {room.capacity}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
