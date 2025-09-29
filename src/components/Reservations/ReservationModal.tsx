@@ -33,7 +33,7 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest, addReservation, addReservationsBulk } = useHotelData();
+  const { reservations, addGuest, updateGuest, addReservation, addReservationGroup } = useHotelData();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);
   const [selectedGuestForMultiRoom, setSelectedGuestForMultiRoom] = useState<Guest | null>(null);
@@ -122,12 +122,18 @@ export const ReservationModal = ({
     }
   };
 
-  const handleCreateMultipleReservations = async (reservationsData: any[]) => {
+  const handleCreateMultipleReservations = async (groupData: {
+    guestId: string;
+    checkIn: string;
+    checkOut: string;
+    roomsData: Array<{ roomId: string; guestsCount: number; totalAmount: number }>;
+    specialRequests?: string;
+  }) => {
     try {
-      console.log('🔄 CREANDO RESERVAS MÚLTIPLES DESDE MODAL:', reservationsData.length);
+      console.log('🔄 CREANDO GRUPO DE RESERVAS DESDE MODAL:', groupData);
       
-      const result = await addReservationsBulk(reservationsData);
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE:', result);
+      const result = await addReservationGroup(groupData);
+      console.log('✅ GRUPO DE RESERVAS CREADO EXITOSAMENTE:', result);
       
       // Esperar un momento para que se actualicen los datos
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -142,12 +148,13 @@ export const ReservationModal = ({
       setShowMultiRoomModal(false);
       onClose();
     } catch (error) {
-      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
+      console.error('❌ ERROR CREANDO GRUPO DE RESERVAS:', error);
       
       // Mostrar mensaje de error
       toast({
         title: "No se crearon las reservas",
         description: "Verifique disponibilidad y datos e intente nuevamente.",
+        variant: "destructive"
       });
     }
   };

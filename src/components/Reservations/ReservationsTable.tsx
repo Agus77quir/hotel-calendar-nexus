@@ -64,7 +64,7 @@ export const ReservationsTable = ({
   onNewReservationForGuest,
   onStatusChange,
 }: ReservationsTableProps) => {
-  const { updateGuest, addReservation, addReservationsBulk } = useHotelData();
+  const { updateGuest, addReservation, addReservationGroup } = useHotelData();
   const { toast } = useToast();
   const { user } = useAuth();
   const [viewModal, setViewModal] = useState<{
@@ -218,11 +218,17 @@ export const ReservationsTable = ({
     }
   };
 
-  const handleMultiRoomReservations = async (reservationsData: any[]) => {
+  const handleMultiRoomReservations = async (groupData: {
+    guestId: string;
+    checkIn: string;
+    checkOut: string;
+    roomsData: Array<{ roomId: string; guestsCount: number; totalAmount: number }>;
+    specialRequests?: string;
+  }) => {
     try {
-      // Usar la función bulk en lugar de crear una por una
-      const result = await addReservationsBulk(reservationsData);
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS:', result);
+      // Crear grupo de reservas múltiples
+      const result = await addReservationGroup(groupData);
+      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO:', result);
       
       // Esperar un momento para que se actualicen los datos
       await new Promise(resolve => setTimeout(resolve, 500));

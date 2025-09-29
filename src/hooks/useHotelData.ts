@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Room, Guest, Reservation, HotelStats } from '@/types/hotel';
+import { Room, Guest, Reservation, ReservationGroup, HotelStats } from '@/types/hotel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeUpdates } from './useRealtimeUpdates';
@@ -113,6 +113,32 @@ export const useHotelData = () => {
       return processedData;
     },
     staleTime: 0, // Sin caché para actualizaciones inmediatas
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: reservationGroups = [], isLoading: reservationGroupsLoading } = useQuery({
+    queryKey: ['reservation_groups'],
+    queryFn: async () => {
+      console.log('🔄 CONSULTANDO GRUPOS DE RESERVACIONES');
+      const { data, error } = await (supabase as any)
+        .from('reservation_groups')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const processedData = (data || []).map((group: any) => ({
+        ...group,
+        status: group.status as ReservationGroup['status'],
+        rooms_count: Number(group.rooms_count),
+        total_amount: Number(group.total_amount)
+      })) as ReservationGroup[];
+
+      console.log('✅ GRUPOS DE RESERVACIONES CARGADOS:', processedData.length);
+      return processedData;
+    },
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
@@ -410,68 +436,96 @@ export const useHotelData = () => {
     },
   });
 
-  // Inserción masiva de reservas en una sola llamada (con fallback a inserciones individuales)
-  const addReservationsBulkMutation = useMutation({
-    mutationFn: async (
-      reservationsData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>[]
-    ) => {
-      console.log('🔄 CREANDO RESERVAS (BULK):', reservationsData.length);
-      
-      // Intento 1: inserción en bloque
-      const { data, error: bulkError } = await supabase
+  // Mutación para crear grupo de reservas múltiples
+  const addReservationGroupMutation = useMutation({
+    mutationFn: async ({
+      guestId,
+      checkIn,
+      checkOut,
+      roomsData,
+      specialRequests
+    }: {
+      guestId: string;
+      checkIn: string;
+      checkOut: string;
+      roomsData: Array<{ roomId: string; guestsCount: number; totalAmount: number }>;
+      specialRequests?: string;
+    }) => {
+      console.log('🔄 CREANDO GRUPO DE RESERVAS MÚLTIPLES');
+      console.log('📋 DATOS:', { guestId, checkIn, checkOut, habitaciones: roomsData.length });
+
+      // 1. Calcular total del grupo
+      const totalAmount = roomsData.reduce((sum, room) => sum + room.totalAmount, 0);
+
+      // 2. Crear el grupo de reservas
+      const { data: group, error: groupError } = await (supabase as any)
+        .from('reservation_groups')
+        .insert({
+          guest_id: guestId,
+          check_in: checkIn,
+          check_out: checkOut,
+          rooms_count: roomsData.length,
+          total_amount: totalAmount,
+          status: 'confirmed',
+          special_requests: specialRequests || ''
+        })
+        .select()
+        .single();
+
+      if (groupError) {
+        console.error('❌ ERROR CREANDO GRUPO:', groupError);
+        throw groupError;
+      }
+
+      console.log('✅ GRUPO CREADO:', group.id);
+
+      // 3. Crear las reservas individuales vinculadas al grupo
+      const reservationsData = roomsData.map(room => ({
+        guest_id: guestId,
+        room_id: room.roomId,
+        check_in: checkIn,
+        check_out: checkOut,
+        guests_count: room.guestsCount,
+        total_amount: room.totalAmount,
+        status: 'confirmed' as const,
+        special_requests: specialRequests || '',
+        group_id: group.id
+      }));
+
+      const { data: reservations, error: reservationsError } = await supabase
         .from('reservations')
         .insert(reservationsData)
         .select();
+
+      if (reservationsError) {
+        console.error('❌ ERROR CREANDO RESERVAS DEL GRUPO:', reservationsError);
         
-      if (!bulkError && data) {
-        console.log('✅ RESERVAS CREADAS (BULK):', data.length);
-        return { success: true, data: data, created: data.length };
+        // Eliminar el grupo si falla la creación de reservas
+        await (supabase as any)
+          .from('reservation_groups')
+          .delete()
+          .eq('id', group.id);
+        
+        throw reservationsError;
       }
 
-      console.warn('⚠️ BULK FALLÓ, CAMBIO A INSERCIÓN INDIVIDUAL:', bulkError);
+      console.log('✅ RESERVAS DEL GRUPO CREADAS:', reservations.length);
 
-      // Intento 2: inserción una por una (permite éxito parcial)
-      const createdReservations: any[] = [];
-      const failures: { item: any; error: any }[] = [];
-      
-      for (const item of reservationsData) {
-        const { data: individualData, error } = await supabase
-          .from('reservations')
-          .insert([item])
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('❌ ERROR INDIVIDUAL:', error);
-          failures.push({ item, error });
-        } else {
-          createdReservations.push(individualData);
-        }
-      }
-
-      if (createdReservations.length === 0) {
-        // Si ninguna pudo crearse, propaga el error original
-        throw bulkError || new Error('No se pudieron crear las reservas');
-      }
-
-      console.log(`✅ RESERVAS CREADAS INDIVIDUALMENTE: ${createdReservations.length}, ❌ fallidas: ${failures.length}`);
-      return { 
-        success: true, 
-        data: createdReservations,
-        created: createdReservations.length, 
-        partial: failures.length > 0 
+      return {
+        group,
+        reservations,
+        created: reservations.length
       };
     },
     onSuccess: async (result) => {
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS - REFRESCANDO DATOS');
-      console.log('📊 RESULTADO:', result);
+      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO - REFRESCANDO DATOS');
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      await queryClient.invalidateQueries({ queryKey: ['reservation_groups'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
     onError: (error) => {
-      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
-      // No mostrar toast aquí - se maneja en el componente
-    },
+      console.error('❌ ERROR CREANDO GRUPO DE RESERVAS:', error);
+    }
   });
 
   const deleteReservationMutation = useMutation({
@@ -502,12 +556,13 @@ export const useHotelData = () => {
     },
   });
 
-  const isLoading = guestsLoading || roomsLoading || reservationsLoading;
+  const isLoading = guestsLoading || roomsLoading || reservationsLoading || reservationGroupsLoading;
 
   return {
     guests,
     rooms,
     reservations,
+    reservationGroups,
     stats,
     isLoading,
     addGuest: addGuestMutation.mutateAsync,
@@ -519,6 +574,6 @@ export const useHotelData = () => {
     addReservation: addReservationMutation.mutateAsync,
     updateReservation: updateReservationMutation.mutateAsync,
     deleteReservation: deleteReservationMutation.mutateAsync,
-    addReservationsBulk: addReservationsBulkMutation.mutateAsync,
+    addReservationGroup: addReservationGroupMutation.mutateAsync,
   };
 };

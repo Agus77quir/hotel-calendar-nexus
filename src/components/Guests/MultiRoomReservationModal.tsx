@@ -20,7 +20,13 @@ interface MultiRoomReservationModalProps {
   guest: Guest;
   rooms: Room[];
   reservations: Reservation[];
-  onCreateReservations: (reservationsData: any[]) => Promise<void>;
+  onCreateReservations: (groupData: {
+    guestId: string;
+    checkIn: string;
+    checkOut: string;
+    roomsData: Array<{ roomId: string; guestsCount: number; totalAmount: number }>;
+    specialRequests?: string;
+  }) => Promise<void>;
 }
 
 export const MultiRoomReservationModal = ({
@@ -253,34 +259,37 @@ export const MultiRoomReservationModal = ({
     try {
       const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
       
-      const reservationsData = selectedRooms.map(roomId => {
+      const roomsData = selectedRooms.map(roomId => {
         const room = rooms.find(r => r.id === roomId);
         const roomSubtotal = Number(room?.price || 0) * nights;
         const roomDiscountAmount = discountPercentage > 0 ? (roomSubtotal * discountPercentage) / 100 : 0;
         const roomTotal = roomSubtotal - roomDiscountAmount;
         
         return {
-          guest_id: guest.id,
-          room_id: roomId,
-          check_in: checkIn,
-          check_out: checkOut,
-          guests_count: guestsCount[roomId] || 1,
-          status: 'confirmed',
-          special_requests: '',
-          total_amount: roomTotal,
+          roomId: roomId,
+          guestsCount: guestsCount[roomId] || 1,
+          totalAmount: roomTotal,
         };
       });
 
-      console.log('📤 ENVIANDO RESERVAS MÚLTIPLES:', reservationsData);
+      const groupData = {
+        guestId: guest.id,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        roomsData: roomsData,
+        specialRequests: ''
+      };
+
+      console.log('📤 ENVIANDO GRUPO DE RESERVAS MÚLTIPLES:', groupData);
       
-      await onCreateReservations(reservationsData);
-      console.log('✅ RESERVAS MÚLTIPLES CREADAS EXITOSAMENTE');
+      await onCreateReservations(groupData);
+      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO EXITOSAMENTE');
       
       // El toast de éxito se maneja en el componente padre
       onClose();
     } catch (error) {
-      console.error('❌ ERROR CREANDO RESERVAS MÚLTIPLES:', error);
-      // El error ya se maneja en useHotelData, no necesitamos toast aquí
+      console.error('❌ ERROR CREANDO GRUPO DE RESERVAS:', error);
+      // El error ya se maneja en el componente padre, no necesitamos toast aquí
     } finally {
       setIsSubmitting(false);
     }
