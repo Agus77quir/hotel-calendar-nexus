@@ -41,14 +41,15 @@ export const MultiRoomReservationModal = ({
 
   const today = getTodayInBuenosAires();
 
-  // Check if a room is available for the selected dates
+  // Check if a room is available for the selected dates (date-based, ignore current status)
   const isRoomAvailable = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
-    if (!room || room.status !== 'available') return false;
+    if (!room) return false;
     
+    // If no dates selected yet, allow selection (we'll validate on submit)
     if (!checkIn || !checkOut) return true;
     
-    // Check if room has overlapping reservations for the selected dates
+    // Available if there is NO overlap with existing reservations for that room
     const hasOverlap = hasDateOverlap(
       roomId,
       checkIn,
@@ -59,8 +60,8 @@ export const MultiRoomReservationModal = ({
     return !hasOverlap;
   };
 
-  // Show all available rooms, with availability status
-  const displayRooms = rooms.filter(room => room.status === 'available');
+  // Show all rooms; availability is computed by date overlap
+  const displayRooms = rooms;
 
   // Clear selected rooms that are no longer available when dates change
   useEffect(() => {
