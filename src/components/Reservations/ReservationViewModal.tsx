@@ -26,6 +26,7 @@ import { openEmailClient } from '@/services/emailTemplateService';
 import { sendReservationToWhatsAppSanitized } from '@/services/whatsappSanitized';
 import { generateReservationPDF } from '@/services/pdfService';
 import { formatDisplayDate } from '@/utils/dateUtils';
+import { useHotelData } from '@/hooks/useHotelData';
 
 interface ReservationViewModalProps {
   isOpen: boolean;
@@ -37,7 +38,16 @@ interface ReservationViewModalProps {
 }
 
 export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room, onEdit }: ReservationViewModalProps) => {
+  const { reservations: allReservations } = useHotelData();
   if (!reservation || !guest || !room) return null;
+
+  // Detectar si esta reserva forma parte de una reserva múltiple (mismo huésped y mismas fechas)
+  const sameDateGroup = allReservations.filter(r => 
+    r.guest_id === reservation.guest_id && 
+    r.check_in === reservation.check_in && 
+    r.check_out === reservation.check_out
+  );
+  const isMultipleReservation = sameDateGroup.length > 1;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,7 +111,7 @@ export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl flex items-center gap-2">
                 Reserva de {guest.first_name} {guest.last_name}
-                <Badge variant="secondary" className="text-xs">Reserva Simple • 1 Habitación</Badge>
+                <Badge variant="secondary" className="text-xs">{isMultipleReservation ? `Reserva Múltiple • ${sameDateGroup.length} Habitación(es)` : 'Reserva Simple • 1 Habitación'}</Badge>
               </DialogTitle>
               <div className="flex items-center gap-3 mt-2">
                 <Badge className={`${getStatusColor(reservation.status)} border`}>
