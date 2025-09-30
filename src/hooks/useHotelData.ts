@@ -460,15 +460,15 @@ export const useHotelData = () => {
       // 2. Crear el grupo de reservas
       const { data: group, error: groupError } = await (supabase as any)
         .from('reservation_groups')
-        .insert({
+        .insert([{
           guest_id: guestId,
           check_in: checkIn,
           check_out: checkOut,
           rooms_count: roomsData.length,
-          total_amount: totalAmount,
+          total_amount: Math.round(totalAmount * 100) / 100,
           status: 'confirmed',
           special_requests: specialRequests || ''
-        })
+        }])
         .select()
         .single();
 
@@ -485,8 +485,8 @@ export const useHotelData = () => {
         room_id: room.roomId,
         check_in: checkIn,
         check_out: checkOut,
-        guests_count: room.guestsCount,
-        total_amount: room.totalAmount,
+        guests_count: Math.max(1, room.guestsCount || 1),
+        total_amount: Math.round(room.totalAmount * 100) / 100,
         status: 'confirmed' as const,
         special_requests: specialRequests || '',
         group_id: group.id
