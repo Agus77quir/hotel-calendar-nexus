@@ -458,64 +458,68 @@ export const useHotelData = () => {
       const totalAmount = roomsData.reduce((sum, room) => sum + room.totalAmount, 0);
 
       // 2. Crear el grupo de reservas
-      const { data: group, error: groupError } = await (supabase as any)
-        .from('reservation_groups')
-        .insert({
+        const roundedTotalAmount = Math.round(totalAmount * 100) / 100;
+
+        const { data: group, error: groupError } = await (supabase as any)
+          .from('reservation_groups')
+          .insert([
+            {
+              guest_id: guestId,
+              check_in: checkIn,
+              check_out: checkOut,
+              rooms_count: roomsData.length,
+              total_amount: roundedTotalAmount,
+              status: 'confirmed',
+              special_requests: specialRequests || ''
+            }
+          ])
+          .select()
+          .single();
+
+        if (groupError) {
+          console.error('❌ ERROR CREANDO GRUPO:', groupError);
+          throw groupError;
+        }
+
+        console.log('✅ GRUPO CREADO:', group.id);
+
+        // 3. Crear las reservas individuales vinculadas al grupo
+        const reservationsData = roomsData.map(room => ({
           guest_id: guestId,
+          room_id: room.roomId,
           check_in: checkIn,
           check_out: checkOut,
-          rooms_count: roomsData.length,
-          total_amount: totalAmount,
-          status: 'confirmed',
-          special_requests: specialRequests || ''
-        })
-        .select()
-        .single();
+          guests_count: Math.max(1, Number(room.guestsCount) || 1),
+          total_amount: Math.round(Number(room.totalAmount) * 100) / 100,
+          status: 'confirmed' as const,
+          special_requests: specialRequests || '',
+          group_id: group.id
+        }));
 
-      if (groupError) {
-        console.error('❌ ERROR CREANDO GRUPO:', groupError);
-        throw groupError;
-      }
+        const { data: reservations, error: reservationsError } = await supabase
+          .from('reservations')
+          .insert(reservationsData)
+          .select();
 
-      console.log('✅ GRUPO CREADO:', group.id);
+        if (reservationsError) {
+          console.error('❌ ERROR CREANDO RESERVAS DEL GRUPO:', reservationsError);
+          
+          // Eliminar el grupo si falla la creación de reservas
+          await (supabase as any)
+            .from('reservation_groups')
+            .delete()
+            .eq('id', group.id);
+          
+          throw reservationsError;
+        }
 
-      // 3. Crear las reservas individuales vinculadas al grupo
-      const reservationsData = roomsData.map(room => ({
-        guest_id: guestId,
-        room_id: room.roomId,
-        check_in: checkIn,
-        check_out: checkOut,
-        guests_count: room.guestsCount,
-        total_amount: room.totalAmount,
-        status: 'confirmed' as const,
-        special_requests: specialRequests || '',
-        group_id: group.id
-      }));
+        console.log('✅ RESERVAS DEL GRUPO CREADAS:', reservations.length);
 
-      const { data: reservations, error: reservationsError } = await supabase
-        .from('reservations')
-        .insert(reservationsData)
-        .select();
-
-      if (reservationsError) {
-        console.error('❌ ERROR CREANDO RESERVAS DEL GRUPO:', reservationsError);
-        
-        // Eliminar el grupo si falla la creación de reservas
-        await (supabase as any)
-          .from('reservation_groups')
-          .delete()
-          .eq('id', group.id);
-        
-        throw reservationsError;
-      }
-
-      console.log('✅ RESERVAS DEL GRUPO CREADAS:', reservations.length);
-
-      return {
-        group,
-        reservations,
-        created: reservations.length
-      };
+        return {
+          group,
+          reservations,
+          created: reservations.length
+        };
     },
     onSuccess: async (result) => {
       console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO - REFRESCANDO DATOS');
