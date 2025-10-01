@@ -11,6 +11,7 @@ import { MultiRoomReservationModal } from '../Guests/MultiRoomReservationModal';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDisplayDate } from '@/utils/dateUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -34,11 +35,15 @@ export const ReservationModal = ({
   preselectedGuestId
 }: ReservationModalProps) => {
   const { reservations, addGuest, updateGuest, addReservation, addReservationGroup } = useHotelData();
+  const { user } = useAuth();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);
   const [selectedGuestForMultiRoom, setSelectedGuestForMultiRoom] = useState<Guest | null>(null);
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
   const { toast } = useToast();
+  
+  // Verificar si el usuario puede hacer reservas múltiples
+  const canCreateMultipleReservations = user?.email !== 'rec1' && user?.email !== 'rec2';
   
   const {
     formData,
@@ -250,8 +255,8 @@ export const ReservationModal = ({
               />
             ) : (
               <div className="space-y-4 sm:space-y-6">
-                {/* Sección de reserva múltiple - Solo en modo crear */}
-                {mode === 'create' && (
+                {/* Sección de reserva múltiple - Solo en modo crear y para usuarios autorizados */}
+                {mode === 'create' && canCreateMultipleReservations && (
                   <div className="flex flex-col items-start justify-between p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 gap-3">
                     <div className="flex-1 min-w-0 w-full">
                       <h3 className="font-medium text-purple-900 text-sm sm:text-base">Reserva Múltiple</h3>
