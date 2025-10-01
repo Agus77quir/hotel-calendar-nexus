@@ -318,7 +318,7 @@ export const ReservationModal = ({
             )}
           </div>
 
-          {!showNewGuestForm && (
+          {!showNewGuestForm && !showMultiRoomModal && (
             <form onSubmit={handleSubmit}>
               <div className="fixed bottom-8 left-4 right-4 sm:relative sm:bottom-auto sm:left-auto sm:right-auto flex justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t flex-shrink-0 bg-white shadow-lg sm:shadow-none z-50 rounded-lg sm:rounded-none landscape:bottom-6 landscape:p-2" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
                 <Button type="button" variant="outline" onClick={handleClose} className="px-4 sm:px-6 touch-manipulation">
