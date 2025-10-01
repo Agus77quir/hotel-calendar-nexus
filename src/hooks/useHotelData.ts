@@ -484,7 +484,8 @@ export const useHotelData = () => {
         console.log('✅ GRUPO CREADO:', group.id);
 
         // 3. Crear las reservas individuales vinculadas al grupo
-        const reservationsData = roomsData.map(room => ({
+        const reservationsData = roomsData.map((room, index) => ({
+          id: `R-${Date.now()}-${index}-${Math.floor(Math.random() * 100000)}`,
           guest_id: guestId,
           room_id: room.roomId,
           check_in: checkIn,
