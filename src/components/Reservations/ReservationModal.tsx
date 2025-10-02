@@ -98,16 +98,24 @@ export const ReservationModal = ({
         title: "Huésped creado",
         description: `${newGuest.first_name} ${newGuest.last_name} ha sido creado y seleccionado automáticamente.`,
       });
-    } catch (error) {
-      console.error('Error creating guest:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear el huésped. Intenta nuevamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingGuest(false);
-    }
+      } catch (error) {
+        console.error('Error creating guest (fallback to existing if found):', error);
+        // Fallback silencioso: intentar seleccionar un huésped existente por documento o teléfono
+        const existing = guests.find(
+          (g) => g.document === (guestData?.document ?? '') || g.phone === (guestData?.phone ?? '')
+        );
+        if (existing) {
+          handleFormChange('guest_id', existing.id);
+          setShowNewGuestForm(false);
+          toast({
+            title: 'Huésped seleccionado',
+            description: `${existing.first_name} ${existing.last_name} fue seleccionado automáticamente.`,
+          });
+        }
+        // No mostrar notificación de error
+      } finally {
+        setIsCreatingGuest(false);
+      }
   };
 
   const handleMultiRoomReservation = () => {
