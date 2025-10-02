@@ -241,23 +241,10 @@ export const useHotelData = () => {
         discount_percentage: guestData.discount_percentage || 0
       };
 
-      // Obtener un ID secuencial para evitar colisiones de PK
-      let nextId: string | null = null;
-      try {
-        const { data: rpcData, error: rpcError } = await supabase.rpc('get_next_sequential_id', { table_name: 'guests' });
-        if (!rpcError) {
-          nextId = rpcData as unknown as string;
-        }
-      } catch (e) {
-        console.warn('⚠️ Excepción al obtener ID secuencial de huéspedes:', e);
-      }
-      const fallbackId = `G-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      const insertData: any = { id: nextId ?? fallbackId, ...dbGuestData };
-
       // Intentar crear el huésped
       const { data, error } = await supabase
         .from('guests')
-        .insert([insertData])
+        .insert([dbGuestData])
         .select();
       
       // Si hay error por duplicado, intentar recuperar el existente por documento o teléfono
