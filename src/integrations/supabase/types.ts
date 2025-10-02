@@ -83,12 +83,52 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_groups: {
+        Row: {
+          check_in: string
+          check_out: string
+          created_at: string
+          guest_id: string
+          id: string
+          rooms_count: number
+          special_requests: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          check_in: string
+          check_out: string
+          created_at?: string
+          guest_id: string
+          id?: string
+          rooms_count?: number
+          special_requests?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          check_in?: string
+          check_out?: string
+          created_at?: string
+          guest_id?: string
+          id?: string
+          rooms_count?: number
+          special_requests?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           check_in: string
           check_out: string
           created_at: string
           created_by: string | null
+          group_id: string | null
           guest_id: string
           guests_count: number
           id: string
@@ -103,6 +143,7 @@ export type Database = {
           check_out: string
           created_at?: string
           created_by?: string | null
+          group_id?: string | null
           guest_id: string
           guests_count?: number
           id?: string
@@ -117,6 +158,7 @@ export type Database = {
           check_out?: string
           created_at?: string
           created_by?: string | null
+          group_id?: string | null
           guest_id?: string
           guests_count?: number
           id?: string
@@ -139,6 +181,13 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_groups"
             referencedColumns: ["id"]
           },
         ]
