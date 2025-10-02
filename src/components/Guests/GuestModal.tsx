@@ -80,11 +80,8 @@ export const GuestModal = ({
       console.error('Validation error: Apellido requerido');
       return false;
     }
-    if (!formData.email.trim()) {
-      console.error('Validation error: Email requerido');
-      return false;
-    }
-    if (!validateEmail(formData.email)) {
+    // Email es opcional, pero si se proporciona debe ser válido
+    if (formData.email.trim() && !validateEmail(formData.email)) {
       setEmailError('Por favor ingrese un email válido');
       console.error('Validation error: Email inválido');
       return false;
@@ -97,10 +94,7 @@ export const GuestModal = ({
       console.error('Validation error: Documento requerido');
       return false;
     }
-    if (!formData.nationality.trim()) {
-      console.error('Validation error: Nacionalidad requerida');
-      return false;
-    }
+    // Nacionalidad es opcional
     console.log('Form validation passed');
     return true;
   };
@@ -118,7 +112,12 @@ export const GuestModal = ({
     
     try {
       const guestPayload = {
-        ...formData,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim() || undefined,
+        phone: formData.phone.trim(),
+        document: formData.document.trim(),
+        nationality: formData.nationality.trim() || undefined,
         is_associated: false,
         discount_percentage: 0
       };
@@ -126,6 +125,20 @@ export const GuestModal = ({
       console.log('Attempting to save guest with data:', guestPayload);
       await onSave(guestPayload);
       console.log('Guest saved successfully');
+      
+      // Limpiar formulario solo en modo create
+      if (mode === 'create') {
+        setFormData({
+          first_name: '',
+          last_name: '',
+          email: '',
+          phone: '',
+          document: '',
+          nationality: '',
+        });
+        setEmailError('');
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error saving guest:', error);
@@ -174,15 +187,15 @@ export const GuestModal = ({
           </div>
 
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email (opcional)</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={handleEmailChange}
-              required
               disabled={isSubmitting}
               className={emailError ? 'border-red-500' : ''}
+              placeholder="ejemplo@correo.com"
             />
             {emailError && (
               <p className="text-red-500 text-sm mt-1">{emailError}</p>
@@ -218,13 +231,13 @@ export const GuestModal = ({
           </div>
 
           <div>
-            <Label htmlFor="nationality">Nacionalidad *</Label>
+            <Label htmlFor="nationality">Nacionalidad (opcional)</Label>
             <Input
               id="nationality"
               value={formData.nationality}
               onChange={(e) => setFormData({...formData, nationality: e.target.value})}
-              required
               disabled={isSubmitting}
+              placeholder="Ej: Mexicana"
             />
           </div>
 
