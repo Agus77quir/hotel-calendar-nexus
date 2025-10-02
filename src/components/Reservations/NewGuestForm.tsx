@@ -72,6 +72,17 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
       
       console.log('Attempting to create guest with data:', guestPayload);
       await onSave(guestPayload);
+      // Reset form after successful save
+      setFormData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        document: '',
+        is_associated: false,
+        discount_percentage: 0,
+      });
+      setErrors({});
       console.log('Guest created successfully from NewGuestForm');
     } catch (error) {
       console.error('Error creating guest from NewGuestForm:', error);
