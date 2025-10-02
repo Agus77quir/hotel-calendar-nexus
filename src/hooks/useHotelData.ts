@@ -404,48 +404,15 @@ export const useHotelData = () => {
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
       console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
-
-      // Obtener un ID secuencial del servidor (evita colisiones de PK)
-      let nextId: string | null = null;
-      try {
-        const { data: rpcData, error: rpcError } = await supabase.rpc('get_next_sequential_id', { table_name: 'reservations' });
-        if (rpcError) {
-          console.warn('⚠️ Error al obtener ID secuencial, se usará fallback:', rpcError);
-        } else {
-          nextId = rpcData as unknown as string;
-        }
-      } catch (e) {
-        console.warn('⚠️ Excepción al obtener ID secuencial, se usará fallback:', e);
-      }
-
-      const fallbackId = `R-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const insertData: any = { id: nextId ?? fallbackId, ...reservationData };
-
-      // Intento de inserción principal
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('reservations')
-        .insert([insertData])
+        .insert([reservationData])
         .select()
         .single();
-
-      // Si hay colisión de PK, reintentar una vez con un nuevo fallback ID único
-      if (error && (error as any).code === '23505') {
-        console.warn('⚠️ Colisión de PK detectada, reintentando con nuevo ID');
-        const retryData: any = { id: `R-${Date.now()}-${Math.floor(Math.random() * 10000)}`, ...reservationData };
-        const retry = await supabase
-          .from('reservations')
-          .insert([retryData])
-          .select()
-          .single();
-        data = retry.data;
-        error = retry.error as any;
-      }
-
       if (error) {
-        console.error('❌ ERROR EN INSERT:', error);
+        console.error('❌ ERROR EN INSERT RESERVA:', error);
         throw error;
       }
-
       console.log('✅ RESERVA CREADA EXITOSAMENTE:', data);
       return data;
     },
@@ -508,8 +475,7 @@ export const useHotelData = () => {
         console.log('✅ GRUPO CREADO:', group.id);
 
         // 3. Crear las reservas individuales vinculadas al grupo
-        const reservationsData = roomsData.map((room, index) => ({
-          id: `R-${Date.now()}-${index}-${Math.floor(Math.random() * 100000)}`,
+        const reservationsData = roomsData.map((room) => ({
           guest_id: guestId,
           room_id: room.roomId,
           check_in: checkIn,
