@@ -244,11 +244,11 @@ export const useHotelData = () => {
       const { data, error } = await supabase
         .from('guests')
         .insert([dbGuestData])
-        .select()
-        .single();
+        .select();
       
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) throw new Error('No se pudo crear el huésped');
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
