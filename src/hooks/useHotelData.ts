@@ -245,37 +245,14 @@ export const useHotelData = () => {
       const { data, error } = await supabase
         .from('guests')
         .insert([dbGuestData])
-        .select();
+        .select()
+        .single();
       
-      // Si hay error por duplicado, intentar recuperar o reintentar con un nuevo id
       if (error) {
-        const err: any = error as any;
-        const isDuplicate = err?.code === '23505' ||
-          err?.message?.toLowerCase?.().includes('duplicate') ||
-          err?.details?.toLowerCase?.().includes('already exists') ||
-          err?.message?.toLowerCase?.().includes('guests_pkey');
-
-        if (isDuplicate) {
-          // Fallback: intentar recuperar el existente por documento o teléfono
-          const { data: byDocument } = await supabase
-            .from('guests')
-            .select('*')
-            .eq('document', dbGuestData.document)
-            .maybeSingle();
-          if (byDocument) return byDocument as Guest;
-
-          const { data: byPhone } = await supabase
-            .from('guests')
-            .select('*')
-            .eq('phone', dbGuestData.phone)
-            .maybeSingle();
-          if (byPhone) return byPhone as Guest;
-        }
         throw error;
       }
 
-      if (!data || data.length === 0) throw new Error('No se pudo crear el huésped');
-      return data[0] as Guest;
+      return data as Guest;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
