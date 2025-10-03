@@ -99,8 +99,8 @@ export const ReservationModal = ({
         description: `${newGuest.first_name} ${newGuest.last_name} ha sido creado y seleccionado automáticamente.`,
       });
       } catch (error) {
-        console.error('Error creating guest (fallback to existing if found):', error);
-        // Fallback silencioso: intentar seleccionar un huésped existente por documento o teléfono
+        console.error('Error creating guest:', error);
+        // Intentar seleccionar un huésped existente por documento o teléfono
         const existing = guests.find(
           (g) => g.document === (guestData?.document ?? '') || g.phone === (guestData?.phone ?? '')
         );
@@ -109,10 +109,17 @@ export const ReservationModal = ({
           setShowNewGuestForm(false);
           toast({
             title: 'Huésped seleccionado',
-            description: `${existing.first_name} ${existing.last_name} fue seleccionado automáticamente.`,
+            description: `${existing.first_name} ${existing.last_name} ya existía y fue seleccionado automáticamente.`,
           });
+          return; // Consideramos éxito al seleccionar existente
         }
-        // No mostrar notificación de error
+        // Superficia el error para que el formulario no limpie y el usuario pueda corregir
+        toast({
+          title: 'No se pudo crear el huésped',
+          description: 'Revisa los datos e inténtalo nuevamente.',
+          variant: 'destructive',
+        });
+        throw error;
       } finally {
         setIsCreatingGuest(false);
       }
