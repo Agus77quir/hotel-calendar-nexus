@@ -256,24 +256,7 @@ export const useHotelData = () => {
           err?.message?.toLowerCase?.().includes('guests_pkey');
 
         if (isDuplicate) {
-          // 1) Reintentar una vez generando un nuevo id secuencial desde RPC
-          try {
-            const { data: nextId } = await supabase.rpc('get_next_sequential_id', { table_name: 'guests' });
-            if (nextId) {
-              const { data: retryData, error: retryError } = await supabase
-                .from('guests')
-                .insert([{ id: nextId as string, ...dbGuestData }])
-                .select();
-
-              if (!retryError && retryData && retryData.length > 0) {
-                return retryData[0] as Guest;
-              }
-            }
-          } catch (e) {
-            // Ignorar y continuar con el fallback de búsqueda
-          }
-
-          // 2) Fallback: intentar recuperar el existente por documento o teléfono
+          // Fallback: intentar recuperar el existente por documento o teléfono
           const { data: byDocument } = await supabase
             .from('guests')
             .select('*')
