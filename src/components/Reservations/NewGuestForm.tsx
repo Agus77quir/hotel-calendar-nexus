@@ -172,7 +172,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 id="phone"
                 type="tel"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 disabled={isSubmitting}
@@ -189,7 +188,6 @@ export const NewGuestForm = ({ onSave, onCancel, isSubmitting = false }: NewGues
                 id="document"
                 type="tel"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={formData.document}
                 onChange={(e) => handleInputChange('document', e.target.value)}
                 disabled={isSubmitting}

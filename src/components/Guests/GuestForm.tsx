@@ -136,7 +136,6 @@ export const GuestForm = ({ defaultValues, mode, onSubmit, onCancel, isSubmittin
         <Input
           id="phone"
           inputMode="numeric"
-          pattern="[0-9]*"
           {...form.register('phone')}
           disabled={disabled}
           className={errors.phone ? 'border-red-500' : ''}
@@ -151,7 +150,6 @@ export const GuestForm = ({ defaultValues, mode, onSubmit, onCancel, isSubmittin
         <Input
           id="document"
           inputMode="numeric"
-          pattern="[0-9]*"
           {...form.register('document')}
           disabled={disabled}
           className={errors.document ? 'border-red-500' : ''}
