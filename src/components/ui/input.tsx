@@ -4,6 +4,15 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    // iOS/Safari optimizations for date inputs
+    const isDateInput = type === "date" || type === "datetime-local" || type === "time";
+    const iosOptimizations = isDateInput ? {
+      // Prevent iOS zoom on focus
+      style: { fontSize: '16px' },
+      // Better touch handling
+      inputMode: 'none' as const,
+    } : {};
+
     return (
       <input
         type={type}
@@ -12,6 +21,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
+        {...iosOptimizations}
         {...props}
       />
     )

@@ -316,7 +316,7 @@ export const MultiRoomReservationModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {/* Fechas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -325,9 +325,9 @@ export const MultiRoomReservationModal = ({
                 id="checkin"
                 type="date"
                 value={checkIn}
-                min={today}
                 onChange={(e) => setCheckIn(e.target.value)}
                 className="w-full"
+                required
               />
             </div>
             <div className="space-y-2">
@@ -336,9 +336,9 @@ export const MultiRoomReservationModal = ({
                 id="checkout"
                 type="date"
                 value={checkOut}
-                min={checkIn || today}
                 onChange={(e) => setCheckOut(e.target.value)}
                 className="w-full"
+                required
               />
             </div>
           </div>
@@ -536,10 +536,8 @@ export const MultiRoomReservationModal = ({
               </CardContent>
             </Card>
           )}
-        </div>
 
-        {/* Footer buttons - Always visible and properly positioned */}
-        <form onSubmit={handleSubmit}>
+          {/* Footer buttons - Always visible and properly positioned */}
           <div className="sticky bottom-0 bg-background border-t pt-4 mt-6">
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <Button 
