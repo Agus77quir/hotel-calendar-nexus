@@ -325,6 +325,7 @@ export const MultiRoomReservationModal = ({
                 id="checkin"
                 type="date"
                 value={checkIn}
+                min={today}
                 onChange={(e) => setCheckIn(e.target.value)}
                 className="w-full"
                 required
@@ -336,6 +337,7 @@ export const MultiRoomReservationModal = ({
                 id="checkout"
                 type="date"
                 value={checkOut}
+                min={checkIn || today}
                 onChange={(e) => setCheckOut(e.target.value)}
                 className="w-full"
                 required
