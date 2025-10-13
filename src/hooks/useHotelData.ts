@@ -303,7 +303,19 @@ export const useHotelData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Habitación creada",
+        description: "La habitación se ha creado correctamente",
+      });
     },
+    onError: (error) => {
+      console.error('❌ Error creando habitación:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la habitación",
+        variant: "destructive",
+      });
+    }
   });
 
   const updateRoomMutation = useMutation({
