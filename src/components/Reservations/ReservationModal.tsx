@@ -238,7 +238,7 @@ export const ReservationModal = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[92dvh] overflow-hidden flex flex-col p-0 touch-manipulation">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[85svh] sm:max-h-[92dvh] overflow-hidden flex flex-col p-0 touch-manipulation">
           <DialogHeader className="px-4 sm:px-6 py-4 border-b flex-shrink-0 bg-white">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
