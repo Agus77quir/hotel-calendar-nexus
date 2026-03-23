@@ -9,6 +9,7 @@ import { CalendarDays, Plus, User, Search } from 'lucide-react';
 import { Reservation, Room, Guest } from '@/types/hotel';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 interface HotelCalendarProps {
   reservations: Reservation[];
