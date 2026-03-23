@@ -196,8 +196,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
               {displayedReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
-                const isCheckIn = isSameDay(new Date(reservation.check_in), selectedDate);
-                const isCheckOut = isSameDay(new Date(reservation.check_out), selectedDate);
+                const isCheckIn = isSameDay(parseStringToDate(reservation.check_in), selectedDate);
+                const isCheckOut = isSameDay(parseStringToDate(reservation.check_out), selectedDate);
                 const guestColorClass = getGuestColor(reservation.guest_id);
 
                 return (
