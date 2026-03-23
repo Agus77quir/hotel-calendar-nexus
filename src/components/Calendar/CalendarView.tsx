@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Plus } from 'lucide-react';
 import { Reservation } from '@/types/hotel';
 import { es } from 'date-fns/locale';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 interface CalendarViewProps {
   reservations: Reservation[];
