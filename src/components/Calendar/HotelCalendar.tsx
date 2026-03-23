@@ -32,8 +32,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
 
   const getReservationsForDate = (date: Date) => {
     return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
+      const checkIn = parseStringToDate(reservation.check_in);
+      const checkOut = parseStringToDate(reservation.check_out);
       return date >= checkIn && date <= checkOut;
     });
   };
