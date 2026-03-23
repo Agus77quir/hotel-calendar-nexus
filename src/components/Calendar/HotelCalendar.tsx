@@ -225,7 +225,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
                       <div>
                         <p className="flex items-center gap-2">
                           <span className="font-medium">Check-in:</span> 
-                          {format(new Date(reservation.check_in), 'dd/MM/yyyy')}
+                          {format(parseStringToDate(reservation.check_in), 'dd/MM/yyyy')}
                           {isCheckIn && <Badge variant="outline" className="text-xs">Hoy</Badge>}
                         </p>
                         <p className="flex items-center gap-2 mt-1">
