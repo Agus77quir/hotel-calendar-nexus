@@ -9,6 +9,7 @@ import { CalendarDays, Plus, User, Search } from 'lucide-react';
 import { Reservation, Room, Guest } from '@/types/hotel';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 interface HotelCalendarProps {
   reservations: Reservation[];
@@ -31,8 +32,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
 
   const getReservationsForDate = (date: Date) => {
     return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
+      const checkIn = parseStringToDate(reservation.check_in);
+      const checkOut = parseStringToDate(reservation.check_out);
       return date >= checkIn && date <= checkOut;
     });
   };
@@ -195,8 +196,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
               {displayedReservations.map((reservation) => {
                 const guest = guests.find(g => g.id === reservation.guest_id);
                 const room = rooms.find(r => r.id === reservation.room_id);
-                const isCheckIn = isSameDay(new Date(reservation.check_in), selectedDate);
-                const isCheckOut = isSameDay(new Date(reservation.check_out), selectedDate);
+                const isCheckIn = isSameDay(parseStringToDate(reservation.check_in), selectedDate);
+                const isCheckOut = isSameDay(parseStringToDate(reservation.check_out), selectedDate);
                 const guestColorClass = getGuestColor(reservation.guest_id);
 
                 return (
@@ -224,12 +225,12 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
                       <div>
                         <p className="flex items-center gap-2">
                           <span className="font-medium">Check-in:</span> 
-                          {format(new Date(reservation.check_in), 'dd/MM/yyyy')}
+                          {format(parseStringToDate(reservation.check_in), 'dd/MM/yyyy')}
                           {isCheckIn && <Badge variant="outline" className="text-xs">Hoy</Badge>}
                         </p>
                         <p className="flex items-center gap-2 mt-1">
                           <span className="font-medium">Check-out:</span> 
-                          {format(new Date(reservation.check_out), 'dd/MM/yyyy')}
+                          {format(parseStringToDate(reservation.check_out), 'dd/MM/yyyy')}
                           {isCheckOut && <Badge variant="outline" className="text-xs">Hoy</Badge>}
                         </p>
                       </div>

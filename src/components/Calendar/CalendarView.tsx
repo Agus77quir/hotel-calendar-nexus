@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Plus } from 'lucide-react';
 import { Reservation } from '@/types/hotel';
 import { es } from 'date-fns/locale';
+import { parseStringToDate } from '@/utils/dateUtils';
 
 interface CalendarViewProps {
   reservations: Reservation[];
@@ -23,8 +24,8 @@ export const CalendarView = ({ reservations, onAddReservation, onDateSelect, sel
 
   const getReservationsForDate = (date: Date) => {
     return reservations.filter(reservation => {
-      const checkIn = new Date(reservation.check_in);
-      const checkOut = new Date(reservation.check_out);
+      const checkIn = parseStringToDate(reservation.check_in);
+      const checkOut = parseStringToDate(reservation.check_out);
       return date >= checkIn && date <= checkOut;
     });
   };
