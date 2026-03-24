@@ -1,34 +1,16 @@
 
-import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, ReservationGroup, HotelStats } from '@/types/hotel';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeUpdates } from './useRealtimeUpdates';
 
 export const useHotelData = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
   const { toast } = useToast();
 
   // Activar tiempo real
   useRealtimeUpdates();
-
-  // Configurar contexto de usuario
-  useEffect(() => {
-    const setUserContext = async () => {
-      if (user?.email) {
-        try {
-          await supabase.rpc('set_current_user', { user_name: user.email });
-          console.log('✅ Usuario configurado:', user.email);
-        } catch (error) {
-          console.error('❌ Error configurando usuario:', error);
-        }
-      }
-    };
-    setUserContext();
-  }, [user?.email]);
 
   // Consultas optimizadas
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
