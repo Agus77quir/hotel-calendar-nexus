@@ -1,8 +1,5 @@
 
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Reservation, Guest, Room } from '@/types/hotel';
@@ -13,6 +10,12 @@ export const useReportExport = () => {
     guests: Guest[],
     rooms: Room[]
   ) => {
+    return (async () => {
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable')
+      ]);
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
@@ -126,6 +129,7 @@ export const useReportExport = () => {
     
     // Guardar el PDF
     doc.save(`reporte-hotel-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    })();
   }, []);
   
   const exportToExcel = useCallback((
@@ -133,6 +137,9 @@ export const useReportExport = () => {
     guests: Guest[],
     rooms: Room[]
   ) => {
+    return (async () => {
+      const XLSX = await import('xlsx');
+
     const workbook = XLSX.utils.book_new();
     
     // Hoja de resumen
@@ -232,6 +239,7 @@ export const useReportExport = () => {
     
     // Guardar el archivo Excel
     XLSX.writeFile(workbook, `reporte-hotel-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    })();
   }, []);
   
   return {

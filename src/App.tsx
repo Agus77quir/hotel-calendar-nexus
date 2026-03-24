@@ -4,18 +4,20 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import GuestsPage from "./pages/GuestsPage";
-import RoomsPage from "./pages/RoomsPage";
-import ReservationsPage from "./pages/ReservationsPage";
-import CheckInOutPage from "./pages/CheckInOutPage";
-import CalendarPage from "./pages/CalendarPage";
-import AuditPage from "./pages/AuditPage";
-import HistoryPage from "./pages/HistoryPage";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
 import { AppLayout } from "@/components/Layout/AppLayout";
+
+const Index = lazy(() => import("./pages/Index"));
+const GuestsPage = lazy(() => import("./pages/GuestsPage"));
+const RoomsPage = lazy(() => import("./pages/RoomsPage"));
+const ReservationsPage = lazy(() => import("./pages/ReservationsPage"));
+const CheckInOutPage = lazy(() => import("./pages/CheckInOutPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const AuditPage = lazy(() => import("./pages/AuditPage"));
+const HistoryPage = lazy(() => import("./pages/HistoryPage"));
+const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -26,20 +28,22 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<AppLayout><Outlet /></AppLayout>}>
-              <Route index element={<Index />} />
-              <Route path="guests" element={<GuestsPage />} />
-              <Route path="rooms" element={<RoomsPage />} />
-              <Route path="reservations" element={<ReservationsPage />} />
-              <Route path="checkin-checkout" element={<CheckInOutPage />} />
-              <Route path="calendar" element={<CalendarPage />} />
-              <Route path="audit" element={<AuditPage />} />
-              <Route path="history" element={<HistoryPage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="flex h-screen items-center justify-center text-muted-foreground">Cargando...</div>}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<AppLayout><Outlet /></AppLayout>}>
+                <Route index element={<Index />} />
+                <Route path="guests" element={<GuestsPage />} />
+                <Route path="rooms" element={<RoomsPage />} />
+                <Route path="reservations" element={<ReservationsPage />} />
+                <Route path="checkin-checkout" element={<CheckInOutPage />} />
+                <Route path="calendar" element={<CalendarPage />} />
+                <Route path="audit" element={<AuditPage />} />
+                <Route path="history" element={<HistoryPage />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -1,13 +1,17 @@
 
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AuditRecordWithEntity } from '@/types/audit';
 
 export const useHistoryExport = () => {
   const exportHistoryToPDF = useCallback((records: AuditRecordWithEntity[]) => {
+    return (async () => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ]);
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
@@ -126,6 +130,7 @@ export const useHistoryExport = () => {
     
     // Guardar el PDF
     doc.save(`historial-movimientos-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    })();
   }, []);
   
   return {

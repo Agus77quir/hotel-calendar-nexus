@@ -23,12 +23,6 @@ const HistoryPage = () => {
   const { auditRecords, isLoading, error, getUniqueUsers } = useAuditData();
   const { exportHistoryToPDF } = useHistoryExport();
 
-  console.log('HistoryPage render state:', {
-    auditRecordsLength: auditRecords?.length || 0,
-    isLoading,
-    hasError: !!error
-  });
-
   // Get unique users for the filter dropdown
   const uniqueUsers = getUniqueUsers();
 
@@ -124,7 +118,7 @@ const HistoryPage = () => {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       if (filteredRecords.length === 0) {
         toast({
@@ -134,7 +128,7 @@ const HistoryPage = () => {
         });
         return;
       }
-      exportHistoryToPDF(filteredRecords);
+      await exportHistoryToPDF(filteredRecords);
       toast({
         title: 'Exportación exitosa',
         description: 'El archivo PDF se ha generado correctamente'
