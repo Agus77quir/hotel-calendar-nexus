@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { User } from '@/types/hotel';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -52,6 +53,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const lastConfiguredUserRef = useRef<string | null>(null);
 
   useEffect(() => {
     console.log('[Auth] Inicializando autenticación...');
@@ -102,6 +104,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  useEffect(() => {
+    const userEmail = user?.email ?? null;
+
+    if (!userEmail || lastConfiguredUserRef.current === userEmail) {
+      return;
+    }
+
+    lastConfiguredUserRef.current = userEmail;
+
+    const configureUserContext = async () => {
+      try {
+        await supabase.rpc('set_current_user', { user_name: userEmail });
+        console.log('✅ Usuario configurado una sola vez:', userEmail);
+      } catch (error) {
+        console.error('❌ Error configurando usuario:', error);
+        lastConfiguredUserRef.current = null;
+      }
+    };
+
+    void configureUserContext();
+  }, [user?.email]);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('Attempting login with:', { email, password });
     
@@ -136,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    lastConfiguredUserRef.current = null;
     setUser(null);
     try {
       localStorage.removeItem('hotelUser');
