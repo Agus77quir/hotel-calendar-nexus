@@ -1,5 +1,4 @@
 
-import jsPDF from 'jspdf';
 import { Reservation, Guest, Room } from '@/types/hotel';
 
 export const generateReservationPDF = (
@@ -8,6 +7,8 @@ export const generateReservationPDF = (
   room: Room,
   options?: { hideAmounts?: boolean }
 ) => {
+  return (async () => {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   
   // Header
@@ -116,6 +117,7 @@ if (!options?.hideAmounts) {
   
   // Save the PDF
   doc.save(`reserva-${reservation.id}.pdf`);
+  })();
 };
 
 const getStatusText = (status: string) => {

@@ -139,9 +139,9 @@ export const ReservationQuickActions = ({
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
-      generateReservationPDF(reservation, guest, room);
+      await generateReservationPDF(reservation, guest, room);
       toast({
         title: "📄 PDF generado",
         description: "Voucher de reserva descargado",

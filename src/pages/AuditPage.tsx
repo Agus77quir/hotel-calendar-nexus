@@ -11,17 +11,12 @@ import { useAuditData } from '@/hooks/useAuditData';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 const AuditPage = () => {
   const [responsibleFilter, setResponsibleFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   
   const { auditRecords, isLoading } = useAuditData();
-
-  console.log('Audit records:', auditRecords.length);
-  console.log('Sample record:', auditRecords[0]);
 
   // Filtrar registros
   const filteredRecords = auditRecords.filter(record => {
@@ -74,7 +69,12 @@ const AuditPage = () => {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ]);
+
     const doc = new jsPDF('l', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     

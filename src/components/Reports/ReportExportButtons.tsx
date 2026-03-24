@@ -13,12 +13,12 @@ interface ReportExportButtonsProps {
 export const ReportExportButtons = ({ reservations, guests, rooms }: ReportExportButtonsProps) => {
   const { exportToPDF, exportToExcel } = useReportExport();
 
-  const handleExportPDF = () => {
-    exportToPDF(reservations, guests, rooms);
+  const handleExportPDF = async () => {
+    await exportToPDF(reservations, guests, rooms);
   };
 
-  const handleExportExcel = () => {
-    exportToExcel(reservations, guests, rooms);
+  const handleExportExcel = async () => {
+    await exportToExcel(reservations, guests, rooms);
   };
 
   return (
