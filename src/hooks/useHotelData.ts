@@ -80,8 +80,9 @@ export const useHotelData = () => {
       console.log('✅ HABITACIONES CARGADAS:', processedData.length);
       return processedData;
     },
-    staleTime: 0, // Sin caché para actualizaciones inmediatas  
-    refetchOnMount: true,
+    staleTime: 30000,
+    gcTime: 300000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
