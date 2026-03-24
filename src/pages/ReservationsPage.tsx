@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useHotelData } from '@/hooks/useHotelData';
 import { ReservationModal } from '@/components/Reservations/ReservationModal';
@@ -29,36 +29,39 @@ const ReservationsPage = () => {
     mode: 'create',
   });
 
-  const filteredReservations = reservations.filter(reservation => {
-    const guest = guests.find(g => g.id === reservation.guest_id);
-    const room = rooms.find(r => r.id === reservation.room_id);
-    const searchLower = searchTerm.toLowerCase();
-    
-    console.log('Search term:', searchTerm);
-    console.log('Total reservations:', reservations.length);
-    
-    // Text search filter
-    const matchesSearch = searchTerm === '' || (
-      (guest?.first_name || '').toLowerCase().includes(searchLower) ||
-      (guest?.last_name || '').toLowerCase().includes(searchLower) ||
-      (guest?.email || '').toLowerCase().includes(searchLower) ||
-      (room?.number || '').toLowerCase().includes(searchLower) ||
-      reservation.id.toLowerCase().includes(searchLower)
-    );
+  const guestsById = useMemo(
+    () => new Map(guests.map((guest) => [guest.id, guest])),
+    [guests]
+  );
 
-    // Date filter
-    let matchesDate = true;
-    if (dateFilters.dateFrom && dateFilters.dateTo) {
-      const checkIn = reservation.check_in;
-      const checkOut = reservation.check_out;
-      matchesDate = checkIn <= dateFilters.dateTo && checkOut >= dateFilters.dateFrom;
-    }
+  const roomsById = useMemo(
+    () => new Map(rooms.map((room) => [room.id, room])),
+    [rooms]
+  );
 
-    const result = matchesSearch && matchesDate;
-    console.log('Filtering reservation:', reservation.id, 'matches:', result);
-    
-    return result;
-  });
+  const filteredReservations = useMemo(() => {
+    const searchLower = searchTerm.trim().toLowerCase();
+
+    return reservations.filter((reservation) => {
+      const guest = guestsById.get(reservation.guest_id);
+      const room = roomsById.get(reservation.room_id);
+
+      const matchesSearch = !searchLower || (
+        (guest?.first_name || '').toLowerCase().includes(searchLower) ||
+        (guest?.last_name || '').toLowerCase().includes(searchLower) ||
+        (guest?.email || '').toLowerCase().includes(searchLower) ||
+        (room?.number || '').toLowerCase().includes(searchLower) ||
+        reservation.id.toLowerCase().includes(searchLower)
+      );
+
+      if (!dateFilters.dateFrom || !dateFilters.dateTo) {
+        return matchesSearch;
+      }
+
+      const matchesDate = reservation.check_in <= dateFilters.dateTo && reservation.check_out >= dateFilters.dateFrom;
+      return matchesSearch && matchesDate;
+    });
+  }, [reservations, guestsById, roomsById, searchTerm, dateFilters]);
 
   const handleSaveReservation = async (reservationData: any) => {
     try {
