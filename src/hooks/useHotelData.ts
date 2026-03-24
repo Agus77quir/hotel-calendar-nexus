@@ -141,8 +141,9 @@ export const useHotelData = () => {
       console.log('✅ GRUPOS DE RESERVACIONES CARGADOS:', processedData.length);
       return processedData;
     },
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 30000,
+    gcTime: 300000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
