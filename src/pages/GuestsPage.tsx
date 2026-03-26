@@ -38,8 +38,6 @@ const GuestsPage = () => {
 
   const filteredGuests = guests.filter(guest => {
     const searchLower = searchTerm.toLowerCase();
-    console.log('Guest search term:', searchTerm);
-    console.log('Total guests:', guests.length);
     
     const matches = searchTerm === '' || (
       (guest.first_name || '').toLowerCase().includes(searchLower) ||
@@ -49,8 +47,6 @@ const GuestsPage = () => {
       (guest.document || '').toLowerCase().includes(searchLower) ||
       (guest.nationality || '').toLowerCase().includes(searchLower)
     );
-    
-    console.log('Guest filter result:', guest.first_name, matches);
     return matches;
   });
 

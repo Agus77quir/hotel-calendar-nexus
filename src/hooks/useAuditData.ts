@@ -8,7 +8,6 @@ export const useAuditData = () => {
   const { data: auditRecords = [], isLoading, error } = useQuery({
     queryKey: ['audit-records'],
     queryFn: async () => {
-      console.log('Fetching audit records...');
       
       try {
         // Fetch from all audit tables
@@ -48,13 +47,16 @@ export const useAuditData = () => {
           sequentialId: (index + 1).toString().padStart(2, '0')
         }));
 
-        console.log('Audit records fetched:', recordsWithSequentialIds.length);
         return recordsWithSequentialIds;
       } catch (error) {
         console.error('Error fetching audit records:', error);
         throw error;
       }
     },
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Filter function for audit records

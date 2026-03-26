@@ -32,12 +32,6 @@ const Dashboard = () => {
   
   const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
 
-  console.log('📊 DASHBOARD - Estado actual:', {
-    today,
-    currentGuests: currentGuests.length,
-    totalReservations: reservations.length
-  });
-
   return (
     <div className="space-y-6">
       {/* Header */}
