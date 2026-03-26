@@ -11,7 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 
 const RoomsPage = () => {
-  const { rooms, addRoom, updateRoom, deleteRoom, isLoading } = useHotelData();
+  const { rooms, addRoom, updateRoom, deleteRoom, isLoading } = useHotelData({
+    guests: false,
+    rooms: true,
+    reservations: false,
+    reservationGroups: false,
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
