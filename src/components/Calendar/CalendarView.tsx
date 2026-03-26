@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,31 @@ interface CalendarViewProps {
 }
 
 export const CalendarView = ({ reservations, onAddReservation, onDateSelect, selectedDate }: CalendarViewProps) => {
+  // Pre-compute date set for O(1) modifier lookups
+  const datesWithReservations = useMemo(() => {
+    const dateSet = new Set<string>();
+    for (const reservation of reservations) {
+      if (reservation.status === 'cancelled') continue;
+      const checkIn = parseStringToDate(reservation.check_in);
+      const checkOut = parseStringToDate(reservation.check_out);
+      const cursor = new Date(checkIn);
+      while (cursor <= checkOut) {
+        dateSet.add(`${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    return dateSet;
+  }, [reservations]);
+
+  const hasReservationsModifier = useCallback(
+    (date: Date) => datesWithReservations.has(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`),
+    [datesWithReservations]
+  );
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       onDateSelect?.(date);
     }
-  };
-
-  const getReservationsForDate = (date: Date) => {
-    return reservations.filter(reservation => {
-      const checkIn = parseStringToDate(reservation.check_in);
-      const checkOut = parseStringToDate(reservation.check_out);
-      return date >= checkIn && date <= checkOut;
-    });
   };
 
   return (
@@ -56,7 +69,7 @@ export const CalendarView = ({ reservations, onAddReservation, onDateSelect, sel
           locale={es}
           className="rounded-md border bg-white/50"
           modifiers={{
-            hasReservations: (date) => getReservationsForDate(date).length > 0,
+              hasReservations: hasReservationsModifier,
           }}
           modifiersStyles={{
             hasReservations: {

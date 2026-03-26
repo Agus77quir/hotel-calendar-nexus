@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,31 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Pre-compute a Set of date strings that have reservations (O(1) lookup per cell)
+  const datesWithReservations = useMemo(() => {
+    const dateSet = new Set<string>();
+    for (const reservation of reservations) {
+      if (reservation.status === 'cancelled') continue;
+      const checkIn = parseStringToDate(reservation.check_in);
+      const checkOut = parseStringToDate(reservation.check_out);
+      const cursor = new Date(checkIn);
+      while (cursor <= checkOut) {
+        dateSet.add(`${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    return dateSet;
+  }, [reservations]);
+
+  const hasReservationsModifier = useCallback(
+    (date: Date) => datesWithReservations.has(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`),
+    [datesWithReservations]
+  );
+
+  // Pre-compute guest/room lookup maps
+  const guestMap = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
+  const roomMap = useMemo(() => new Map(rooms.map(r => [r.id, r])), [rooms]);
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -30,15 +55,13 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
     }
   };
 
-  const getReservationsForDate = (date: Date) => {
-    return reservations.filter(reservation => {
+  const selectedDateReservations = useMemo(() => {
+    return reservations.filter((reservation) => {
       const checkIn = parseStringToDate(reservation.check_in);
       const checkOut = parseStringToDate(reservation.check_out);
-      return date >= checkIn && date <= checkOut;
+      return selectedDate >= checkIn && selectedDate <= checkOut;
     });
-  };
-
-  const selectedDateReservations = getReservationsForDate(selectedDate);
+  }, [reservations, selectedDate]);
 
   // When searching, show all matching reservations; when not searching, show only selected date reservations
   const displayedReservations = useMemo(() => {
@@ -49,8 +72,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
     const searchLower = searchTerm.toLowerCase().trim();
     
     return baseReservations.filter(reservation => {
-      const guest = guests.find(g => g.id === reservation.guest_id);
-      const room = rooms.find(r => r.id === reservation.room_id);
+      const guest = guestMap.get(reservation.guest_id);
+      const room = roomMap.get(reservation.room_id);
       
       if (!guest) return false;
       
@@ -68,7 +91,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
         reservationId.includes(searchLower)
       );
     });
-  }, [searchTerm, reservations, selectedDateReservations, guests, rooms]);
+  }, [searchTerm, reservations, selectedDateReservations, guestMap, roomMap]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -144,7 +167,7 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
             locale={es}
             className="rounded-md border bg-white/50"
             modifiers={{
-              hasReservations: (date) => getReservationsForDate(date).length > 0,
+              hasReservations: hasReservationsModifier,
             }}
             modifiersStyles={{
               hasReservations: {
@@ -194,8 +217,8 @@ export const HotelCalendar = ({ reservations, rooms, guests, onAddReservation, o
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {displayedReservations.map((reservation) => {
-                const guest = guests.find(g => g.id === reservation.guest_id);
-                const room = rooms.find(r => r.id === reservation.room_id);
+                const guest = guestMap.get(reservation.guest_id);
+                const room = roomMap.get(reservation.room_id);
                 const isCheckIn = isSameDay(parseStringToDate(reservation.check_in), selectedDate);
                 const isCheckOut = isSameDay(parseStringToDate(reservation.check_out), selectedDate);
                 const guestColorClass = getGuestColor(reservation.guest_id);
