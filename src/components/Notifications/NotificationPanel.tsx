@@ -27,7 +27,12 @@ interface Notification {
 }
 
 export const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
-  const { reservations, guests, rooms, updateReservation, updateRoom } = useHotelData();
+  const { reservations, guests, rooms, updateReservation, updateRoom } = useHotelData({
+    guests: true,
+    rooms: true,
+    reservations: true,
+    reservationGroups: false,
+  });
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { toast } = useToast();
 
