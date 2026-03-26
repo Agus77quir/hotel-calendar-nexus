@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Room, Guest, Reservation } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 import { hasDateOverlap, validateReservationDates } from '@/utils/reservationValidation';
@@ -57,7 +57,29 @@ export const useReservationForm = ({
   };
 
   // Validate all required fields - ENHANCED VALIDATION
-  const validateForm = () => {
+  const selectedRoom = useMemo(() => rooms.find(r => r.id === formData.room_id), [rooms, formData.room_id]);
+  const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
+  const selectedGuest = useMemo(() => guests.find(g => g.id === formData.guest_id), [guests, formData.guest_id]);
+
+  const roomAvailabilityMap = useMemo(() => {
+    const hasDates = Boolean(formData.check_in && formData.check_out);
+
+    return Object.fromEntries(
+      rooms.map((room) => {
+        const isAvailable = room.status === 'available' && (!hasDates || !hasDateOverlap(
+          room.id,
+          formData.check_in,
+          formData.check_out,
+          reservations,
+          reservation?.id
+        ));
+
+        return [room.id, isAvailable];
+      })
+    );
+  }, [rooms, formData.check_in, formData.check_out, reservations, reservation?.id]);
+
+  const validationErrors = useMemo(() => {
     const errors: string[] = [];
     
     if (!formData.guest_id) {
@@ -109,11 +131,11 @@ export const useReservationForm = ({
     }
     
     return errors;
-  };
+  }, [formData, today, reservations, reservation?.id, rooms, selectedRoom]);
 
-  const isFormValid = () => {
-    return validateForm().length === 0;
-  };
+  const validateForm = useCallback(() => validationErrors, [validationErrors]);
+
+  const isFormValid = useCallback(() => validationErrors.length === 0, [validationErrors]);
 
   useEffect(() => {
     if (reservation && mode === 'edit') {
@@ -145,42 +167,17 @@ export const useReservationForm = ({
     setAvailabilityError('');
   }, [reservation, mode, isOpen, guests]);
 
-  // Get selected room details
-  const selectedRoom = rooms.find(r => r.id === formData.room_id);
-  const maxCapacity = selectedRoom ? selectedRoom.capacity : 1;
-
-  // Get selected guest details
-  const selectedGuest = guests.find(g => g.id === formData.guest_id);
-
   // Auto-suggest best available room when dates change
-  const getBestAvailableRoom = () => {
-    if (!formData.check_in || !formData.check_out) {
-      return rooms.filter(room => room.status === 'available');
-    }
+  const availableRooms = useMemo(() => {
+    const available = rooms.filter(room => roomAvailabilityMap[room.id]);
 
-    const availableRooms = rooms.filter(room => {
-      if (room.status !== 'available') return false;
-
-      const hasOverlap = hasDateOverlap(
-        room.id, 
-        formData.check_in, 
-        formData.check_out, 
-        reservations,
-        reservation?.id
-      );
-      
-      return !hasOverlap;
-    });
-
-    return availableRooms.sort((a, b) => {
+    return available.sort((a, b) => {
       if (a.capacity !== b.capacity) {
         return a.capacity - b.capacity;
       }
       return a.price - b.price;
     });
-  };
-
-  const availableRooms = getBestAvailableRoom();
+  }, [rooms, roomAvailabilityMap]);
 
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
@@ -193,7 +190,7 @@ export const useReservationForm = ({
   }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
 
   // Handle room change and set guest count to maximum capacity - ENHANCED
-  const handleRoomChange = (roomId: string) => {
+  const handleRoomChange = useCallback((roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     const newMaxCapacity = room ? room.capacity : 1;
     
@@ -215,7 +212,6 @@ export const useReservationForm = ({
           description: errorMsg,
           variant: 'destructive',
         });
-        console.error('Room overlap detected:', errorMsg);
         return;
       }
     }
@@ -228,13 +224,10 @@ export const useReservationForm = ({
     }));
     
     setAvailabilityError('');
-    console.log('Room selected successfully:', roomId, 'capacity:', newMaxCapacity);
-  };
+  }, [formData.check_in, formData.check_out, reservation?.id, reservations, rooms, toast]);
 
   // Handle date changes - CORREGIDO para mantener fechas exactas
-  const handleDateChange = (field: 'check_in' | 'check_out', value: string) => {
-    console.log(`Date change for ${field}:`, value, 'today:', today);
-    
+  const handleDateChange = useCallback((field: 'check_in' | 'check_out', value: string) => {
     // Validar solo si es check_in y la fecha es realmente anterior (no igual)
     if (field === 'check_in' && value && value < today) {
       setAvailabilityError('La fecha de check-in no puede ser anterior a hoy');
@@ -277,22 +270,18 @@ export const useReservationForm = ({
     });
     
     setAvailabilityError('');
-  };
+  }, [today, mode, reservation?.id, reservations, rooms, toast]);
 
   // Simple form change handler
-  const handleFormChange = (field: string, value: any) => {
-    console.log(`Form field changed: ${field} =`, value);
-    
-    setFormData(prev => ({
+  const handleFormChange = useCallback((field: string, value: any) => {
+    setFormData(prev => (prev[field as keyof typeof prev] === value ? prev : {
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
   // Calculate total with proper date handling and single occupancy pricing
-  const calculateTotal = () => {
-    const selectedRoom = rooms.find(r => r.id === formData.room_id);
-    
+  const calculateTotal = useCallback(() => {
     if (!selectedRoom || !formData.check_in || !formData.check_out) return { subtotal: 0, discount: 0, total: 0 };
     
     const nights = calculateDaysDifference(formData.check_in, formData.check_out);
@@ -304,14 +293,12 @@ export const useReservationForm = ({
     const discountAmount = formData.discount_percentage > 0 ? (subtotal * formData.discount_percentage) / 100 : 0;
     const total = subtotal - discountAmount;
     
-    console.log('Calculate total - nights:', nights, 'guests:', formData.guests_count, 'roomPrice:', roomPrice, 'subtotal:', subtotal, 'discount%:', formData.discount_percentage, 'discountAmount:', discountAmount, 'total:', total);
-    
     return {
       subtotal,
       discount: discountAmount,
       total
     };
-  };
+  }, [selectedRoom, formData.check_in, formData.check_out, formData.guests_count, formData.discount_percentage]);
 
   const validateDates = () => {
     return validateReservationDates(formData.check_in, formData.check_out, today);
@@ -326,6 +313,8 @@ export const useReservationForm = ({
     selectedGuest,
     maxCapacity,
     availableRooms,
+    roomAvailabilityMap,
+    validationErrors,
     setAvailabilityError,
     setIsSubmitting,
     handleRoomChange,

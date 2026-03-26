@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,6 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsIOS } from '@/hooks/use-mobile';
 import { formatSelectedDateForBuenosAires, parseStringToDate } from '@/utils/dateUtils';
-import { hasDateOverlap } from '@/utils/reservationValidation';
 
 interface ReservationFormFieldsProps {
   formData: {
@@ -32,6 +31,7 @@ interface ReservationFormFieldsProps {
   };
   rooms: Room[];
   availableRooms: Room[];
+  availabilityByRoomId: Record<string, boolean>;
   guests: Guest[];
   reservations: Reservation[];
   selectedRoom: Room | undefined;
@@ -49,6 +49,7 @@ export const ReservationFormFields = ({
   formData,
   rooms,
   availableRooms,
+  availabilityByRoomId,
   guests,
   reservations,
   selectedRoom,
@@ -81,7 +82,6 @@ export const ReservationFormFields = ({
       // Convertir la fecha seleccionada directamente a string YYYY-MM-DD
       const dateString = formatSelectedDateForBuenosAires(date);
       
-      console.log(`Calendar date selected for ${field}:`, date, 'Formatted as:', dateString);
       onDateChange(field, dateString);
       
       // Close the calendar after selection
@@ -93,8 +93,10 @@ export const ReservationFormFields = ({
     }
   };
 
-// Get all rooms for search functionality
-  const allRooms = rooms;
+  const sortedRooms = useMemo(
+    () => [...rooms].sort((a, b) => parseInt(a.number) - parseInt(b.number)),
+    [rooms]
+  );
 
   return (
     <div className="space-y-6">
@@ -111,7 +113,7 @@ export const ReservationFormFields = ({
             <Label className="block mb-2">Buscar Huésped *</Label>
             <GuestSearchInput
               guests={guests}
-              rooms={allRooms}
+                rooms={rooms}
               reservations={reservations}
               selectedGuestId={formData.guest_id}
               onGuestSelect={(guestId) => onFormChange('guest_id', guestId)}
@@ -288,14 +290,8 @@ export const ReservationFormFields = ({
                 <SelectValue placeholder="Seleccionar habitación disponible" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                {rooms
-                  .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-                  .map((room) => {
-                    const hasDates = !!(formData.check_in && formData.check_out);
-                    const isFree = hasDates
-                      ? !hasDateOverlap(room.id, formData.check_in, formData.check_out, reservations)
-                      : room.status === 'available';
-                    const isAvailable = room.status === 'available' && isFree;
+                {sortedRooms.map((room) => {
+                    const isAvailable = availabilityByRoomId[room.id] ?? false;
                     return (
                       <SelectItem key={room.id} value={room.id} className={cn("py-3", !isAvailable && "opacity-60")}> 
                         <div className="flex items-center justify-between w-full min-w-0">
