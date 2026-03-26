@@ -38,7 +38,12 @@ interface ReservationViewModalProps {
 }
 
 export const ReservationViewModal = ({ isOpen, onClose, reservation, guest, room, onEdit }: ReservationViewModalProps) => {
-  const { reservations: allReservations } = useHotelData();
+  const { reservations: allReservations } = useHotelData({
+    guests: false,
+    rooms: false,
+    reservations: true,
+    reservationGroups: false,
+  });
   if (!reservation || !guest || !room) return null;
 
   // Detectar si esta reserva forma parte de una reserva múltiple (mismo huésped y mismas fechas)

@@ -34,7 +34,12 @@ export const ReservationModal = ({
   mode,
   preselectedGuestId
 }: ReservationModalProps) => {
-  const { reservations, addGuest, updateGuest, addReservation, addReservationGroup } = useHotelData();
+  const { reservations, addGuest, updateGuest, addReservation, addReservationGroup } = useHotelData({
+    guests: false,
+    rooms: false,
+    reservations: true,
+    reservationGroups: false,
+  });
   const { user } = useAuth();
   const [showNewGuestForm, setShowNewGuestForm] = useState(false);
   const [showMultiRoomModal, setShowMultiRoomModal] = useState(false);

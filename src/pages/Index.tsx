@@ -18,7 +18,12 @@ import { useIsIPhone } from '@/hooks/use-mobile';
 
 const Index = () => {
   const { user } = useAuth();
-  const { stats, rooms, guests, reservations, addReservation, isLoading } = useHotelData();
+  const { stats, rooms, guests, reservations, addReservation, isLoading } = useHotelData({
+    guests: true,
+    rooms: true,
+    reservations: true,
+    reservationGroups: false,
+  });
   const { setOpenMobile } = useSidebar();
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -64,7 +64,12 @@ export const ReservationsTable = ({
   onNewReservationForGuest,
   onStatusChange,
 }: ReservationsTableProps) => {
-  const { updateGuest, addReservation, addReservationGroup } = useHotelData();
+  const { updateGuest, addReservation, addReservationGroup } = useHotelData({
+    guests: false,
+    rooms: false,
+    reservations: false,
+    reservationGroups: false,
+  });
   const { toast } = useToast();
   const { user } = useAuth();
   const [viewModal, setViewModal] = useState<{
