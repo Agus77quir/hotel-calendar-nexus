@@ -59,6 +59,7 @@ export const ReservationModal = ({
     selectedGuest,
     maxCapacity,
     availableRooms,
+    roomAvailabilityMap,
     setAvailabilityError,
     setIsSubmitting,
     handleRoomChange,
