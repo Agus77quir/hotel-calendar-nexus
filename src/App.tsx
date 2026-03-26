@@ -32,6 +32,11 @@ const NotFound = lazy(loadNotFound);
 
 const queryClient = new QueryClient();
 
+type IdleCapableGlobal = typeof globalThis & {
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 const warmRouteChunks = () => {
   void loadIndex();
   void loadGuestsPage();
@@ -47,15 +52,16 @@ const warmRouteChunks = () => {
 
 const RouteChunkPreloader = () => {
   useEffect(() => {
+    const idleGlobal = globalThis as IdleCapableGlobal;
     const preload = () => warmRouteChunks();
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(preload, { timeout: 1200 });
-      return () => window.cancelIdleCallback(idleId);
+    if (idleGlobal.requestIdleCallback) {
+      const idleId = idleGlobal.requestIdleCallback(preload, { timeout: 1200 });
+      return () => idleGlobal.cancelIdleCallback?.(idleId);
     }
 
-    const timeoutId = window.setTimeout(preload, 300);
-    return () => window.clearTimeout(timeoutId);
+    const timeoutId = globalThis.setTimeout(preload, 300);
+    return () => globalThis.clearTimeout(timeoutId);
   }, []);
 
   return null;
