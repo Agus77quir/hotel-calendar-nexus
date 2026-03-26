@@ -17,11 +17,6 @@ const ReservationModal = lazy(() => import('@/components/Reservations/Reservatio
 const StatsCards = lazy(() => import('@/components/Dashboard/StatsCards').then((module) => ({ default: module.StatsCards })));
 const ReceptionistStatsCards = lazy(() => import('@/components/Dashboard/ReceptionistStatsCards').then((module) => ({ default: module.ReceptionistStatsCards })));
 
-type IdleCapableGlobal = typeof globalThis & {
-  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-  cancelIdleCallback?: (handle: number) => void;
-};
-
 const Index = () => {
   const { user } = useAuth();
   const { stats, rooms, reservations, addReservation, isLoading } = useHotelData({
@@ -70,16 +65,9 @@ const Index = () => {
   }, [isIPhone]);
 
   useEffect(() => {
-    const idleGlobal = globalThis as IdleCapableGlobal;
-    const showSections = () => setShowDeferredSections(true);
-
-    if (idleGlobal.requestIdleCallback) {
-      const idleId = idleGlobal.requestIdleCallback(showSections, { timeout: 300 });
-      return () => idleGlobal.cancelIdleCallback?.(idleId);
-    }
-
-    const timeoutId = window.setTimeout(showSections, 120);
-    return () => window.clearTimeout(timeoutId);
+    // Show deferred sections immediately on next frame
+    const rafId = requestAnimationFrame(() => setShowDeferredSections(true));
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   const handleQuickAction = (path: string) => {
