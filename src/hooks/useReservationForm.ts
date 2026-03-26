@@ -79,6 +79,18 @@ export const useReservationForm = ({
     );
   }, [rooms, formData.check_in, formData.check_out, reservations, reservation?.id]);
 
+  const selectedRoomHasOverlap = useMemo(() => {
+    if (!formData.room_id || !formData.check_in || !formData.check_out) return false;
+
+    return hasDateOverlap(
+      formData.room_id,
+      formData.check_in,
+      formData.check_out,
+      reservations,
+      reservation?.id
+    );
+  }, [formData.room_id, formData.check_in, formData.check_out, reservations, reservation?.id]);
+
   const validationErrors = useMemo(() => {
     const errors: string[] = [];
     
@@ -111,19 +123,10 @@ export const useReservationForm = ({
     }
     
     // ENHANCED: Critical room availability check
-    if (formData.room_id && formData.check_in && formData.check_out) {
-      const hasOverlap = hasDateOverlap(
-        formData.room_id, 
-        formData.check_in, 
-        formData.check_out, 
-        reservations,
-        reservation?.id
-      );
-      if (hasOverlap) {
+    if (selectedRoomHasOverlap) {
         const room = rooms.find(r => r.id === formData.room_id);
         const roomNumber = room?.number || formData.room_id;
         errors.push(`La habitación ${roomNumber} ya está reservada para estas fechas. Seleccione otra habitación disponible.`);
-      }
     }
     
     if (selectedRoom && formData.guests_count > selectedRoom.capacity) {
@@ -131,7 +134,7 @@ export const useReservationForm = ({
     }
     
     return errors;
-  }, [formData, today, reservations, reservation?.id, rooms, selectedRoom]);
+  }, [formData, today, rooms, selectedRoom, selectedRoomHasOverlap]);
 
   const validateForm = useCallback(() => validationErrors, [validationErrors]);
 
@@ -181,13 +184,15 @@ export const useReservationForm = ({
 
   // Auto-select best room when dates are set and no room is selected
   useEffect(() => {
-    if (mode === 'create' && !formData.room_id && formData.check_in && formData.check_out && availableRooms.length > 0) {
-      const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
-      if (suitableRoom) {
-        handleRoomChange(suitableRoom.id);
-      }
+    if (mode !== 'create' || formData.room_id || !formData.check_in || !formData.check_out || availableRooms.length === 0) {
+      return;
     }
-  }, [formData.check_in, formData.check_out, formData.guests_count, mode, availableRooms.length]);
+
+    const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
+    if (suitableRoom) {
+      handleRoomChange(suitableRoom.id);
+    }
+  }, [mode, formData.room_id, formData.check_in, formData.check_out, formData.guests_count, availableRooms, handleRoomChange]);
 
   // Handle room change and set guest count to maximum capacity - ENHANCED
   const handleRoomChange = useCallback((roomId: string) => {

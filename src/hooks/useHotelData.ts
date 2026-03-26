@@ -1,4 +1,5 @@
 
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Room, Guest, Reservation, ReservationGroup, HotelStats } from '@/types/hotel';
@@ -19,6 +20,13 @@ const defaultOptions: Required<UseHotelDataOptions> = {
   reservationGroups: true,
 };
 
+const queryConfig = {
+  staleTime: 30000,
+  gcTime: 300000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+};
+
 export const useHotelData = (options?: UseHotelDataOptions) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -32,7 +40,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
     queryKey: ['guests'],
     enabled: queryOptions.guests,
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO HUÉSPEDES');
       const { data, error } = await supabase
         .from('guests')
         .select('*')
@@ -46,20 +53,15 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
         discount_percentage: Number(guest.discount_percentage) || 0
       })) as Guest[];
 
-      console.log('✅ HUÉSPEDES CARGADOS:', processedData.length);
       return processedData;
     },
-    staleTime: 30000,
-    gcTime: 300000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    ...queryConfig,
   });
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
     enabled: queryOptions.rooms,
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO HABITACIONES');
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -76,20 +78,15 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
         amenities: room.amenities || []
       })) as Room[];
 
-      console.log('✅ HABITACIONES CARGADAS:', processedData.length);
       return processedData;
     },
-    staleTime: 30000,
-    gcTime: 300000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    ...queryConfig,
   });
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
     enabled: queryOptions.reservations,
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO RESERVACIONES');
       const { data, error } = await supabase
         .from('reservations')
         .select('*')
@@ -104,27 +101,15 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
         total_amount: Number(reservation.total_amount)
       })) as Reservation[];
 
-      console.log('✅ RESERVACIONES CARGADAS:', {
-        total: processedData.length,
-        confirmed: processedData.filter(r => r.status === 'confirmed').length,
-        checkedIn: processedData.filter(r => r.status === 'checked-in').length,
-        checkedOut: processedData.filter(r => r.status === 'checked-out').length,
-        timestamp: new Date().toISOString()
-      });
-
       return processedData;
     },
-    staleTime: 30000,
-    gcTime: 300000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    ...queryConfig,
   });
 
   const { data: reservationGroups = [], isLoading: reservationGroupsLoading } = useQuery({
     queryKey: ['reservation_groups'],
     enabled: queryOptions.reservationGroups,
     queryFn: async () => {
-      console.log('🔄 CONSULTANDO GRUPOS DE RESERVACIONES');
       const { data, error } = await (supabase as any)
         .from('reservation_groups')
         .select('*')
@@ -139,38 +124,49 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
         total_amount: Number(group.total_amount)
       })) as ReservationGroup[];
 
-      console.log('✅ GRUPOS DE RESERVACIONES CARGADOS:', processedData.length);
       return processedData;
     },
-    staleTime: 30000,
-    gcTime: 300000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    ...queryConfig,
   });
 
-  // Estadísticas calculadas
-  const today = new Date().toISOString().split('T')[0];
-  
-  const stats: HotelStats = {
-    totalRooms: rooms.length,
-    occupiedRooms: rooms.filter(r => r.status === 'occupied').length,
-    availableRooms: rooms.filter(r => r.status === 'available').length,
-    maintenanceRooms: rooms.filter(r => r.status === 'maintenance').length,
-    totalReservations: reservations.length,
-    todayCheckIns: reservations.filter(r => 
-      r.check_in === today && r.status === 'confirmed'
-    ).length,
-    todayCheckOuts: reservations.filter(r => 
-      r.check_out === today && r.status === 'checked-in'
-    ).length,
-    revenue: reservations.reduce((sum, r) => sum + Number(r.total_amount || 0), 0)
-  };
+  const stats: HotelStats = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+
+    let occupiedRooms = 0;
+    let availableRooms = 0;
+    let maintenanceRooms = 0;
+
+    for (const room of rooms) {
+      if (room.status === 'occupied') occupiedRooms += 1;
+      else if (room.status === 'available') availableRooms += 1;
+      else if (room.status === 'maintenance') maintenanceRooms += 1;
+    }
+
+    let todayCheckIns = 0;
+    let todayCheckOuts = 0;
+    let revenue = 0;
+
+    for (const reservation of reservations) {
+      if (reservation.check_in === today && reservation.status === 'confirmed') todayCheckIns += 1;
+      if (reservation.check_out === today && reservation.status === 'checked-in') todayCheckOuts += 1;
+      revenue += Number(reservation.total_amount || 0);
+    }
+
+    return {
+      totalRooms: rooms.length,
+      occupiedRooms,
+      availableRooms,
+      maintenanceRooms,
+      totalReservations: reservations.length,
+      todayCheckIns,
+      todayCheckOuts,
+      revenue,
+    };
+  }, [rooms, reservations]);
 
   // Mutación optimizada para check-in/check-out
   const updateReservationMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Omit<Reservation, 'id'>>) => {
-      console.log('🔄 ACTUALIZANDO RESERVA:', id, data);
-      
       // Obtener reserva actual
       const { data: currentReservation, error: fetchError } = await supabase
         .from('reservations')
@@ -208,22 +204,16 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
           .update({ status: roomStatus })
           .eq('id', currentReservation.room_id);
 
-        if (roomError) console.error('❌ Error actualizando habitación:', roomError);
+        if (roomError) throw roomError;
       }
       
       return updatedReservation;
     },
     onSuccess: async () => {
-      console.log('✅ RESERVA ACTUALIZADA - REFRESCANDO DATOS');
-      
-      // Invalidar las queries específicas de manera ordenada
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      
-      console.log('🔄 DATOS REFRESCADOS CORRECTAMENTE');
     },
     onError: (error) => {
-      console.error('❌ ERROR EN MUTACIÓN:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la reserva",
@@ -314,7 +304,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
       });
     },
     onError: (error) => {
-      console.error('❌ Error creando habitación:', error);
       toast({
         title: "Error",
         description: "No se pudo crear la habitación",
@@ -325,8 +314,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
 
   const updateRoomMutation = useMutation({
     mutationFn: async ({ id, updateGroupPrice = true, ...roomData }: { id: string; updateGroupPrice?: boolean } & Partial<Omit<Room, 'id'>>) => {
-      console.log('🔄 ACTUALIZANDO HABITACIÓN:', id, roomData, 'Actualizar grupo:', updateGroupPrice);
-      
       // If price is being updated and updateGroupPrice is true, update all rooms of the same type
       if (roomData.price !== undefined && updateGroupPrice) {
         // First get the current room to know its type
@@ -345,8 +332,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
           .eq('type', currentRoom.type);
 
         if (bulkUpdateError) throw bulkUpdateError;
-
-        console.log(`✅ PRECIO ACTUALIZADO para todas las habitaciones tipo: ${currentRoom.type}`);
       }
 
       // Then update the specific room with all the provided data
@@ -375,7 +360,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
       }
     },
     onError: (error) => {
-      console.error('❌ Error actualizando habitación:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar la habitación",
@@ -400,27 +384,17 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
 
   const addReservationMutation = useMutation({
     mutationFn: async (reservationData: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('🔄 CREANDO NUEVA RESERVA:', reservationData);
       const { data, error } = await supabase
         .from('reservations')
         .insert([reservationData])
         .select()
         .single();
-      if (error) {
-        console.error('❌ ERROR EN INSERT RESERVA:', error);
-        throw error;
-      }
-      console.log('✅ RESERVA CREADA EXITOSAMENTE:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: async () => {
-      console.log('✅ REFRESCANDO DATOS DESPUÉS DE CREAR RESERVA');
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-    },
-    onError: (error) => {
-      console.error('❌ ERROR EN MUTACIÓN DE RESERVA:', error);
-      // No mostrar toast aquí - se maneja en el componente
     },
   });
 
@@ -439,9 +413,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
       roomsData: Array<{ roomId: string; guestsCount: number; totalAmount: number }>;
       specialRequests?: string;
     }) => {
-      console.log('🔄 CREANDO GRUPO DE RESERVAS MÚLTIPLES');
-      console.log('📋 DATOS:', { guestId, checkIn, checkOut, habitaciones: roomsData.length });
-
       // 1. Calcular total del grupo
       const totalAmount = roomsData.reduce((sum, room) => sum + room.totalAmount, 0);
 
@@ -465,11 +436,8 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
           .single();
 
         if (groupError) {
-          console.error('❌ ERROR CREANDO GRUPO:', groupError);
           throw groupError;
         }
-
-        console.log('✅ GRUPO CREADO:', group.id);
 
         // 3. Crear las reservas individuales vinculadas al grupo
         const reservationsData = roomsData.map((room) => ({
@@ -490,8 +458,6 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
           .select();
 
         if (reservationsError) {
-          console.error('❌ ERROR CREANDO RESERVAS DEL GRUPO:', reservationsError);
-          
           // Eliminar el grupo si falla la creación de reservas
           await (supabase as any)
             .from('reservation_groups')
@@ -501,23 +467,17 @@ export const useHotelData = (options?: UseHotelDataOptions) => {
           throw reservationsError;
         }
 
-        console.log('✅ RESERVAS DEL GRUPO CREADAS:', reservations.length);
-
         return {
           group,
           reservations,
           created: reservations.length
         };
     },
-    onSuccess: async (result) => {
-      console.log('✅ GRUPO DE RESERVAS MÚLTIPLES CREADO - REFRESCANDO DATOS');
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['reservations'] });
       await queryClient.invalidateQueries({ queryKey: ['reservation_groups'] });
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
-    onError: (error) => {
-      console.error('❌ ERROR CREANDO GRUPO DE RESERVAS:', error);
-    }
   });
 
   const deleteReservationMutation = useMutation({
