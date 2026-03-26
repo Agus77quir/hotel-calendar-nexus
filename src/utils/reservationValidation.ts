@@ -10,9 +10,7 @@ export const hasDateOverlap = (
   currentReservationId?: string
 ) => {
   if (!checkIn || !checkOut || !roomId) return false;
-  
-  console.log('Checking overlap for room:', roomId, 'dates:', checkIn, 'to', checkOut);
-  
+
   // VALIDACIÓN ALINEADA CON BACKEND (intervalos mitad-abiertos [check_in, check_out))
   // Se considera solapado SOLO cuando los rangos se intersectan estrictamente.
   // Las fechas adyacentes (nuevo.check_in === existente.check_out o nuevo.check_out === existente.check_in) son válidas y NO solapan.
@@ -30,14 +28,7 @@ export const hasDateOverlap = (
     const existingCheckOut = existingReservation.check_out;
 
     const noOverlap = (checkOut <= existingCheckIn) || (checkIn >= existingCheckOut);
-    const overlap = !noOverlap;
-
-    console.log('Comparando contra reserva:', existingReservation.id,
-      'existente:', existingCheckIn, 'a', existingCheckOut,
-      'nuevo:', checkIn, 'a', checkOut,
-      'solapa:', overlap);
-
-    return overlap;
+    return !noOverlap;
   });
 };
 

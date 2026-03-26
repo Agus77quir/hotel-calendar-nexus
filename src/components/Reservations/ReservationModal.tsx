@@ -59,6 +59,7 @@ export const ReservationModal = ({
     selectedGuest,
     maxCapacity,
     availableRooms,
+    roomAvailabilityMap,
     setAvailabilityError,
     setIsSubmitting,
     handleRoomChange,
@@ -323,6 +324,7 @@ export const ReservationModal = ({
                   guests={guests}
                   reservations={reservations}
                   availableRooms={availableRooms}
+                  availabilityByRoomId={roomAvailabilityMap}
                   selectedRoom={selectedRoom}
                   selectedGuest={selectedGuest}
                   maxCapacity={maxCapacity}
