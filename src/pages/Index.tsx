@@ -1,29 +1,36 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatsCards } from '@/components/Dashboard/StatsCards';
-import { ReceptionistStatsCards } from '@/components/Dashboard/ReceptionistStatsCards';
-import { DailyReservationsCard } from '@/components/Dashboard/DailyReservationsCard';
-import { CalendarView } from '@/components/Calendar/CalendarView';
-import { ReportExportButtons } from '@/components/Reports/ReportExportButtons';
-import { ReservationModal } from '@/components/Reservations/ReservationModal';
 import { useHotelData } from '@/hooks/useHotelData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building2, Calendar, TrendingUp, Plus } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsIPhone } from '@/hooks/use-mobile';
 
+const DailyReservationsCard = lazy(() => import('@/components/Dashboard/DailyReservationsCard').then((module) => ({ default: module.DailyReservationsCard })));
+const CalendarView = lazy(() => import('@/components/Calendar/CalendarView').then((module) => ({ default: module.CalendarView })));
+const ReportExportButtons = lazy(() => import('@/components/Reports/ReportExportButtons').then((module) => ({ default: module.ReportExportButtons })));
+const ReservationModal = lazy(() => import('@/components/Reservations/ReservationModal').then((module) => ({ default: module.ReservationModal })));
+const StatsCards = lazy(() => import('@/components/Dashboard/StatsCards').then((module) => ({ default: module.StatsCards })));
+const ReceptionistStatsCards = lazy(() => import('@/components/Dashboard/ReceptionistStatsCards').then((module) => ({ default: module.ReceptionistStatsCards })));
+
+type IdleCapableGlobal = typeof globalThis & {
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 const Index = () => {
   const { user } = useAuth();
-  const { stats, rooms, guests, reservations, addReservation, isLoading } = useHotelData({
-    guests: true,
+  const { stats, rooms, reservations, addReservation, isLoading } = useHotelData({
+    guests: false,
     rooms: true,
     reservations: true,
     reservationGroups: false,
   });
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
   const { setOpenMobile } = useSidebar();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -36,6 +43,13 @@ const Index = () => {
   });
 
   const isReceptionist = user?.role === 'receptionist';
+  const shouldLoadGuests = showDeferredSections || reservationModal.isOpen;
+  const { guests } = useHotelData({
+    guests: shouldLoadGuests,
+    rooms: false,
+    reservations: false,
+    reservationGroups: false,
+  });
 
   // iPhone-specific optimizations
   useEffect(() => {
@@ -54,6 +68,19 @@ const Index = () => {
       };
     }
   }, [isIPhone]);
+
+  useEffect(() => {
+    const idleGlobal = globalThis as IdleCapableGlobal;
+    const showSections = () => setShowDeferredSections(true);
+
+    if (idleGlobal.requestIdleCallback) {
+      const idleId = idleGlobal.requestIdleCallback(showSections, { timeout: 300 });
+      return () => idleGlobal.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = window.setTimeout(showSections, 120);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const handleQuickAction = (path: string) => {
     setOpenMobile(false);
@@ -176,41 +203,46 @@ const Index = () => {
       </Card>
 
       {/* Daily Reservations Section */}
-      <div className="mb-4 sm:mb-6">
-        <DailyReservationsCard 
-          reservations={reservations}
-          rooms={rooms}
-          guests={guests}
-          selectedDate={selectedDate}
-        />
-      </div>
+      {showDeferredSections ? (
+        <Suspense fallback={<div className="py-4 text-sm text-muted-foreground">Cargando panel...</div>}>
+          <div className="mb-4 sm:mb-6">
+            <DailyReservationsCard 
+              reservations={reservations}
+              rooms={rooms}
+              guests={guests}
+              selectedDate={selectedDate}
+            />
+          </div>
 
-      {/* Calendar Section */}
-      <div className="mb-4 sm:mb-6">
-        <CalendarView 
-          reservations={reservations}
-          onAddReservation={handleNewReservation}
-          onDateSelect={handleDateSelect}
-          selectedDate={selectedDate}
-        />
-      </div>
+          <div className="mb-4 sm:mb-6">
+            <CalendarView 
+              reservations={reservations}
+              onAddReservation={handleNewReservation}
+              onDateSelect={handleDateSelect}
+              selectedDate={selectedDate}
+            />
+          </div>
 
-      {/* Export Buttons Section - Only for admins */}
-      {!isReceptionist && (
-        <div className="flex justify-end">
-          <ReportExportButtons 
-            reservations={reservations}
-            guests={guests}
-            rooms={rooms}
-          />
-        </div>
-      )}
+          {!isReceptionist && (
+            <div className="flex justify-end">
+              <ReportExportButtons 
+                reservations={reservations}
+                guests={guests}
+                rooms={rooms}
+              />
+            </div>
+          )}
 
-      {/* Stats Cards */}
-      {isReceptionist ? (
-        <ReceptionistStatsCards stats={stats} rooms={rooms} reservations={reservations} guests={guests} />
+          {isReceptionist ? (
+            <ReceptionistStatsCards stats={stats} rooms={rooms} reservations={reservations} guests={guests} />
+          ) : (
+            <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+          )}
+        </Suspense>
       ) : (
-        <StatsCards stats={stats} rooms={rooms} reservations={reservations} />
+        <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+          Preparando panel...
+        </div>
       )}
 
       {/* Quick Actions Card */}
@@ -255,14 +287,18 @@ const Index = () => {
       </Card>
 
       {/* Reservation Modal */}
-      <ReservationModal
-        isOpen={reservationModal.isOpen}
-        onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
-        onSave={handleSaveReservation}
-        rooms={rooms}
-        guests={guests}
-        mode={reservationModal.mode}
-      />
+      {reservationModal.isOpen && (
+        <Suspense fallback={null}>
+          <ReservationModal
+            isOpen={reservationModal.isOpen}
+            onClose={() => setReservationModal({ isOpen: false, mode: 'create' })}
+            onSave={handleSaveReservation}
+            rooms={rooms}
+            guests={guests}
+            mode={reservationModal.mode}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
