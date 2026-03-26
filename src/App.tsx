@@ -4,25 +4,72 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/Layout/AppLayout";
 
-const Index = lazy(() => import("./pages/Index"));
-const GuestsPage = lazy(() => import("./pages/GuestsPage"));
-const RoomsPage = lazy(() => import("./pages/RoomsPage"));
-const ReservationsPage = lazy(() => import("./pages/ReservationsPage"));
-const CheckInOutPage = lazy(() => import("./pages/CheckInOutPage"));
-const CalendarPage = lazy(() => import("./pages/CalendarPage"));
-const AuditPage = lazy(() => import("./pages/AuditPage"));
-const HistoryPage = lazy(() => import("./pages/HistoryPage"));
-const Login = lazy(() => import("./pages/Login"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const loadIndex = () => import("./pages/Index");
+const loadGuestsPage = () => import("./pages/GuestsPage");
+const loadRoomsPage = () => import("./pages/RoomsPage");
+const loadReservationsPage = () => import("./pages/ReservationsPage");
+const loadCheckInOutPage = () => import("./pages/CheckInOutPage");
+const loadCalendarPage = () => import("./pages/CalendarPage");
+const loadAuditPage = () => import("./pages/AuditPage");
+const loadHistoryPage = () => import("./pages/HistoryPage");
+const loadLogin = () => import("./pages/Login");
+const loadNotFound = () => import("./pages/NotFound");
+
+const Index = lazy(loadIndex);
+const GuestsPage = lazy(loadGuestsPage);
+const RoomsPage = lazy(loadRoomsPage);
+const ReservationsPage = lazy(loadReservationsPage);
+const CheckInOutPage = lazy(loadCheckInOutPage);
+const CalendarPage = lazy(loadCalendarPage);
+const AuditPage = lazy(loadAuditPage);
+const HistoryPage = lazy(loadHistoryPage);
+const Login = lazy(loadLogin);
+const NotFound = lazy(loadNotFound);
 
 const queryClient = new QueryClient();
 
+type IdleCapableGlobal = typeof globalThis & {
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
+const warmRouteChunks = () => {
+  void loadIndex();
+  void loadGuestsPage();
+  void loadRoomsPage();
+  void loadReservationsPage();
+  void loadCheckInOutPage();
+  void loadCalendarPage();
+  void loadAuditPage();
+  void loadHistoryPage();
+  void loadLogin();
+  void loadNotFound();
+};
+
+const RouteChunkPreloader = () => {
+  useEffect(() => {
+    const idleGlobal = globalThis as IdleCapableGlobal;
+    const preload = () => warmRouteChunks();
+
+    if (idleGlobal.requestIdleCallback) {
+      const idleId = idleGlobal.requestIdleCallback(preload, { timeout: 1200 });
+      return () => idleGlobal.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = globalThis.setTimeout(preload, 300);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, []);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <RouteChunkPreloader />
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
