@@ -19,7 +19,12 @@ import { Guest } from '@/types/hotel';
 import { useToast } from '@/hooks/use-toast';
 
 const GuestsPage = () => {
-  const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData();
+  const { guests, addGuest, updateGuest, deleteGuest, isLoading } = useHotelData({
+    guests: true,
+    rooms: false,
+    reservations: false,
+    reservationGroups: false,
+  });
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [guestModal, setGuestModal] = useState<{

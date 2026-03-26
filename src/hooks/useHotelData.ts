@@ -5,9 +5,24 @@ import { Room, Guest, Reservation, ReservationGroup, HotelStats } from '@/types/
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeUpdates } from './useRealtimeUpdates';
 
-export const useHotelData = () => {
+type UseHotelDataOptions = {
+  guests?: boolean;
+  rooms?: boolean;
+  reservations?: boolean;
+  reservationGroups?: boolean;
+};
+
+const defaultOptions: Required<UseHotelDataOptions> = {
+  guests: true,
+  rooms: true,
+  reservations: true,
+  reservationGroups: true,
+};
+
+export const useHotelData = (options?: UseHotelDataOptions) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryOptions = { ...defaultOptions, ...options };
 
   // Activar tiempo real
   useRealtimeUpdates();
@@ -15,6 +30,7 @@ export const useHotelData = () => {
   // Consultas optimizadas
   const { data: guests = [], isLoading: guestsLoading } = useQuery({
     queryKey: ['guests'],
+    enabled: queryOptions.guests,
     queryFn: async () => {
       console.log('🔄 CONSULTANDO HUÉSPEDES');
       const { data, error } = await supabase
@@ -41,6 +57,7 @@ export const useHotelData = () => {
 
   const { data: rooms = [], isLoading: roomsLoading } = useQuery({
     queryKey: ['rooms'],
+    enabled: queryOptions.rooms,
     queryFn: async () => {
       console.log('🔄 CONSULTANDO HABITACIONES');
       const { data, error } = await supabase
@@ -70,6 +87,7 @@ export const useHotelData = () => {
 
   const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
     queryKey: ['reservations'],
+    enabled: queryOptions.reservations,
     queryFn: async () => {
       console.log('🔄 CONSULTANDO RESERVACIONES');
       const { data, error } = await supabase
@@ -104,6 +122,7 @@ export const useHotelData = () => {
 
   const { data: reservationGroups = [], isLoading: reservationGroupsLoading } = useQuery({
     queryKey: ['reservation_groups'],
+    enabled: queryOptions.reservationGroups,
     queryFn: async () => {
       console.log('🔄 CONSULTANDO GRUPOS DE RESERVACIONES');
       const { data, error } = await (supabase as any)
@@ -529,7 +548,11 @@ export const useHotelData = () => {
     },
   });
 
-  const isLoading = guestsLoading || roomsLoading || reservationsLoading || reservationGroupsLoading;
+  const isLoading =
+    (queryOptions.guests && guestsLoading) ||
+    (queryOptions.rooms && roomsLoading) ||
+    (queryOptions.reservations && reservationsLoading) ||
+    (queryOptions.reservationGroups && reservationGroupsLoading);
 
   return {
     guests,

@@ -4,7 +4,12 @@ import { useHotelData } from '@/hooks/useHotelData';
 import { BackToHomeButton } from '@/components/ui/back-to-home-button';
 
 const CalendarPage = () => {
-  const { reservations, rooms, guests } = useHotelData();
+  const { reservations, rooms, guests } = useHotelData({
+    guests: true,
+    rooms: true,
+    reservations: true,
+    reservationGroups: false,
+  });
 
   return (
     <div className="space-y-6">

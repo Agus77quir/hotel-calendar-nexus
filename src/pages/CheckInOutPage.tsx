@@ -12,7 +12,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Reservation } from '@/types/hotel';
 
 const CheckInOutPage = () => {
-  const { reservations, guests, rooms, updateReservation, isLoading } = useHotelData();
+  const { reservations, guests, rooms, updateReservation, isLoading } = useHotelData({
+    guests: true,
+    rooms: true,
+    reservations: true,
+    reservationGroups: false,
+  });
   const { toast } = useToast();
   const [processing, setProcessing] = useState<Set<string>>(new Set());
 

@@ -15,7 +15,12 @@ interface FloatingGuestSearchProps {
 export const FloatingGuestSearch = ({ isOpen, onClose }: FloatingGuestSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredGuests, setFilteredGuests] = useState<Guest[]>([]);
-  const { guests } = useHotelData();
+  const { guests } = useHotelData({
+    guests: true,
+    rooms: false,
+    reservations: false,
+    reservationGroups: false,
+  });
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
