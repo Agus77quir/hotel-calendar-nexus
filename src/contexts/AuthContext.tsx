@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { User } from '@/types/hotel';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -57,51 +57,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('[Auth] Inicializando autenticación...');
-    let rafId: number | null = null;
-    let timeoutId: number | null = null;
-
-    const finalize = () => {
+    try {
+      const savedUser = localStorage.getItem('hotelUser');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        console.log('[Auth] Usuario restaurado desde localStorage:', parsedUser?.email);
+      } else {
+        console.log('[Auth] No hay usuario guardado en localStorage');
+      }
+    } catch (error) {
+      console.error('[Auth] Error leyendo/parsing localStorage:', error);
+      try {
+        localStorage.removeItem('hotelUser');
+      } catch (storageError) {
+        console.error('[Auth] Error limpiando localStorage:', storageError);
+      }
+    } finally {
       setIsInitialized(true);
       console.log('[Auth] Inicialización completada');
-    };
-
-    try {
-      rafId = requestAnimationFrame(() => {
-        try {
-          const savedUser = localStorage.getItem('hotelUser');
-          if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            setUser(parsedUser);
-            console.log('[Auth] Usuario restaurado desde localStorage:', parsedUser?.email);
-          } else {
-            console.log('[Auth] No hay usuario guardado en localStorage');
-          }
-        } catch (error) {
-          console.error('[Auth] Error leyendo/parsing localStorage:', error);
-          try {
-            localStorage.removeItem('hotelUser');
-          } catch (storageError) {
-            console.error('[Auth] Error limpiando localStorage:', storageError);
-          }
-        } finally {
-          finalize();
-        }
-      });
-
-      // Fallback por si requestAnimationFrame nunca dispara
-      timeoutId = window.setTimeout(() => {
-        console.warn('[Auth] Fallback de inicialización activado');
-        finalize();
-      }, 1500);
-    } catch (error) {
-      console.error('[Auth] Error programando inicialización:', error);
-      finalize();
     }
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
   }, []);
 
   useEffect(() => {
@@ -169,12 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     login,
     logout,
     isAuthenticated: !!user,
-  };
+  }), [user]);
 
   if (!isInitialized) {
     return (

@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/Layout/AppLayout";
 
@@ -32,44 +32,8 @@ const NotFound = lazy(loadNotFound);
 
 const queryClient = new QueryClient();
 
-type IdleCapableGlobal = typeof globalThis & {
-  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-  cancelIdleCallback?: (handle: number) => void;
-};
-
-const warmRouteChunks = () => {
-  void loadIndex();
-  void loadGuestsPage();
-  void loadRoomsPage();
-  void loadReservationsPage();
-  void loadCheckInOutPage();
-  void loadCalendarPage();
-  void loadAuditPage();
-  void loadHistoryPage();
-  void loadLogin();
-  void loadNotFound();
-};
-
-const RouteChunkPreloader = () => {
-  useEffect(() => {
-    const idleGlobal = globalThis as IdleCapableGlobal;
-    const preload = () => warmRouteChunks();
-
-    if (idleGlobal.requestIdleCallback) {
-      const idleId = idleGlobal.requestIdleCallback(preload, { timeout: 1200 });
-      return () => idleGlobal.cancelIdleCallback?.(idleId);
-    }
-
-    const timeoutId = globalThis.setTimeout(preload, 300);
-    return () => globalThis.clearTimeout(timeoutId);
-  }, []);
-
-  return null;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <RouteChunkPreloader />
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
