@@ -8,19 +8,36 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-export const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+
+const CurrentDateTimeDisplay = () => {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  // Update current date and time every second
   useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, []);
+
+  return (
+    <div className="flex items-center gap-1 text-muted-foreground">
+      <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="font-mono">
+        <span className="hidden sm:inline">
+          {format(currentDateTime, 'dd/MM/yyyy HH:mm', { locale: es })}
+        </span>
+        <span className="sm:hidden">
+          {format(currentDateTime, 'dd/MM HH:mm', { locale: es })}
+        </span>
+      </span>
+    </div>
+  );
+};
+
+export const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Mobile optimizations for all devices
   useEffect(() => {
@@ -133,17 +150,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     {getRoleDisplayName(user?.role || '')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="font-mono">
-                    <span className="hidden sm:inline">
-                      {format(currentDateTime, 'dd/MM/yyyy HH:mm', { locale: es })}
-                    </span>
-                    <span className="sm:hidden">
-                      {format(currentDateTime, 'dd/MM HH:mm', { locale: es })}
-                    </span>
-                  </span>
-                </div>
+                <CurrentDateTimeDisplay />
               </div>
 
               <div className="flex items-center flex-shrink-0">
