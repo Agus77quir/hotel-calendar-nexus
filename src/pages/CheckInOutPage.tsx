@@ -38,13 +38,6 @@ const CheckInOutPage = () => {
     r.check_out >= today
   );
 
-  console.log('🏨 CHECK-IN/OUT PAGE - Contadores:', {
-    today,
-    todayCheckIns: todayCheckIns.length,
-    todayCheckOuts: todayCheckOuts.length,
-    currentGuests: currentGuests.length,
-  });
-
   const handleCheckIn = async (reservationId: string) => {
     if (processing.has(reservationId)) return;
     
