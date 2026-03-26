@@ -182,18 +182,6 @@ export const useReservationForm = ({
     });
   }, [rooms, roomAvailabilityMap]);
 
-  // Auto-select best room when dates are set and no room is selected
-  useEffect(() => {
-    if (mode !== 'create' || formData.room_id || !formData.check_in || !formData.check_out || availableRooms.length === 0) {
-      return;
-    }
-
-    const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
-    if (suitableRoom) {
-      handleRoomChange(suitableRoom.id);
-    }
-  }, [mode, formData.room_id, formData.check_in, formData.check_out, formData.guests_count, availableRooms, handleRoomChange]);
-
   // Handle room change and set guest count to maximum capacity - ENHANCED
   const handleRoomChange = useCallback((roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
@@ -230,6 +218,18 @@ export const useReservationForm = ({
     
     setAvailabilityError('');
   }, [formData.check_in, formData.check_out, reservation?.id, reservations, rooms, toast]);
+
+  // Auto-select best room when dates are set and no room is selected
+  useEffect(() => {
+    if (mode !== 'create' || formData.room_id || !formData.check_in || !formData.check_out || availableRooms.length === 0) {
+      return;
+    }
+
+    const suitableRoom = availableRooms.find(room => room.capacity >= formData.guests_count) || availableRooms[0];
+    if (suitableRoom) {
+      handleRoomChange(suitableRoom.id);
+    }
+  }, [mode, formData.room_id, formData.check_in, formData.check_out, formData.guests_count, availableRooms, handleRoomChange]);
 
   // Handle date changes - CORREGIDO para mantener fechas exactas
   const handleDateChange = useCallback((field: 'check_in' | 'check_out', value: string) => {
